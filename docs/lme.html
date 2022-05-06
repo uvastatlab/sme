@@ -60,6 +60,28 @@ if (window.hljs) {
 
 
 
+<style type="text/css">
+/* for pandoc --citeproc since 2.11 */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
+</style>
 
 
 
@@ -365,8 +387,72 @@ div.tocify {
 </div>
 
 
-<div id="references" class="section level3">
-<h3>References</h3>
+<div id="basic-longitudinal-data-analysis" class="section level3">
+<h3>Basic longitudinal data analysis</h3>
+<p>The phosphate data in the HSAUR3 package contains plasma inorganic
+phosphate levels from 33 subjects (20 controls, 13 obese). <span
+class="citation">(Hothorn and Everitt 2022)</span></p>
+<pre class="r"><code>library(HSAUR3)
+data(&quot;phosphate&quot;)
+head(phosphate)</code></pre>
+<pre><code>##     group  t0 t0.5  t1 t1.5  t2  t3  t4  t5
+## 1 control 4.3  3.3 3.0  2.6 2.2 2.5 3.4 4.4
+## 2 control 3.7  2.6 2.6  1.9 2.9 3.2 3.1 3.9
+## 3 control 4.0  4.1 3.1  2.3 2.9 3.1 3.9 4.0
+## 4 control 3.6  3.0 2.2  2.8 2.9 3.9 3.8 4.0
+## 5 control 4.1  3.8 2.1  3.0 3.6 3.4 3.6 3.7
+## 6 control 3.8  2.2 2.0  2.6 3.8 3.6 3.0 3.5</code></pre>
+<p>Reshaping the data facilitates data visualization. The
+<code>pivot_longer()</code> function from the tidyr package makes quick
+work of this. <span class="citation">(Wickham and Girlich 2022)</span>
+We add a subject <code>id</code> to identify subjects after reshaping
+the data into a “long” format.</p>
+<pre class="r"><code>library(tidyr)
+phosphate$id &lt;- 1:nrow(phosphate)
+phosphateL &lt;- pivot_longer(phosphate, cols = t0:t5, 
+                           names_to = &quot;time&quot;, 
+                           names_prefix = &quot;t&quot;,
+                           names_transform = list(time = as.numeric),
+                           values_to = &quot;level&quot;)
+head(phosphateL, n = 10)</code></pre>
+<pre><code>## # A tibble: 10 × 4
+##    group      id  time level
+##    &lt;fct&gt;   &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt;
+##  1 control     1   0     4.3
+##  2 control     1   0.5   3.3
+##  3 control     1   1     3  
+##  4 control     1   1.5   2.6
+##  5 control     1   2     2.2
+##  6 control     1   3     2.5
+##  7 control     1   4     3.4
+##  8 control     1   5     4.4
+##  9 control     2   0     3.7
+## 10 control     2   0.5   2.6</code></pre>
+<p>There appears to be a great deal of variability between the
+subjects.</p>
+<pre class="r"><code>library(ggplot2)
+ggplot(phosphateL) +
+  aes(x = time, y = level, group = id) +
+  geom_line() +
+  facet_wrap(~group)</code></pre>
+<p><img src="lme_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<p>What might be a sensible linear mixed effect model to quantify trend
+in time, effect of obesity, and variation between subjects?</p>
+</div>
+<div id="references" class="section level3 unnumbered">
+<h3 class="unnumbered">References</h3>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-hsaur3" class="csl-entry">
+Hothorn, Torsten, and Brian S. Everitt. 2022. <em>Hsaur3: A Handbook of
+Statistical Analyses Using r (3rd Edition)</em>. <a
+href="https://CRAN.R-project.org/package=HSAUR3">https://CRAN.R-project.org/package=HSAUR3</a>.
+</div>
+<div id="ref-tidyr" class="csl-entry">
+Wickham, Hadley, and Maximilian Girlich. 2022. <em>Tidyr: Tidy Messy
+Data</em>. <a
+href="https://CRAN.R-project.org/package=tidyr">https://CRAN.R-project.org/package=tidyr</a>.
+</div>
+</div>
 </div>
 
 

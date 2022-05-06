@@ -8,9 +8,18 @@ bibliography: refs.bib
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE)
 ```
 
+### Poisson regression
+
+The AirCrash dataset in the vcdExtra package contains data on all fatal commercial airplane crashes from 1993–2015. [@vcdextra] How does the number of fatalities depend on other variables? Fit a main effects Poisson regression model. [@friendly2016]
+
+
+```{r message=FALSE}
+library(vcdExtra)
+data("AirCrash")
+```
 
 
 ### References

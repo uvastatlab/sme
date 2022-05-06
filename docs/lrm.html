@@ -416,7 +416,6 @@ pout$conf.int</code></pre>
 model. The confidence interval is slightly different.</p>
 <pre class="r"><code>m &lt;- glm(cbind(39, 100-39) ~ 1, family = binomial)
 plogis(confint(m))</code></pre>
-<pre><code>## Waiting for profiling to be done...</code></pre>
 <pre><code>##     2.5 %    97.5 % 
 ## 0.2980745 0.4874909</code></pre>
 <p>There are many confidence intervals that can be calculated for

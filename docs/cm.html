@@ -60,6 +60,28 @@ if (window.hljs) {
 
 
 
+<style type="text/css">
+/* for pandoc --citeproc since 2.11 */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
+</style>
 
 
 
@@ -365,8 +387,30 @@ div.tocify {
 </div>
 
 
-<div id="references" class="section level3">
-<h3>References</h3>
+<div id="poisson-regression" class="section level3">
+<h3>Poisson regression</h3>
+<p>The AirCrash dataset in the vcdExtra package contains data on all
+fatal commercial airplane crashes from 1993–2015. <span
+class="citation">(Friendly 2022)</span> How does the number of
+fatalities depend on other variables? Fit a main effects Poisson
+regression model. <span class="citation">(Friendly and Meyer
+2016)</span></p>
+<pre class="r"><code>library(vcdExtra)
+data(&quot;AirCrash&quot;)</code></pre>
+</div>
+<div id="references" class="section level3 unnumbered">
+<h3 class="unnumbered">References</h3>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-vcdextra" class="csl-entry">
+Friendly, Michael. 2022. <em>vcdExtra: ’Vcd’ Extensions and
+Additions</em>. <a
+href="https://CRAN.R-project.org/package=vcdExtra">https://CRAN.R-project.org/package=vcdExtra</a>.
+</div>
+<div id="ref-friendly2016" class="csl-entry">
+Friendly, Michael, and David Meyer. 2016. <em>Discrete Data Analysis
+with <span>R</span></em>. Boca Raton: <span>CRC</span> Press.
+</div>
+</div>
 </div>
 
 

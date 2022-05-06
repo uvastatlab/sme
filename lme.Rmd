@@ -8,9 +8,43 @@ bibliography: refs.bib
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE)
 ```
 
+### Basic longitudinal data analysis
+
+The phosphate data in the HSAUR3 package contains plasma inorganic phosphate levels from 33 subjects (20 controls, 13 obese). [@hsaur3]
+
+```{r}
+library(HSAUR3)
+data("phosphate")
+head(phosphate)
+```
+
+Reshaping the data facilitates data visualization. The `pivot_longer()` function from the tidyr package makes quick work of this. [@tidyr] We add a subject `id` to identify subjects after reshaping the data into a "long" format. 
+
+```{r}
+library(tidyr)
+phosphate$id <- 1:nrow(phosphate)
+phosphateL <- pivot_longer(phosphate, cols = t0:t5, 
+                           names_to = "time", 
+                           names_prefix = "t",
+                           names_transform = list(time = as.numeric),
+                           values_to = "level")
+head(phosphateL, n = 10)
+```
+
+There appears to be a great deal of variability between the subjects.
+
+```{r}
+library(ggplot2)
+ggplot(phosphateL) +
+  aes(x = time, y = level, group = id) +
+  geom_line() +
+  facet_wrap(~group)
+```
+
+What might be a sensible linear mixed effect model to quantify trend in time, effect of obesity, and variation between subjects? 
 
 
 ### References
