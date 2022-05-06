@@ -1,0 +1,23 @@
+name: "statistical-modeling-examples"
+output_dir: "docs"
+navbar:
+  title: "Statistical Modeling Examples in R"   
+  left:
+    - text: "Home"
+      href: index.html
+    - text: "Examples"
+      menu:
+      - text: linear models
+        href: lm.html
+      - text: logistic regression models
+        href: lrm.html
+      - text: count models
+        href: cm.html
+      - text: mixed-effect models
+        href: lme.html
+    - text: "About"
+      href: about.html
+output:
+  html_document:
+    theme: readable
+    highlight: textmate

@@ -1,0 +1,45 @@
+---
+title: "Logistic Regression Models"
+output:
+  html_document:
+    toc: TRUE
+    toc_float: TRUE
+bibliography: refs.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Inference about a proportion
+
+100 Hershey's Kisses are put into a large cup and dumped on a table. We want to estimate the proportion of Kisses we can expect to land on their base. [@bilder2015] In our experiment we observe 39 out of 100. What is the 95% confidence interval on the proportion?
+
+```{r}
+prop.test(x = 39, n = 100)
+```
+
+To get just the confidence interval:
+
+```{r}
+pout <- prop.test(x = 39, n = 100)
+pout$conf.int
+```
+
+This can be analyzed as an intercept-only binary logistic regression model. The confidence interval is slightly different.
+
+```{r}
+m <- glm(cbind(39, 100-39) ~ 1, family = binomial)
+plogis(confint(m))
+```
+
+There are many confidence intervals that can be calculated for proportions. The binom package calculates 11 of them. [@binom]
+
+```{r}
+library(binom)
+binom.confint(x = 39, n = 100)
+```
+
+The "prop.test" and "profile" versions are the two we calculated above. 
+
+### References
