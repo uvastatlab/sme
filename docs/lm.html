@@ -433,9 +433,45 @@ qqline(speed)</code></pre>
 <pre><code>## [1]  5 15 20</code></pre>
 <p>There was a fast reader and a couple of slower readers.</p>
 </div>
+<div id="linear-models-with-categorical-predictors"
+class="section level3">
+<h3>Linear models with categorical predictors</h3>
+<p>The <code>schooldays</code> data frame from the HSAUR3 package has
+154 rows and 5 columns. It contains data from a sociological study of
+Australian Aboriginal and white children. Model <code>absent</code>
+(number of days absent during school year) as a function of
+<code>race</code>, <code>gender</code>, <code>school</code> (school
+type), and <code>learner</code> (average or slow learner). <span
+class="citation">(Hothorn and Everitt 2022)</span></p>
+<pre class="r"><code>library(HSAUR3)
+data(&quot;schooldays&quot;)</code></pre>
+</div>
+<div id="linear-model-with-categorical-and-numeric-predictors"
+class="section level3">
+<h3>Linear model with categorical and numeric predictors</h3>
+<p>The <code>bp.obese</code> data frame from the ISwR package has 102
+rows and 3 columns. It contains data from a random sample of
+Mexican-American adults in a small California town. Analyze blood
+pressure (<code>bp</code>) as a function of obesity (<code>obese</code>)
+and gender (<code>sex</code>). Here <code>obese</code> is a ratio of
+actual weight to ideal weight from New York Metropolitan Life Tables.
+<span class="citation">(Dalgaard 2020)</span></p>
+<pre class="r"><code>library(ISwR)
+data(&quot;bp.obese&quot;)</code></pre>
+</div>
 <div id="references" class="section level3 unnumbered">
 <h3 class="unnumbered">References</h3>
 <div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-ISwR" class="csl-entry">
+Dalgaard, Peter. 2020. <em>ISwR: Introductory Statistics with
+<span>R</span></em>. <a
+href="https://CRAN.R-project.org/package=ISwR">https://CRAN.R-project.org/package=ISwR</a>.
+</div>
+<div id="ref-hsaur3" class="csl-entry">
+Hothorn, Torsten, and Brian S. Everitt. 2022. <em>Hsaur3: A Handbook of
+Statistical Analyses Using r (3rd Edition)</em>. <a
+href="https://CRAN.R-project.org/package=HSAUR3">https://CRAN.R-project.org/package=HSAUR3</a>.
+</div>
 <div id="ref-ott2004" class="csl-entry">
 Ott, R. Lyman, and Michael T. Longnecker. 2004. <em>A First Course in
 Statistical Methods</em>. California: Brooks/Cole.
