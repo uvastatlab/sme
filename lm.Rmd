@@ -89,6 +89,11 @@ library(ISwR)
 data("bp.obese")
 ```
 
+Summary of data.
+
+```{r}
+summary(bp.obese)
+```
 
 
 
