@@ -11,7 +11,7 @@ bibliography: refs.bib
 knitr::opts_chunk$set(echo = TRUE, message = FALSE)
 ```
 
-### Inference about a proportion
+### Logistic regression with no predictors (intercept only)
 
 100 Hershey's Kisses are put into a large cup and dumped on a table. We want to estimate the proportion of Kisses we can expect to land on their base. [@bilder2015] In our experiment we observe 39 out of 100. What is the 95% confidence interval on the proportion?
 
@@ -41,5 +41,15 @@ binom.confint(x = 39, n = 100)
 ```
 
 The "prop.test" and "profile" versions are the two we calculated above. 
+
+### Logistic regression with numeric predictors
+
+The `malaria` data frame from the `ISwR` package has 100 rows and 4 columns. It contains data on a sample of 100 children aged 3–15 years from a village in Ghana. Model the risk of malaria (`mal`) as a function of age (`age`) and log-transformed antibody levels (`log(ab)`). [@ISwR]
+
+```{r}
+library(ISwR)
+data("malaria")
+```
+
 
 ### References

@@ -387,8 +387,9 @@ div.tocify {
 </div>
 
 
-<div id="inference-about-a-proportion" class="section level3">
-<h3>Inference about a proportion</h3>
+<div id="logistic-regression-with-no-predictors-intercept-only"
+class="section level3">
+<h3>Logistic regression with no predictors (intercept only)</h3>
 <p>100 Hershey’s Kisses are put into a large cup and dumped on a table.
 We want to estimate the proportion of Kisses we can expect to land on
 their base. <span class="citation">(Bilder and Loughin 2015)</span> In
@@ -438,6 +439,18 @@ binom.confint(x = 39, n = 100)</code></pre>
 <p>The “prop.test” and “profile” versions are the two we calculated
 above.</p>
 </div>
+<div id="logistic-regression-with-numeric-predictors"
+class="section level3">
+<h3>Logistic regression with numeric predictors</h3>
+<p>The <code>malaria</code> data frame from the <code>ISwR</code>
+package has 100 rows and 4 columns. It contains data on a sample of 100
+children aged 3–15 years from a village in Ghana. Model the risk of
+malaria (<code>mal</code>) as a function of age (<code>age</code>) and
+log-transformed antibody levels (<code>log(ab)</code>). <span
+class="citation">(Dalgaard 2020)</span></p>
+<pre class="r"><code>library(ISwR)
+data(&quot;malaria&quot;)</code></pre>
+</div>
 <div id="references" class="section level3 unnumbered">
 <h3 class="unnumbered">References</h3>
 <div id="refs" class="references csl-bib-body hanging-indent">
@@ -445,6 +458,11 @@ above.</p>
 Bilder, Christopher R., and Thomas M. Loughin. 2015. <em>Analysis of
 Categorical Data in <span>R</span></em>. Boca Raton: <span>CRC</span>
 Press.
+</div>
+<div id="ref-ISwR" class="csl-entry">
+Dalgaard, Peter. 2020. <em>ISwR: Introductory Statistics with
+<span>R</span></em>. <a
+href="https://CRAN.R-project.org/package=ISwR">https://CRAN.R-project.org/package=ISwR</a>.
 </div>
 <div id="ref-binom" class="csl-entry">
 Dorai-Raj, Sundar. 2022. <em>Binom: Binomial Confidence Intervals for
