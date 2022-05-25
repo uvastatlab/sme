@@ -54,6 +54,8 @@ qqnorm(speed)
 qqline(speed)
 ```
 
+The model does not appear to be from a normal distribution. Perhaps my interpretation of the QQ plot is not quite right ? Also, is it also appropriate to use a qq plot to asses normality ?
+
 Using the model output:
 
 ```{r}
@@ -79,6 +81,39 @@ library(HSAUR3)
 data("schooldays")
 ```
 
+```{r}
+# plots to look at data
+library(ggplot2)
+library(dplyr)
+
+# histogram of absences
+hist(schooldays$absent)
+
+# bar plot of absences by gender
+schooldays_by_gender = schooldays %>% 
+  group_by(gender) %>% 
+  summarise(absent = sum(absent))
+
+ggplot(aes(x=gender, y=absent), data = schooldays_by_gender) +
+geom_bar(stat = "identity")
+
+# base r strip chart of absences by gender
+stripchart(absent ~ gender, data = schooldays,
+           ylab = 'number of absences', xlab = 'gender', 
+           main = 'Stripchart of Absences by gender')
+
+# ggplot strip chart of absences by gender
+ggplot(schooldays, aes(x = gender, y = absent, color=learner)) +
+  geom_jitter(position = position_jitter(0.2))
+```
+
+```{r}
+m <- lm(absent ~ race + gender + school + learner, schooldays)
+summary(m)
+plot(m)
+```
+
+Plan to add some explanation of the summary output.
 
 ### Linear model with categorical and numeric predictors
 
