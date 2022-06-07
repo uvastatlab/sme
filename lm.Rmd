@@ -110,10 +110,52 @@ ggplot(schooldays, aes(x = gender, y = absent, color=learner)) +
 ```{r}
 m <- lm(absent ~ race + gender + school + learner, schooldays)
 summary(m)
-plot(m)
+```
+```{r}
+plot(m, which = 1)
 ```
 
-Plan to add some explanation of the summary output.
+https://data.library.virginia.edu/diagnostic-plots/
+
+Residual vs Fitted: "This plot shows if residuals have non-linear patterns."
+I think residuals are supposed to center around 0 for a "good" model. If residuals center around horizontal line, then the good indication of no non-linear relationships.
+If spread around horizontal line which is non-zero, then "bad" model with no non-linear relationships?
+
+For this in particular, values seems generally centered around mostly horizontal line @ 0. Good amount of spread above 0. Does this mean the model is not so good? Perhaps need to look at other things
+
+```{r}
+plot(m, which = 2)
+```
+
+Normal Q-Q: shows if residuals are normally distributed
+
+These residuals should fall along the straight line if residuals are normally distributed. why is this important ? indication of equal variance ?
+
+Is normally distributed residuals a requirement for linear regression? i may be thinking of equal variance
+
+These residuals deviate quite a but from the straight line, so I would say the residuals are not normally distributed. I am not sure if this particular shape has implications or if we can conclude anything from it?
+
+```{r}
+plot(m, which = 3)
+```
+
+Scale-Location/Spread-Location: "This plot shows if residuals are spread equally along the ranges of predictors" -- check assumption of equal variance
+
+equal variance between what?
+
+residuals should center around the same value (horizontal line). if not horizontal, then residuals change as predictors change. residuals should not be dependent on predictors.
+
+this plot seems ok to me. residuals do not seem to change with predictors.
+
+if residuals do change with predictors, would this be a reason to use a mixed-effect model ?
+
+```{r}
+plot(m, which = 5)
+```
+
+Residuals vs leverage: helps to find influential cases. "look for cases outside of a dashed line"
+
+there do not seem to be any particularly influential cases in this model
 
 ### Linear model with categorical and numeric predictors
 
