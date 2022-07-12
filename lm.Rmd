@@ -55,6 +55,8 @@ qqnorm(speed)
 qqline(speed)
 ```
 
+The model does not appear to be from a normal distribution. Perhaps my interpretation of the QQ plot is not quite right ? Also, is it also appropriate to use a qq plot to asses normality ?
+
 Using the model output:
 
 ```{r}
@@ -80,6 +82,7 @@ library(HSAUR3)
 data("schooldays")
 ```
 
+<<<<<<< HEAD
 Here, I build the model then output just the coefficients then just the confidence intervals for each coefficient. 
 
 ```{r}
@@ -145,6 +148,104 @@ plot(m2, which = 5)
 ```
 
 This plot helps us identify 
+=======
+```{r}
+# plots to look at data
+library(ggplot2)
+library(dplyr)
+
+# histogram of absences
+hist(schooldays$absent)
+
+# bar plot of absences by gender
+schooldays_by_gender = schooldays %>% 
+  group_by(gender) %>% 
+  summarise(absent = sum(absent))
+
+ggplot(aes(x=gender, y=absent), data = schooldays_by_gender) +
+geom_bar(stat = "identity")
+
+# base r strip chart of absences by gender
+stripchart(absent ~ gender, data = schooldays,
+           ylab = 'number of absences', xlab = 'gender', 
+           main = 'Stripchart of Absences by gender')
+
+# ggplot strip chart of absences by gender
+ggplot(schooldays, aes(x = gender, y = absent, color=learner)) +
+  geom_jitter(position = position_jitter(0.2))
+```
+
+```{r}
+m <- lm(absent ~ race + gender + school + learner, schooldays)
+summary(m)
+```
+Residuals.
+median should center around 0. it doesn't really.
+min/max and q1 and q3 should have roughly the same absolute value. they do not. residuals seem to show skew towards overprediction
+
+Coefficients
+std err -- std error of the coefficient. what exactly does this mean? std error in the estimation
+interpretation example: according to the model, being non-aboriginal contributes negatively to school absence.
+
+which hypothesis test is being done here ?
+so the hypothesis test is based only on the difference from 0 ? wouldn't some coefficients just naturally be closer to 0 than others ? i assume the test accounts for this ? how ? by dividing by the std error ? but even that would not account for measurements of a certain variable just naturally being close to 0.
+how do you assess the usefulness of a variable without the p-value ? bc a coefficient's magnitude is related to the magnitude of the measurements, right ? i def see the appeal of normalizing coefficients now but i know you are not "suppossed" to do that.
+
+Residual standard error
+How is degrees of freedom calculated? n - num predictors ? i think it is something close to that ...
+i assume residual standard error should be close to 0 ? closer to 0 means less spread ? why is residual std error a good measure of the model? it does not seem that useful to me. bc it does not say anything about direction, does it ?
+
+r-squareds ? 
+how relevant are these actually ? -- read that article
+
+f-statistic: statistic for hypothesis test all coefficients (=0)
+
+```{r}
+plot(m, which = 1)
+```
+
+https://data.library.virginia.edu/diagnostic-plots/
+
+Residual vs Fitted: "This plot shows if residuals have non-linear patterns."
+I think residuals are supposed to center around 0 for a "good" model. If residuals center around horizontal line, then the good indication of no non-linear relationships.
+If spread around horizontal line which is non-zero, then "bad" model with no non-linear relationships?
+
+For this in particular, values seems generally centered around mostly horizontal line @ 0. Good amount of spread above 0 -- overpredicting. Does this mean the model is not so good? Perhaps need to look at other things
+
+```{r}
+plot(m, which = 2)
+```
+
+Normal Q-Q: shows if residuals are normally distributed
+
+These residuals should fall along the straight line if residuals are normally distributed. why is this important ? indication of equal variance ?
+
+Is normally distributed residuals a requirement for linear regression? i may be thinking of equal variance
+
+These residuals deviate quite a but from the straight line, so I would say the residuals are not normally distributed. I am not sure if this particular shape has implications or if we can conclude anything from it?
+
+```{r}
+plot(m, which = 3)
+```
+
+Scale-Location/Spread-Location: "This plot shows if residuals are spread equally along the ranges of predictors" -- check assumption of equal variance
+
+equal variance between what?
+
+residuals should center around the same value (horizontal line). if not horizontal, then residuals change as predictors change. residuals should not be dependent on predictors.
+
+this plot seems ok to me. residuals do not seem to change with predictors.
+
+if residuals do change with predictors, would this be a reason to use a mixed-effect model ?
+
+```{r}
+plot(m, which = 5)
+```
+
+Residuals vs leverage: helps to find influential cases. "look for cases outside of a dashed line"
+
+there do not seem to be any particularly influential cases in this model
+>>>>>>> 32e7ad35c8d6691690ec3b99e65d04935e7a233e
 
 ### Linear model with categorical and numeric predictors
 

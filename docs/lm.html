@@ -13,7 +13,7 @@
 
 <title>Linear Modeling</title>
 
-<script src="site_libs/header-attrs-2.14/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.11/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
@@ -55,7 +55,6 @@ if (window.hljs) {
   }
 }
 </script>
-
 
 
 
@@ -106,9 +105,6 @@ button.code-folding-btn:focus {
 }
 summary {
   display: list-item;
-}
-details > summary > p:only-child {
-  display: inline;
 }
 pre code {
   padding: 0;
@@ -334,7 +330,7 @@ div.tocify {
 <div class="navbar navbar-default  navbar-fixed-top" role="navigation">
   <div class="container">
     <div class="navbar-header">
-      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
@@ -347,7 +343,7 @@ div.tocify {
   <a href="index.html">Home</a>
 </li>
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
     Examples
      
     <span class="caret"></span>
@@ -387,13 +383,9 @@ div.tocify {
 </div>
 
 
-<div id="linear-model-with-no-predictors-intercept-only"
-class="section level3">
+<div id="linear-model-with-no-predictors-intercept-only" class="section level3">
 <h3>Linear model with no predictors (intercept only)</h3>
-<p>A new reading program is being evaluated at an elementary school. A
-random sample of 20 students were tested to determine reading speed.
-Speed was measured in minutes. <span class="citation">(Ott and
-Longnecker 2004)</span></p>
+<p>A new reading program is being evaluated at an elementary school. A random sample of 20 students were tested to determine reading speed. Speed was measured in minutes. <span class="citation">(Ott and Longnecker 2004)</span></p>
 <pre class="r"><code>speed &lt;- c(5, 7, 15, 12, 8, 7, 10, 11, 9, 13, 10, 6, 11, 8, 10, 8, 7, 6, 11, 8, 20)</code></pre>
 <p>Visualize distribution of data:</p>
 <pre class="r"><code>hist(speed)</code></pre>
@@ -426,6 +418,7 @@ confint(m)</code></pre>
 <pre class="r"><code>qqnorm(speed)
 qqline(speed)</code></pre>
 <p><img src="lm_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>The model does not appear to be from a normal distribution. Perhaps my interpretation of the QQ plot is not quite right ? Also, is it also appropriate to use a qq plot to asses normality ?</p>
 <p>Using the model output:</p>
 <pre class="r"><code>plot(m, which = 2)</code></pre>
 <p><img src="lm_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
@@ -434,31 +427,72 @@ qqline(speed)</code></pre>
 <pre><code>## [1]  5 15 20</code></pre>
 <p>There was a fast reader and a couple of slower readers.</p>
 </div>
-<div id="linear-model-with-categorical-predictors"
-class="section level3">
+<div id="linear-model-with-categorical-predictors" class="section level3">
 <h3>Linear model with categorical predictors</h3>
-<p>The <code>schooldays</code> data frame from the HSAUR3 package has
-154 rows and 5 columns. It contains data from a sociological study of
-Australian Aboriginal and white children. Model <code>absent</code>
-(number of days absent during school year) as a function of
-<code>race</code>, <code>gender</code>, <code>school</code> (school
-type), and <code>learner</code> (average or slow learner). <span
-class="citation">(Hothorn and Everitt 2022)</span></p>
-<pre class="r"><code>library(HSAUR3)
-data(&quot;schooldays&quot;)</code></pre>
+<p>The <code>schooldays</code> data frame from the HSAUR3 package has 154 rows and 5 columns. It contains data from a sociological study of Australian Aboriginal and white children. Model <code>absent</code> (number of days absent during school year) as a function of <code>race</code>, <code>gender</code>, <code>school</code> (school type), and <code>learner</code> (average or slow learner). <span class="citation">(Hothorn and Everitt 2022)</span></p>
+<pre class="r"><code>library(HSAUR3)</code></pre>
+<pre><code>## Warning: package &#39;HSAUR3&#39; was built under R version 4.1.3</code></pre>
+<pre class="r"><code>data(&quot;schooldays&quot;)</code></pre>
+<pre class="r"><code># plots to look at data
+library(ggplot2)
+library(dplyr)
+
+# histogram of absences
+hist(schooldays$absent)</code></pre>
+<p><img src="lm_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<pre class="r"><code># bar plot of absences by gender
+schooldays_by_gender = schooldays %&gt;% 
+  group_by(gender) %&gt;% 
+  summarise(absent = sum(absent))
+
+ggplot(aes(x=gender, y=absent), data = schooldays_by_gender) +
+geom_bar(stat = &quot;identity&quot;)</code></pre>
+<p><img src="lm_files/figure-html/unnamed-chunk-10-2.png" width="672" /></p>
+<pre class="r"><code># base r strip chart of absences by gender
+stripchart(absent ~ gender, data = schooldays,
+           ylab = &#39;number of absences&#39;, xlab = &#39;gender&#39;, 
+           main = &#39;Stripchart of Absences by gender&#39;)</code></pre>
+<p><img src="lm_files/figure-html/unnamed-chunk-10-3.png" width="672" /></p>
+<pre class="r"><code># ggplot strip chart of absences by gender
+ggplot(schooldays, aes(x = gender, y = absent, color=learner)) +
+  geom_jitter(position = position_jitter(0.2))</code></pre>
+<p><img src="lm_files/figure-html/unnamed-chunk-10-4.png" width="672" /></p>
+<pre class="r"><code>m &lt;- lm(absent ~ race + gender + school + learner, schooldays)
+summary(m)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = absent ~ race + gender + school + learner, data = schooldays)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -20.383 -10.252  -3.560   6.232  57.877 
+## 
+## Coefficients:
+##                    Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)         17.0323     3.7353   4.560 1.07e-05 ***
+## racenon-aboriginal  -7.8280     2.4836  -3.152  0.00197 ** 
+## gendermale           2.6356     2.5596   1.030  0.30484    
+## schoolF1            -1.7803     3.8597  -0.461  0.64530    
+## schoolF2             5.3509     3.9365   1.359  0.17612    
+## schoolF3             3.2898     3.8428   0.856  0.39334    
+## learnerslow          0.7393     2.7243   0.271  0.78648    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 15.32 on 147 degrees of freedom
+## Multiple R-squared:  0.1091, Adjusted R-squared:  0.07276 
+## F-statistic: 3.001 on 6 and 147 DF,  p-value: 0.00853</code></pre>
+<pre class="r"><code>plot(m)</code></pre>
+<p><img src="lm_files/figure-html/unnamed-chunk-11-1.png" width="672" /><img src="lm_files/figure-html/unnamed-chunk-11-2.png" width="672" /><img src="lm_files/figure-html/unnamed-chunk-11-3.png" width="672" /><img src="lm_files/figure-html/unnamed-chunk-11-4.png" width="672" /></p>
+<p>Plan to add some explanation of the summary output.</p>
 </div>
-<div id="linear-model-with-categorical-and-numeric-predictors"
-class="section level3">
+<div id="linear-model-with-categorical-and-numeric-predictors" class="section level3">
 <h3>Linear model with categorical and numeric predictors</h3>
-<p>The <code>bp.obese</code> data frame from the ISwR package has 102
-rows and 3 columns. It contains data from a random sample of
-Mexican-American adults in a small California town. Analyze blood
-pressure (<code>bp</code>) as a function of obesity (<code>obese</code>)
-and gender (<code>sex</code>). Here <code>obese</code> is a ratio of
-actual weight to ideal weight from New York Metropolitan Life Tables.
-<span class="citation">(Dalgaard 2020)</span></p>
-<pre class="r"><code>library(ISwR)
-data(&quot;bp.obese&quot;)</code></pre>
+<p>The <code>bp.obese</code> data frame from the ISwR package has 102 rows and 3 columns. It contains data from a random sample of Mexican-American adults in a small California town. Analyze blood pressure (<code>bp</code>) as a function of obesity (<code>obese</code>) and gender (<code>sex</code>). Here <code>obese</code> is a ratio of actual weight to ideal weight from New York Metropolitan Life Tables. <span class="citation">(Dalgaard 2020)</span></p>
+<pre class="r"><code>library(ISwR)</code></pre>
+<pre><code>## Warning: package &#39;ISwR&#39; was built under R version 4.1.3</code></pre>
+<pre class="r"><code>data(&quot;bp.obese&quot;)</code></pre>
+<p>Summary of data.</p>
 <pre class="r"><code>summary(bp.obese)</code></pre>
 <pre><code>##       sex             obese             bp       
 ##  Min.   :0.0000   Min.   :0.810   Min.   : 94.0  
@@ -472,18 +506,13 @@ data(&quot;bp.obese&quot;)</code></pre>
 <h3 class="unnumbered">References</h3>
 <div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-ISwR" class="csl-entry">
-Dalgaard, Peter. 2020. <em>ISwR: Introductory Statistics with
-<span>R</span></em>. <a
-href="https://CRAN.R-project.org/package=ISwR">https://CRAN.R-project.org/package=ISwR</a>.
+Dalgaard, Peter. 2020. <em>ISwR: Introductory Statistics with <span>R</span></em>. <a href="https://CRAN.R-project.org/package=ISwR">https://CRAN.R-project.org/package=ISwR</a>.
 </div>
 <div id="ref-hsaur3" class="csl-entry">
-Hothorn, Torsten, and Brian S. Everitt. 2022. <em>Hsaur3: A Handbook of
-Statistical Analyses Using r (3rd Edition)</em>. <a
-href="https://CRAN.R-project.org/package=HSAUR3">https://CRAN.R-project.org/package=HSAUR3</a>.
+Hothorn, Torsten, and Brian S. Everitt. 2022. <em>Hsaur3: A Handbook of Statistical Analyses Using r (3rd Edition)</em>. <a href="https://CRAN.R-project.org/package=HSAUR3">https://CRAN.R-project.org/package=HSAUR3</a>.
 </div>
 <div id="ref-ott2004" class="csl-entry">
-Ott, R. Lyman, and Michael T. Longnecker. 2004. <em>A First Course in
-Statistical Methods</em>. California: Brooks/Cole.
+Ott, R. Lyman, and Michael T. Longnecker. 2004. <em>A First Course in Statistical Methods</em>. California: Brooks/Cole.
 </div>
 </div>
 </div>
