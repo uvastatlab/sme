@@ -45,6 +45,7 @@ This can also be found using an intercept-only linear model:
 ```{r}
 m <- lm(speed ~ 1)
 confint(m)
+#m$coefficients # prints out the intercept value aka the mean here 
 ```
 
 Does the sample appear to be from a Normal distribution?
@@ -79,6 +80,71 @@ library(HSAUR3)
 data("schooldays")
 ```
 
+Here, I build the model then output just the coefficients then just the confidence intervals for each coefficient. 
+
+```{r}
+#lm(absent ~ race + gender + school + learner, schooldays)
+
+m2 <- lm(absent ~ race + gender + school + learner, schooldays)
+m2
+m2$coefficients
+confint(m2)
+```
+
+Next, I plot the residuals against fitted values by setting the `which` attribute of plot to 1. 
+
+```{r}
+plot(m2, which = 1)
+```
+
+A good model would have residuals centered around 0 (I think). The residuals here seem to be centered around 0, indicating this is a good model. 
+
+Also, from my googling I found that the red line is a LOWESS (locally weighted scatterplot smoothing). It is bent which may indicate some deviation from linearity (if the LOWESS line is flat that is an indication that linear model is good for this data). Does this bend mean that linear model is not the best choice here? Or is it not bent enough to indicate a need for a different model? 
+
+I think the line is relatively flat, so for this model I would say that the linear model is a good choice for this data. 
+
+The residuals above 0 span a larger range than the residuals below 0. I'm not totally sure what this means for the model. 
+
+
+Now I look at the qq plot using `which` = 2. 
+
+```{r}
+plot(m2, which = 2)
+```
+
+Q-Q plot indicates whether or not the data is normally distributed. If it does follow a normal distribution, the data points will fall on the 45 degree line (the dashed line in the above plot). Here, we see that the data points outputted by the model do not fall on the 45 degree line so it does not follow a normal distribution. 
+
+
+Now I look at the Scale Location plot by setting `which` = 3.
+
+```{r}
+plot(m2, which = 3)
+```
+
+The Scale-Location plot helps us determine homoskedasticity -- the variance of the residuals is constant or in other words if the spread of residuals is equal at all fitted values. If the red line on this plot is horizontal and the points are randomly distributed above and below the line, then the residuals are spread out equally at all fitted values. Here, the line slopes slightly upward, but is mostly horizontal. Also, the data points do appear to be uniformly/randomly spread above and below the line for all fitted values. So I think homoskedasticity holds for this model.  
+
+Next, we look at the Cook's Distance plot using `which` = 4. 
+
+```{r}
+plot(m2, which = 4)
+```
+
+Here, we see that observations 61, 77, and 111 are influential data points (I think outliers??). Let's look at these points: 
+
+```{r}
+schooldays$absent[61]
+schooldays$absent[77]
+schooldays$absent[111]
+```
+
+
+And finally, we look at the Residuals vs Leverage plot using `which` = 5. 
+
+```{r}
+plot(m2, which = 5)
+```
+
+This plot helps us identify 
 
 ### Linear model with categorical and numeric predictors
 
@@ -95,6 +161,14 @@ Summary of data.
 summary(bp.obese)
 ```
 
+```{r}
+m3 <- lm(bp ~ obese + sex, bp.obese)
+m3
+```
 
+```{r}
+m3$coefficients
+confint(m3)
+```
 
 ### References
