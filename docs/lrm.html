@@ -13,7 +13,7 @@
 
 <title>Logistic Regression Models</title>
 
-<script src="site_libs/header-attrs-2.11/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.14/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
@@ -55,6 +55,7 @@ if (window.hljs) {
   }
 }
 </script>
+
 
 
 
@@ -105,6 +106,9 @@ button.code-folding-btn:focus {
 }
 summary {
   display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
 }
 pre code {
   padding: 0;
@@ -330,7 +334,7 @@ div.tocify {
 <div class="navbar navbar-default  navbar-fixed-top" role="navigation">
   <div class="container">
     <div class="navbar-header">
-      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
@@ -343,7 +347,7 @@ div.tocify {
   <a href="index.html">Home</a>
 </li>
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Examples
      
     <span class="caret"></span>
@@ -383,9 +387,14 @@ div.tocify {
 </div>
 
 
-<div id="logistic-regression-with-no-predictors-intercept-only" class="section level3">
+<div id="logistic-regression-with-no-predictors-intercept-only"
+class="section level3">
 <h3>Logistic regression with no predictors (intercept only)</h3>
-<p>100 Hershey’s Kisses are put into a large cup and dumped on a table. We want to estimate the proportion of Kisses we can expect to land on their base. <span class="citation">(Bilder and Loughin 2015)</span> In our experiment we observe 39 out of 100. What is the 95% confidence interval on the proportion?</p>
+<p>100 Hershey’s Kisses are put into a large cup and dumped on a table.
+We want to estimate the proportion of Kisses we can expect to land on
+their base. <span class="citation">(Bilder and Loughin 2015)</span> In
+our experiment we observe 39 out of 100. What is the 95% confidence
+interval on the proportion?</p>
 <pre class="r"><code>prop.test(x = 39, n = 100)</code></pre>
 <pre><code>## 
 ##  1-sample proportions test with continuity correction
@@ -404,15 +413,17 @@ pout$conf.int</code></pre>
 <pre><code>## [1] 0.2955674 0.4929886
 ## attr(,&quot;conf.level&quot;)
 ## [1] 0.95</code></pre>
-<p>This can be analyzed as an intercept-only binary logistic regression model. The confidence interval is slightly different.</p>
+<p>This can be analyzed as an intercept-only binary logistic regression
+model. The confidence interval is slightly different.</p>
 <pre class="r"><code>m &lt;- glm(cbind(39, 100-39) ~ 1, family = binomial)
 plogis(confint(m))</code></pre>
 <pre><code>##     2.5 %    97.5 % 
 ## 0.2980745 0.4874909</code></pre>
-<p>There are many confidence intervals that can be calculated for proportions. The binom package calculates 11 of them. <span class="citation">(Dorai-Raj 2022)</span></p>
-<pre class="r"><code>library(binom)</code></pre>
-<pre><code>## Warning: package &#39;binom&#39; was built under R version 4.1.3</code></pre>
-<pre class="r"><code>binom.confint(x = 39, n = 100)</code></pre>
+<p>There are many confidence intervals that can be calculated for
+proportions. The binom package calculates 11 of them. <span
+class="citation">(Dorai-Raj 2022)</span></p>
+<pre class="r"><code>library(binom)
+binom.confint(x = 39, n = 100)</code></pre>
 <pre><code>##           method  x   n      mean     lower     upper
 ## 1  agresti-coull 39 100 0.3900000 0.3000839 0.4880547
 ## 2     asymptotic 39 100 0.3900000 0.2944028 0.4855972
@@ -425,11 +436,18 @@ plogis(confint(m))</code></pre>
 ## 9            lrt 39 100 0.3900000 0.2980690 0.4875128
 ## 10     prop.test 39 100 0.3900000 0.2955674 0.4929886
 ## 11        wilson 39 100 0.3900000 0.3001687 0.4879698</code></pre>
-<p>The “prop.test” and “profile” versions are the two we calculated above.</p>
+<p>The “prop.test” and “profile” versions are the two we calculated
+above.</p>
 </div>
-<div id="logistic-regression-with-numeric-predictors" class="section level3">
+<div id="logistic-regression-with-numeric-predictors"
+class="section level3">
 <h3>Logistic regression with numeric predictors</h3>
-<p>The <code>malaria</code> data frame from the <code>ISwR</code> package has 100 rows and 4 columns. It contains data on a sample of 100 children aged 3–15 years from a village in Ghana. Model the risk of malaria (<code>mal</code>) as a function of age (<code>age</code>) and log-transformed antibody levels (<code>log(ab)</code>). <span class="citation">(Dalgaard 2020)</span></p>
+<p>The <code>malaria</code> data frame from the <code>ISwR</code>
+package has 100 rows and 4 columns. It contains data on a sample of 100
+children aged 3–15 years from a village in Ghana. Model the risk of
+malaria (<code>mal</code>) as a function of age (<code>age</code>) and
+log-transformed antibody levels (<code>log(ab)</code>). <span
+class="citation">(Dalgaard 2020)</span></p>
 <pre class="r"><code>library(ISwR)
 data(&quot;malaria&quot;)</code></pre>
 </div>
@@ -437,13 +455,19 @@ data(&quot;malaria&quot;)</code></pre>
 <h3 class="unnumbered">References</h3>
 <div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-bilder2015" class="csl-entry">
-Bilder, Christopher R., and Thomas M. Loughin. 2015. <em>Analysis of Categorical Data in <span>R</span></em>. Boca Raton: <span>CRC</span> Press.
+Bilder, Christopher R., and Thomas M. Loughin. 2015. <em>Analysis of
+Categorical Data in <span>R</span></em>. Boca Raton: <span>CRC</span>
+Press.
 </div>
 <div id="ref-ISwR" class="csl-entry">
-Dalgaard, Peter. 2020. <em>ISwR: Introductory Statistics with <span>R</span></em>. <a href="https://CRAN.R-project.org/package=ISwR">https://CRAN.R-project.org/package=ISwR</a>.
+Dalgaard, Peter. 2020. <em>ISwR: Introductory Statistics with
+<span>R</span></em>. <a
+href="https://CRAN.R-project.org/package=ISwR">https://CRAN.R-project.org/package=ISwR</a>.
 </div>
 <div id="ref-binom" class="csl-entry">
-Dorai-Raj, Sundar. 2022. <em>Binom: Binomial Confidence Intervals for Several Parameterizations</em>. <a href="https://CRAN.R-project.org/package=binom">https://CRAN.R-project.org/package=binom</a>.
+Dorai-Raj, Sundar. 2022. <em>Binom: Binomial Confidence Intervals for
+Several Parameterizations</em>. <a
+href="https://CRAN.R-project.org/package=binom">https://CRAN.R-project.org/package=binom</a>.
 </div>
 </div>
 </div>
