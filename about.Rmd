@@ -3,5 +3,4 @@ title: "About"
 
 ---
 
-In the summer of 2022 we are posting weekly examples of statistical linear modeling in R. 
-
+This site contains worked examples of statistical modeling in R. It was created by the UVA Library StatLab. It was started in the summer of 2022 and is currently a work in progress. 
