@@ -473,6 +473,7 @@ type), and <code>learner</code> (average or slow learner). <span
 class="citation">(Hothorn and Everitt 2022)</span></p>
 <pre class="r"><code>library(HSAUR3)
 data(&quot;schooldays&quot;)</code></pre>
+<p>First we summarize and explore the data.</p>
 <pre class="r"><code># plots to look at data
 library(ggplot2)
 library(dplyr)
@@ -497,6 +498,8 @@ stripchart(absent ~ gender, data = schooldays,
 ggplot(schooldays, aes(x = gender, y = absent, color=learner)) +
   geom_jitter(position = position_jitter(0.2))</code></pre>
 <p><img src="lm_files/figure-html/unnamed-chunk-11-4.png" width="672" /></p>
+<p>Next we model <code>absent</code> as a function of all other
+predictors.</p>
 <pre class="r"><code>m &lt;- lm(absent ~ race + gender + school + learner, schooldays)
 summary(m)</code></pre>
 <pre><code>## 
@@ -522,76 +525,119 @@ summary(m)</code></pre>
 ## Residual standard error: 15.32 on 147 degrees of freedom
 ## Multiple R-squared:  0.1091, Adjusted R-squared:  0.07276 
 ## F-statistic: 3.001 on 6 and 147 DF,  p-value: 0.00853</code></pre>
-<p>Residuals. median should center around 0. it doesn’t really. min/max
-and q1 and q3 should have roughly the same absolute value. they do not.
-residuals seem to show skew towards overprediction</p>
-<p>Coefficients std err – std error of the coefficient. what exactly
-does this mean? std error in the estimation interpretation example:
-according to the model, being non-aboriginal contributes negatively to
-school absence.</p>
-<p>which hypothesis test is being done here ? so the hypothesis test is
-based only on the difference from 0 ? wouldn’t some coefficients just
-naturally be closer to 0 than others ? i assume the test accounts for
-this ? how ? by dividing by the std error ? but even that would not
-account for measurements of a certain variable just naturally being
-close to 0. how do you assess the usefulness of a variable without the
-p-value ? bc a coefficient’s magnitude is related to the magnitude of
-the measurements, right ? i def see the appeal of normalizing
-coefficients now but i know you are not “suppossed” to do that.</p>
-<p>Residual standard error How is degrees of freedom calculated? n - num
-predictors ? i think it is something close to that … i assume residual
-standard error should be close to 0 ? closer to 0 means less spread ?
-why is residual std error a good measure of the model? it does not seem
-that useful to me. bc it does not say anything about direction, does it
-?</p>
-<p>r-squareds ? how relevant are these actually ? – read that
-article</p>
-<p>f-statistic: statistic for hypothesis test all coefficients (=0)</p>
+<p>In the first section we would like to see Residuals centered around
+0, with the min/max and 1Q/3Q having roughly the same absolute value.
+This indicates a uniform scatter of residuals, which is what a linear
+model assumes.</p>
+<ul>
+<li>Positive residuals occur when observed response values are
+<em>greater than</em> predicted response values.</li>
+<li>Negative residuals occur when observed response values are <em>less
+than</em> predicted response values.</li>
+</ul>
+<p>Residuals do not seem uniformly scatter based on these summary
+statistics.</p>
+<p>The Coefficients section shows the fitted model in the Estimate
+column. A mathematical expression of the model is as follows:</p>
+<p><span class="math display">\[\text{absent} = 17.03 + -7.83\text{
+non-aboriginal} + 2.64\text{ male} + -1.78\text{ F1} + 5.35\text{ F2} +
+3.29\text{ F3} + 0.74\text{ slow learner}\]</span></p>
+<p>For example, we might use our model to predict expected number of
+days absent for non-aboriginal females in an F1 school who are average
+learners.</p>
+<p><span class="math display">\[\text{absent} = 17.03 + -7.83(1) +
+2.64(0) + -1.78(1) + 5.35(0) + 3.28(0) + 0.74(0)\]</span></p>
+<p>Notice we plug in 1 if our subject belongs to the category and 0
+otherwise. We can carry out this prediction using the
+<code>predict()</code> function. The input values need to be entered in
+a data frame using the same variable names and category levels as our
+analysis data set.</p>
+<pre class="r"><code>predict(m, newdata = data.frame(race = &quot;non-aboriginal&quot;,
+                                gender = &quot;female&quot;,
+                                school = &quot;F1&quot;,
+                                learner = &quot;average&quot;))</code></pre>
+<pre><code>##        1 
+## 7.423977</code></pre>
+<p>Our model predicts about 7 days absence. Adding
+<code>interval = "confidence"</code> to <code>predict()</code> reports a
+95% confidence interval on this prediction.</p>
+<pre class="r"><code>predict(m, newdata = data.frame(race = &quot;non-aboriginal&quot;,
+                                gender = &quot;female&quot;,
+                                school = &quot;F1&quot;,
+                                learner = &quot;average&quot;),
+        interval = &quot;confidence&quot;)</code></pre>
+<pre><code>##        fit      lwr      upr
+## 1 7.423977 1.144474 13.70348</code></pre>
+<p>The estimate is rather wide, ranging from 1 day to 14 days.</p>
+<p>The “Std. Error” column in the summary output quantifies uncertainty
+in the estimated coefficients. The “t value” column is the ratio of the
+estimated coefficient to the standard error. Ratios larger than 2 or 3
+in absolute value give us confidence in the direction of the
+coefficient. Other than the intercept, the only coefficient that we’re
+confident about is the race coefficient. It appears
+<code>non-aboriginal</code> students have a lower rate of absence by
+about 7 days.</p>
+<p>The “Pr(&gt;|t|)” column reports p-values for hypothesis tests for
+each t value. The null hypothesis is the t value is 0. The reported
+p-value is the probability of seeing a t value that large or larger in
+magnitude if the null is true. In all seven hypothesis tests are
+reported. Two appear to be “significant” in the sense their p-values
+fall below traditional thresholds.</p>
+<p>The “Residual standard error” is the expected amount a predicted
+response value will differ from its observed value. The reported value
+of 15.32 tells us the model’s predicted value for days absent will be
+off by about 15 days.</p>
+<p>The Multiple and Adjusted R-squareds are 0.10 and 0.07. This
+summarizes the proportion of variability explained by the model. Of the
+variability in days absent, it looks like this model explains about 7%
+of the variance. The Adjusted R-squared is adjusted for the number of
+predictors and is the preferred statistic of the two. (Multiple
+R-squared always increases when variables are added to a model, even
+variables unrelated to the response.)</p>
+<p>The F-statistic tests the null hypothesis that all coefficients
+(other than the intercept) are 0. Small p-values provide evidence
+against this hypothesis.</p>
+<p>R provides some built-in diagnostic plots. A good one to inspect is
+the Residuals vs Fitted plot.</p>
 <pre class="r"><code>plot(m, which = 1)</code></pre>
-<p><img src="lm_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
-<p><a href="https://data.library.virginia.edu/diagnostic-plots/"
-class="uri">https://data.library.virginia.edu/diagnostic-plots/</a></p>
-<p>Residual vs Fitted: “This plot shows if residuals have non-linear
-patterns.” I think residuals are supposed to center around 0 for a
-“good” model. If residuals center around horizontal line, then the good
-indication of no non-linear relationships. If spread around horizontal
-line which is non-zero, then “bad” model with no non-linear
-relationships?</p>
-<p>For this in particular, values seems generally centered around mostly
-horizontal line @ 0. Good amount of spread above 0 – overpredicting.
-Does this mean the model is not so good? Perhaps need to look at other
-things</p>
-<pre class="r"><code>plot(m, which = 2)</code></pre>
-<p><img src="lm_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
-<p>Normal Q-Q: shows if residuals are normally distributed</p>
-<p>These residuals should fall along the straight line if residuals are
-normally distributed. why is this important ? indication of equal
-variance ?</p>
-<p>Is normally distributed residuals a requirement for linear
-regression? i may be thinking of equal variance</p>
-<p>These residuals deviate quite a but from the straight line, so I
-would say the residuals are not normally distributed. I am not sure if
-this particular shape has implications or if we can conclude anything
-from it?</p>
-<pre class="r"><code>plot(m, which = 3)</code></pre>
 <p><img src="lm_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
-<p>Scale-Location/Spread-Location: “This plot shows if residuals are
-spread equally along the ranges of predictors” – check assumption of
-equal variance</p>
-<p>equal variance between what?</p>
-<p>residuals should center around the same value (horizontal line). if
-not horizontal, then residuals change as predictors change. residuals
-should not be dependent on predictors.</p>
-<p>this plot seems ok to me. residuals do not seem to change with
-predictors.</p>
-<p>if residuals do change with predictors, would this be a reason to use
-a mixed-effect model ?</p>
-<pre class="r"><code>plot(m, which = 5)</code></pre>
+<p>Residuals above 0 are instances where the observed values are larger
+than the predicted values. It seems our model is under-predicting
+absences to a greater degree than over-predicting absences. The labeled
+points of 77, 111, and 61 are the rows of the data set with the largest
+residuals. These data points may be worth investigating. For example,
+point 111 is a child that we predict would be absent about 15 days (on
+the x-axis), but the residual of about 50 (on the y-axis) tells us this
+student was absent about 65 days.</p>
+<p>A QQ Plot can help us assess the Normality assumption of the
+residuals.</p>
+<pre class="r"><code>plot(m, which = 2)</code></pre>
 <p><img src="lm_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
-<p>Residuals vs leverage: helps to find influential cases. “look for
-cases outside of a dashed line”</p>
-<p>there do not seem to be any particularly influential cases in this
-model</p>
+<p>We would like the points to fall along the diagonal line. This plot
+doesn’t look great. Since our model doesn’t seem to be very good based
+on the previous plot, it’s probably not worth worrying too much about
+the QQ Plot.</p>
+<p>Another version of the Residuals vs Fitted plot is the Scale-Location
+plot.</p>
+<pre class="r"><code>plot(m, which = 3)</code></pre>
+<p><img src="lm_files/figure-html/unnamed-chunk-17-1.png" width="672" /></p>
+<p>In this plot the residuals are standardized and strictly positive. We
+would like the smooth red line to trend straight. The fact it’s trending
+up provides some evidence that our residuals are getting larger as our
+fitted values get larger. This could mean a violation of the constant
+variance assumption.</p>
+<p>One final plot to inspect is the Residuals vs Leverage plot. This can
+help us see if any data points are influencing the model.</p>
+<pre class="r"><code>plot(m, which = 5)</code></pre>
+<p><img src="lm_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
+<p>The x-axis is Leverage, also called hat-values. Higher values of
+leverage mean a higher potential to influence a model. The y-axis shows
+standardized residuals. Also plotted is Cook’s distance contour lines if
+any points exceed a particular threshold. Like leverage, Cook’s distance
+also quantifies the influence of a data point. In this plot it doesn’t
+appear any points are unduly influencing the model.</p>
+<p>Conclusion: it looks like the number of days absent cannot be
+properly modeled or understood with these categorical predictors.</p>
 </div>
 <div id="linear-model-with-categorical-and-numeric-predictors"
 class="section level3">
