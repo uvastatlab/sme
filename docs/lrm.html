@@ -13,7 +13,7 @@
 
 <title>Logistic Regression Models</title>
 
-<script src="site_libs/header-attrs-2.14/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.15/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
@@ -166,11 +166,15 @@ $(document).ready(function () {
     href = "index.html";
   var menuAnchor = $('a[href="' + href + '"]');
 
-  // mark it active
-  menuAnchor.tab('show');
-
-  // if it's got a parent navbar menu mark it active as well
-  menuAnchor.closest('li.dropdown').addClass('active');
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
 
   // Navbar adjustments
   var navHeight = $(".navbar").first().height() + 15;
@@ -439,9 +443,9 @@ binom.confint(x = 39, n = 100)</code></pre>
 <p>The “prop.test” and “profile” versions are the two we calculated
 above.</p>
 </div>
-<div id="logistic-regression-with-numeric-predictors"
+<div id="logistic-regression-with-numeric-predictors-1"
 class="section level3">
-<h3>Logistic regression with numeric predictors</h3>
+<h3>Logistic regression with numeric predictors (1)</h3>
 <p>The <code>malaria</code> data frame from the <code>ISwR</code>
 package has 100 rows and 4 columns. It contains data on a sample of 100
 children aged 3–15 years from a village in Ghana. Model the risk of
@@ -450,6 +454,29 @@ log-transformed antibody levels (<code>log(ab)</code>). <span
 class="citation">(Dalgaard 2020)</span></p>
 <pre class="r"><code>library(ISwR)
 data(&quot;malaria&quot;)</code></pre>
+</div>
+<div id="logistic-regression-with-numeric-predictors-2"
+class="section level3">
+<h3>Logistic regression with numeric predictors (2)</h3>
+<p>The <code>pima</code> data frame from the <code>faraway</code>
+package contains data on 768 adult female Pima Indians living near
+Phoenix <span class="citation">(Faraway 2016)</span>. This data was
+collected by <a href="https://www.niddk.nih.gov/">The National Institute
+of Diabetes and Digestive and Kidney Diseases</a>. The purpose of the
+study was to investigate factors related to diabetes. The variable
+<code>test</code> indicates whether the patient showed signs of diabetes
+(coded 0 if negative, 1 if positive). Model <code>test</code> as a
+function of all other predictors.</p>
+<pre class="r"><code>library(faraway)
+data(&quot;pima&quot;)</code></pre>
+<p>What is the difference in odds of testing positive for diabetes for a
+subject with BMI in the first quartile compared to a subject with BMI at
+the third quartile? <span class="citation">(Faraway 2006)</span></p>
+<pre class="r"><code>library(emmeans)
+bmi_vals &lt;- quantile(pima$bmi, probs = c(0.25,0.75))
+rg &lt;- ref_grid(m, at = list(bmi = bmi_vals))
+emmeans(rg, specs = &quot;bmi&quot;, type = &quot;response&quot;) |&gt;
+  contrast(&quot;pairwise&quot;)</code></pre>
 </div>
 <div id="references" class="section level3 unnumbered">
 <h3 class="unnumbered">References</h3>
@@ -468,6 +495,16 @@ href="https://CRAN.R-project.org/package=ISwR">https://CRAN.R-project.org/packag
 Dorai-Raj, Sundar. 2022. <em>Binom: Binomial Confidence Intervals for
 Several Parameterizations</em>. <a
 href="https://CRAN.R-project.org/package=binom">https://CRAN.R-project.org/package=binom</a>.
+</div>
+<div id="ref-faraway_book" class="csl-entry">
+Faraway, Julian. 2006. <em>Extending the Linear Model with
+<span>R</span></em>. CRC press. <a
+href="https://julianfaraway.github.io/faraway/ELM/">https://julianfaraway.github.io/faraway/ELM/</a>.
+</div>
+<div id="ref-faraway" class="csl-entry">
+———. 2016. <em>Faraway: Functions and Datasets for Books by Julian
+Faraway</em>. <a
+href="https://CRAN.R-project.org/package=faraway">https://CRAN.R-project.org/package=faraway</a>.
 </div>
 </div>
 </div>
