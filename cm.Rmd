@@ -22,4 +22,16 @@ data("AirCrash")
 ```
 
 
+### Rate model
+
+The `esdcomp` data frame from the `faraway` package [@faraway] contains data on complaints about emergency room doctors. Data was recorded on 44 doctors working in an emergency service at a hospital to study the factors affecting the number of complaints received. Build a model for the _rate_ of complaints received. [@faraway_book] Use `visits` as an offset in the model.
+
+
+```{r}
+library(faraway)
+data("esdcomp")
+```
+
+
+
 ### References

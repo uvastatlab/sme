@@ -402,9 +402,31 @@ regression model. <span class="citation">(Friendly and Meyer
 <pre class="r"><code>library(vcdExtra)
 data(&quot;AirCrash&quot;)</code></pre>
 </div>
+<div id="rate-model" class="section level3">
+<h3>Rate model</h3>
+<p>The <code>esdcomp</code> data frame from the <code>faraway</code>
+package <span class="citation">(Faraway 2016)</span> contains data on
+complaints about emergency room doctors. Data was recorded on 44 doctors
+working in an emergency service at a hospital to study the factors
+affecting the number of complaints received. Build a model for the
+<em>rate</em> of complaints received. <span class="citation">(Faraway
+2006)</span> Use <code>visits</code> as an offset in the model.</p>
+<pre class="r"><code>library(faraway)
+data(&quot;esdcomp&quot;)</code></pre>
+</div>
 <div id="references" class="section level3 unnumbered">
 <h3 class="unnumbered">References</h3>
 <div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-faraway_book" class="csl-entry">
+Faraway, Julian. 2006. <em>Extending the Linear Model with
+<span>R</span></em>. CRC press. <a
+href="https://julianfaraway.github.io/faraway/ELM/">https://julianfaraway.github.io/faraway/ELM/</a>.
+</div>
+<div id="ref-faraway" class="csl-entry">
+———. 2016. <em>Faraway: Functions and Datasets for Books by Julian
+Faraway</em>. <a
+href="https://CRAN.R-project.org/package=faraway">https://CRAN.R-project.org/package=faraway</a>.
+</div>
 <div id="ref-vcdextra" class="csl-entry">
 Friendly, Michael. 2022. <em>vcdExtra: ’Vcd’ Extensions and
 Additions</em>. <a
