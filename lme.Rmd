@@ -11,9 +11,19 @@ bibliography: refs.bib
 knitr::opts_chunk$set(echo = TRUE, message = FALSE)
 ```
 
-### Basic longitudinal data analysis
+### multilevel modeling
 
-The phosphate data in the HSAUR3 package contains plasma inorganic phosphate levels from 33 subjects (20 controls, 13 obese). [@hsaur3]
+The `eggprod` data in the faraway package contains data on egg production. [@faraway] Six pullets (young hens) were placed into each of 12 pens. Four blocks were formed from groups of 3 pens based on location. Three treatments were applied. The number of eggs produced was recorded. Fit a model for the number of eggs produced with `treat` as a fixed effect and `block` as a random effect. [@faraway_book] Does `treat` appear to affect the number of eggs, and if so, which treatment seems superior?
+
+```{r}
+library(faraway)
+data("eggprod")
+```
+
+
+### longitudinal modeling
+
+The `phosphate` data in the HSAUR3 package contains plasma inorganic phosphate levels from 33 subjects (20 controls, 13 obese). [@hsaur3]
 
 ```{r}
 library(HSAUR3)
