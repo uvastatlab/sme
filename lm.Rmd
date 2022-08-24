@@ -227,6 +227,166 @@ Summary of data.
 summary(bp.obese)
 ```
 
+### Linear model with time ordered data
 
+The heating equipment data set from _Applied Linear Statistical Models (5th Ed)_ [@alsm] contains data on heating equipment orders over a span of four years. The data are listed in time order. Develop a reasonable predictor model for `orders`. Determine whether or not autocorrelation is present. If so, revise model as needed.
+
+```{r}
+heating <- readRDS("data/heating.rds")
+names(heating)
+```
+
+The variables are as follows:
+
+1. `orders`: number orders during month
+2. `int_rate`: prime interest rate in effect during month
+3. `new_homes`: number of new homes built and for sale during month
+4. `discount`: percent discount offered to distributors during month
+5. `inventories`: distributor inventories during month
+6. `sell_through`: number of units sold by distributor to contractors in previous month
+7. `temp_dev`: difference in avg temperature for month and 30-year avg for that month
+8. `year`: year (1999, 2000, 2001, 2002)
+9. `month`: month (1 - 12)
+
+First we look at the distribution of orders.
+
+```{r}
+hist(heating$orders)
+```
+
+We had negative orders one month and zero orders a couple of months
+
+```{r}
+summary(heating$orders)
+head(sort(heating$orders))
+```
+
+Let's review summaries of potential predictors. Discounts are almost always 0.
+
+```{r}
+summary(heating[,2:7])
+```
+
+Tabling up discounts shows there were only 5 occasions when a discount was not 0.
+
+```{r}
+table(heating$discount)
+```
+
+
+Pairwise scatterplots again reveal that discount is mostly 0. But when greater than 0, it appears to be associated with higher orders. 
+
+```{r}
+pairs(heating[,1:7], lower.panel = NULL)
+```
+
+Since the data is in time order, we can plot `orders` against its index to investigate any trends in time. There appears to be an upward trend in the first 9 months. After that orders seem rather sporadic.
+
+```{r}
+plot(heating$orders, type = "b")
+```
+
+With only 43 observations and little knowledge of this industry, we decide to pursue a simple model with no interactions or non-linear effects. To help us decide which predictors to use, will use a bootstrap procedure to investigate the variability of model selection under the `stepAIC()` function from the MASS package [@MASS], which performs stepwise model selection by AIC. The `bootStepAIC()` function from the package of the same name allows us to easily implement this procedure. [@bootStepAIC]
+
+First we fit a "full" model with all predictors we would like to entertain, with the exception of year and month.
+
+```{r}
+m <- lm(orders ~ . - year - month, data = heating)
+```
+
+Then we bootstrap the `stepAIC()` function 999 times and investigate which variables appear to be selected most often.
+
+```{r eval=FALSE}
+library(bootStepAIC)
+b.out <- boot.stepAIC(m, heating, B = 999)
+```
+
+```{r echo=FALSE}
+b.out <- readRDS(file = "data/bout.rds")
+```
+
+The Covariates element of the BootStep object shows three predictors being selected most often: `sell_through`, `discount`, and `inventories`
+
+```{r}
+b.out$Covariates
+```
+
+The Sign element of the BootStep object shows that `sell_through` had a positive coefficient 100% of the time, while `discount` had a positive coefficient about 99.9% of the time. The sign of the coefficient for `inventories` was negative about 99.5% of the time.
+
+```{r}
+b.out$Sign
+```
+
+Let's proceed with these three predictors in a simple additive model. 
+
+```{r}
+m <- lm(orders ~ discount + inventories + sell_through, data = heating)
+summary(m)
+```
+
+Before we get too invested in the model output, we investigate the residuals for autocorrelation since our data is in time order. One (subjective) way to do that is to plot residuals over time. Since our data is already in time order, we can just plot residuals versus its index. We're looking to see if residuals are consistently above or below 0 for extended times. It appears we may have some instances of this phenomenon but nothing too severe.
+
+```{r}
+plot(residuals(m), type = "b")
+segments(x0 = 0, y0 = 0, x1 = 43, y1 = 0, lty = 2)
+```
+
+A test for autocorrelation is the Durbin-Watson Test. The car package [@car] provides a function for this test. The null hypothesis is the autocorrelation parameter, $\rho$, is 0. Rejecting this test with a small p-value may provide evidence of serious autocorrelation. The test result below fails to provide good evidence against the null. 
+
+```{r}
+library(car)
+durbinWatsonTest(m)
+```
+
+Based on our residual versus time plot and the result of the Durbin-Watson test, we decide to assume our residual errors are independent. 
+
+Our Residuals versus Fitted plot shows a couple of observations (22 and 18) that the model massively under-predicts. Observation 18, for example, has a fitted value of over 4000, but its residual is about 1000, indicating the model under-predicted its order value by about 1000 units.
+
+```{r}
+plot(m, which = 1)
+```
+
+The Residuals versus Leverage plot indicates that observation 18 may be exerting a strong influence on the model.
+
+```{r}
+plot(m, which = 5)
+```
+
+The "18" label allows us to easily investigate this observation. It appears this is one of the rare times there was a discount. And at 5%, this is the largest observed discount.
+
+```{r}
+heating[18, c("orders", "discount", "inventories", "sell_through")]
+```
+
+We can assess how our model changes by re-fitting without observation 18.
+
+```{r}
+m2 <- update(m, subset = -18)
+```
+
+The `compareCoefs()` function from the car package makes it easy to compare model coefficients side-by-side. It doesn't appear to change the substance of the results and we elect to keep the observation moving forward.
+
+```{r}
+compareCoefs(m, m2)
+```
+
+Computing confidence intervals on the coefficients can help with interpretation. It appears every additional one percentage point discount could boost orders by about 500 units, perhaps as much as 750 or higher. Of course with only 5 instances of discounts being used, this is far from a sure thing, especially for forecasting future orders. 
+
+The `inventories` coefficient is very small. One reason for that is because it's on the scale of single units. Multiplying by 100 yields a CI of [-21, -1]. This suggests every additional 100 units in stock may slightly decrease orders. Same with the `sell_through` coefficient. If we multiple by 100 we get a CI of [29, 119]. Every 100 number units sold the previous month suggests an increase of a few dozen orders.
+
+```{r}
+confint(m)
+```
+
+We can use our model to make a prediction. What's the expected mean number of orders with `inventories` at 2500 and `sell_through` at 900, assuming a 1% discount?
+
+```{r}
+predict(m, newdata = data.frame(inventories = 2500,
+                                sell_through = 900,
+                                discount = 1), 
+        interval = "confidence")
+```
+
+Based on the confidence interval, a conservative estimate would be about 1300 orders.
 
 ### References
