@@ -48,14 +48,12 @@ confint(m)
 #m$coefficients # prints out the intercept value aka the mean here 
 ```
 
-Does the sample appear to be from a Normal distribution?
+Does the sample appear to be from a Normal distribution? If so, the points in a QQ Plot should lie close to the diagonal line. See [this article](https://data.library.virginia.edu/understanding-q-q-plots/) for information on QQ Plots. This plot looks ok.
 
 ```{r}
 qqnorm(speed)
 qqline(speed)
 ```
-
-The model does not appear to be from a normal distribution. Perhaps my interpretation of the QQ plot is not quite right ? Also, is it also appropriate to use a qq plot to asses normality ?
 
 Using the model output:
 
@@ -71,6 +69,23 @@ speed[c(1, 3, 21)]
 
 There was a fast reader and a couple of slower readers.
 
+If a Normal QQ Plot if your data looks suspect, try comparing it to other Normal QQ plots created with Normal data. Below we calculate the mean and standard deviation of our data, re-draw the original QQ Plot, and then generate 24 additional QQ plots from a Normal distribution with the same mean and standard deviation as our data. The QQ Plot of our observed data doesn't seem too difference from the QQ Plots of Normal data.
+
+```{r}
+m <- mean(speed)
+s <- sd(speed)
+
+op <- par(mar = c(2,2,1,1), mfrow = c(5,5))
+qqnorm(speed, xlab = "", ylab = "", main = "")
+qqline(speed)
+for(i in 1:24){
+  d <- rnorm(20, mean = m, sd = s)
+  qqnorm(d, xlab = "", ylab = "", main = "")
+  qqline(d)
+}
+par(op)
+```
+
 
 ### Linear model with categorical predictors
 
@@ -82,73 +97,8 @@ library(HSAUR3)
 data("schooldays")
 ```
 
-<<<<<<< HEAD
-Here, I build the model then output just the coefficients then just the confidence intervals for each coefficient. 
+First we summarize and explore the data.
 
-```{r}
-#lm(absent ~ race + gender + school + learner, schooldays)
-
-m2 <- lm(absent ~ race + gender + school + learner, schooldays)
-m2
-m2$coefficients
-confint(m2)
-```
-
-Next, I plot the residuals against fitted values by setting the `which` attribute of plot to 1. 
-
-```{r}
-plot(m2, which = 1)
-```
-
-A good model would have residuals centered around 0 (I think). The residuals here seem to be centered around 0, indicating this is a good model. 
-
-Also, from my googling I found that the red line is a LOWESS (locally weighted scatterplot smoothing). It is bent which may indicate some deviation from linearity (if the LOWESS line is flat that is an indication that linear model is good for this data). Does this bend mean that linear model is not the best choice here? Or is it not bent enough to indicate a need for a different model? 
-
-I think the line is relatively flat, so for this model I would say that the linear model is a good choice for this data. 
-
-The residuals above 0 span a larger range than the residuals below 0. I'm not totally sure what this means for the model. 
-
-
-Now I look at the qq plot using `which` = 2. 
-
-```{r}
-plot(m2, which = 2)
-```
-
-Q-Q plot indicates whether or not the data is normally distributed. If it does follow a normal distribution, the data points will fall on the 45 degree line (the dashed line in the above plot). Here, we see that the data points outputted by the model do not fall on the 45 degree line so it does not follow a normal distribution. 
-
-
-Now I look at the Scale Location plot by setting `which` = 3.
-
-```{r}
-plot(m2, which = 3)
-```
-
-The Scale-Location plot helps us determine homoskedasticity -- the variance of the residuals is constant or in other words if the spread of residuals is equal at all fitted values. If the red line on this plot is horizontal and the points are randomly distributed above and below the line, then the residuals are spread out equally at all fitted values. Here, the line slopes slightly upward, but is mostly horizontal. Also, the data points do appear to be uniformly/randomly spread above and below the line for all fitted values. So I think homoskedasticity holds for this model.  
-
-Next, we look at the Cook's Distance plot using `which` = 4. 
-
-```{r}
-plot(m2, which = 4)
-```
-
-Here, we see that observations 61, 77, and 111 are influential data points (I think outliers??). Let's look at these points: 
-
-```{r}
-schooldays$absent[61]
-schooldays$absent[77]
-schooldays$absent[111]
-```
-
-
-And finally, we look at the Residuals vs Leverage plot using `which` = 5. 
-
-```{r}
-plot(m2, which = 5)
-```
-
-This plot helps us identify 
-=======
 ```{r}
 # plots to look at data
 library(ggplot2)
@@ -156,14 +106,6 @@ library(dplyr)
 
 # histogram of absences
 hist(schooldays$absent)
-
-# bar plot of absences by gender
-schooldays_by_gender = schooldays %>% 
-  group_by(gender) %>% 
-  summarise(absent = sum(absent))
-
-ggplot(aes(x=gender, y=absent), data = schooldays_by_gender) +
-geom_bar(stat = "identity")
 
 # base r strip chart of absences by gender
 stripchart(absent ~ gender, data = schooldays,
@@ -175,77 +117,95 @@ ggplot(schooldays, aes(x = gender, y = absent, color=learner)) +
   geom_jitter(position = position_jitter(0.2))
 ```
 
+Next we model `absent` as a function of all other predictors.
+
+
 ```{r}
 m <- lm(absent ~ race + gender + school + learner, schooldays)
 summary(m)
 ```
-Residuals.
-median should center around 0. it doesn't really.
-min/max and q1 and q3 should have roughly the same absolute value. they do not. residuals seem to show skew towards overprediction
 
-Coefficients
-std err -- std error of the coefficient. what exactly does this mean? std error in the estimation
-interpretation example: according to the model, being non-aboriginal contributes negatively to school absence.
 
-which hypothesis test is being done here ?
-so the hypothesis test is based only on the difference from 0 ? wouldn't some coefficients just naturally be closer to 0 than others ? i assume the test accounts for this ? how ? by dividing by the std error ? but even that would not account for measurements of a certain variable just naturally being close to 0.
-how do you assess the usefulness of a variable without the p-value ? bc a coefficient's magnitude is related to the magnitude of the measurements, right ? i def see the appeal of normalizing coefficients now but i know you are not "suppossed" to do that.
+In the first section we would like to see Residuals centered around 0, with the min/max and 1Q/3Q having roughly the same absolute value. This indicates a uniform scatter of residuals, which is what a linear model assumes. 
 
-Residual standard error
-How is degrees of freedom calculated? n - num predictors ? i think it is something close to that ...
-i assume residual standard error should be close to 0 ? closer to 0 means less spread ? why is residual std error a good measure of the model? it does not seem that useful to me. bc it does not say anything about direction, does it ?
+- Positive residuals occur when observed response values are _greater than_ predicted response values. 
+- Negative residuals occur when observed response values are _less than_ predicted response values. 
 
-r-squareds ? 
-how relevant are these actually ? -- read that article
+Residuals do not seem uniformly scatter based on these summary statistics.
 
-f-statistic: statistic for hypothesis test all coefficients (=0)
+The Coefficients section shows the fitted model in the Estimate column. A mathematical expression of the model is as follows:
+
+$$\text{absent} = 17.03 + -7.83\text{ non-aboriginal} + 2.64\text{ male} + -1.78\text{ F1} + 5.35\text{ F2} + 3.29\text{ F3} + 0.74\text{ slow learner}$$
+
+For example, we might use our model to predict expected number of days absent for non-aboriginal females in an F1 school who are average learners. 
+
+$$\text{absent} = 17.03 + -7.83(1) + 2.64(0) + -1.78(1) + 5.35(0) + 3.28(0) + 0.74(0)$$
+
+Notice we plug in 1 if our subject belongs to the category and 0 otherwise. We can carry out this prediction using the `predict()` function. The input values need to be entered in a data frame using the same variable names and category levels as our analysis data set.
+
+```{r}
+predict(m, newdata = data.frame(race = "non-aboriginal",
+                                gender = "female",
+                                school = "F1",
+                                learner = "average"))
+```
+
+Our model predicts about 7 days absence. Adding `interval = "confidence"` to `predict()` reports a 95% confidence interval on this prediction.
+
+```{r}
+predict(m, newdata = data.frame(race = "non-aboriginal",
+                                gender = "female",
+                                school = "F1",
+                                learner = "average"),
+        interval = "confidence")
+```
+
+The estimate is rather wide, ranging from 1 day to 14 days.
+
+The "Std. Error" column in the summary output quantifies uncertainty in the estimated coefficients. The "t value" column is the ratio of the estimated coefficient to the standard error. Ratios larger than 2 or 3 in absolute value give us confidence in the direction of the coefficient. Other than the intercept, the only coefficient that we're confident about is the race coefficient. It appears `non-aboriginal` students have a lower rate of absence by about 7 days. 
+
+The "Pr(>|t|)" column reports p-values for hypothesis tests for each t value. The null hypothesis is the t value is 0. The reported p-value is the probability of seeing a t value that large or larger in magnitude if the null is true. In all seven hypothesis tests are reported. Two appear to be "significant" in the sense their p-values fall below traditional thresholds.
+
+The "Residual standard error" is the expected amount a predicted response value will differ from its observed value. The reported value of 15.32 tells us the model's predicted value for days absent will be off by about 15 days. 
+
+The Multiple and Adjusted R-squareds are 0.10 and 0.07. This summarizes the proportion of variability explained by the model. Of the variability in days absent, it looks like this model explains about 7% of the variance. The Adjusted R-squared is adjusted for the number of predictors and is the preferred statistic of the two. (Multiple R-squared always increases when variables are added to a model, even variables unrelated to the response.)
+
+The F-statistic tests the null hypothesis that all coefficients (other than the intercept) are 0. Small p-values provide evidence against this hypothesis.
+
+R provides some built-in diagnostic plots. A good one to inspect is the Residuals vs Fitted plot. 
 
 ```{r}
 plot(m, which = 1)
 ```
 
-https://data.library.virginia.edu/diagnostic-plots/
+Residuals above 0 are instances where the observed values are larger than the predicted values. It seems our model is under-predicting absences to a greater degree than over-predicting absences. The labeled points of 77, 111, and 61 are the rows of the data set with the largest residuals. These data points may be worth investigating. For example, point 111 is a child that we predict would be absent about 15 days (on the x-axis), but the residual of about 50 (on the y-axis) tells us this student was absent about 65 days. 
 
-Residual vs Fitted: "This plot shows if residuals have non-linear patterns."
-I think residuals are supposed to center around 0 for a "good" model. If residuals center around horizontal line, then the good indication of no non-linear relationships.
-If spread around horizontal line which is non-zero, then "bad" model with no non-linear relationships?
-
-For this in particular, values seems generally centered around mostly horizontal line @ 0. Good amount of spread above 0 -- overpredicting. Does this mean the model is not so good? Perhaps need to look at other things
+A QQ Plot can help us assess the Normality assumption of the residuals. 
 
 ```{r}
 plot(m, which = 2)
 ```
 
-Normal Q-Q: shows if residuals are normally distributed
+We would like the points to fall along the diagonal line. This plot doesn't look great. Since our model doesn't seem to be very good based on the previous plot, it's probably not worth worrying too much about the QQ Plot. 
 
-These residuals should fall along the straight line if residuals are normally distributed. why is this important ? indication of equal variance ?
-
-Is normally distributed residuals a requirement for linear regression? i may be thinking of equal variance
-
-These residuals deviate quite a but from the straight line, so I would say the residuals are not normally distributed. I am not sure if this particular shape has implications or if we can conclude anything from it?
+Another version of the Residuals vs Fitted plot is the Scale-Location plot. 
 
 ```{r}
 plot(m, which = 3)
 ```
 
-Scale-Location/Spread-Location: "This plot shows if residuals are spread equally along the ranges of predictors" -- check assumption of equal variance
+In this plot the residuals are standardized and strictly positive. We would like the smooth red line to trend straight. The fact it's trending up provides some evidence that our residuals are getting larger as our fitted values get larger. This could mean a violation of the constant variance assumption.
 
-equal variance between what?
-
-residuals should center around the same value (horizontal line). if not horizontal, then residuals change as predictors change. residuals should not be dependent on predictors.
-
-this plot seems ok to me. residuals do not seem to change with predictors.
-
-if residuals do change with predictors, would this be a reason to use a mixed-effect model ?
+One final plot to inspect is the Residuals vs Leverage plot. This can help us see if any data points are influencing the model. 
 
 ```{r}
 plot(m, which = 5)
 ```
 
-Residuals vs leverage: helps to find influential cases. "look for cases outside of a dashed line"
+The x-axis is Leverage, also called hat-values. Higher values of leverage mean a higher potential to influence a model. The y-axis shows standardized residuals. Also plotted is Cook's distance contour lines if any points exceed a particular threshold. Like leverage, Cook's distance also quantifies the influence of a data point. In this plot it doesn't appear any points are unduly influencing the model. 
 
-there do not seem to be any particularly influential cases in this model
->>>>>>> 32e7ad35c8d6691690ec3b99e65d04935e7a233e
+Conclusion: it looks like the number of days absent cannot be properly modeled or understood with these categorical predictors. 
+
 
 ### Linear model with categorical and numeric predictors
 
@@ -271,5 +231,169 @@ m3
 m3$coefficients
 confint(m3)
 ```
+
+
+
+### Linear model with time ordered data
+
+The heating equipment data set from _Applied Linear Statistical Models (5th Ed)_ [@alsm] contains data on heating equipment orders over a span of four years. The data are listed in time order. Develop a reasonable predictor model for `orders`. Determine whether or not autocorrelation is present. If so, revise model as needed.
+
+```{r}
+heating <- readRDS("data/heating.rds")
+names(heating)
+```
+
+The variables are as follows:
+
+1. `orders`: number orders during month
+2. `int_rate`: prime interest rate in effect during month
+3. `new_homes`: number of new homes built and for sale during month
+4. `discount`: percent discount offered to distributors during month
+5. `inventories`: distributor inventories during month
+6. `sell_through`: number of units sold by distributor to contractors in previous month
+7. `temp_dev`: difference in avg temperature for month and 30-year avg for that month
+8. `year`: year (1999, 2000, 2001, 2002)
+9. `month`: month (1 - 12)
+
+First we look at the distribution of orders.
+
+```{r}
+hist(heating$orders)
+```
+
+We had negative orders one month and zero orders a couple of months
+
+```{r}
+summary(heating$orders)
+head(sort(heating$orders))
+```
+
+Let's review summaries of potential predictors. Discounts are almost always 0.
+
+```{r}
+summary(heating[,2:7])
+```
+
+Tabling up discounts shows there were only 5 occasions when a discount was not 0.
+
+```{r}
+table(heating$discount)
+```
+
+
+Pairwise scatterplots again reveal that discount is mostly 0. But when greater than 0, it appears to be associated with higher orders. 
+
+```{r}
+pairs(heating[,1:7], lower.panel = NULL)
+```
+
+Since the data is in time order, we can plot `orders` against its index to investigate any trends in time. There appears to be an upward trend in the first 9 months. After that orders seem rather sporadic.
+
+```{r}
+plot(heating$orders, type = "b")
+```
+
+With only 43 observations and little knowledge of this industry, we decide to pursue a simple model with no interactions or non-linear effects. To help us decide which predictors to use, will use a bootstrap procedure to investigate the variability of model selection under the `stepAIC()` function from the MASS package [@MASS], which performs stepwise model selection by AIC. The `bootStepAIC()` function from the package of the same name allows us to easily implement this procedure. [@bootStepAIC]
+
+First we fit a "full" model with all predictors we would like to entertain, with the exception of year and month.
+
+```{r}
+m <- lm(orders ~ . - year - month, data = heating)
+```
+
+Then we bootstrap the `stepAIC()` function 999 times and investigate which variables appear to be selected most often.
+
+```{r eval=FALSE}
+library(bootStepAIC)
+b.out <- boot.stepAIC(m, heating, B = 999)
+```
+
+```{r echo=FALSE}
+b.out <- readRDS(file = "data/bout.rds")
+```
+
+The Covariates element of the BootStep object shows three predictors being selected most often: `sell_through`, `discount`, and `inventories`
+
+```{r}
+b.out$Covariates
+```
+
+The Sign element of the BootStep object shows that `sell_through` had a positive coefficient 100% of the time, while `discount` had a positive coefficient about 99.9% of the time. The sign of the coefficient for `inventories` was negative about 99.5% of the time.
+
+```{r}
+b.out$Sign
+```
+
+Let's proceed with these three predictors in a simple additive model. 
+
+```{r}
+m <- lm(orders ~ discount + inventories + sell_through, data = heating)
+summary(m)
+```
+
+Before we get too invested in the model output, we investigate the residuals for autocorrelation since our data is in time order. One (subjective) way to do that is to plot residuals over time. Since our data is already in time order, we can just plot residuals versus its index. We're looking to see if residuals are consistently above or below 0 for extended times. It appears we may have some instances of this phenomenon but nothing too severe.
+
+```{r}
+plot(residuals(m), type = "b")
+segments(x0 = 0, y0 = 0, x1 = 43, y1 = 0, lty = 2)
+```
+
+A test for autocorrelation is the Durbin-Watson Test. The car package [@car] provides a function for this test. The null hypothesis is the autocorrelation parameter, $\rho$, is 0. Rejecting this test with a small p-value may provide evidence of serious autocorrelation. The test result below fails to provide good evidence against the null. 
+
+```{r}
+library(car)
+durbinWatsonTest(m)
+```
+
+Based on our residual versus time plot and the result of the Durbin-Watson test, we decide to assume our residual errors are independent. 
+
+Our Residuals versus Fitted plot shows a couple of observations (22 and 18) that the model massively under-predicts. Observation 18, for example, has a fitted value of over 4000, but its residual is about 1000, indicating the model under-predicted its order value by about 1000 units.
+
+```{r}
+plot(m, which = 1)
+```
+
+The Residuals versus Leverage plot indicates that observation 18 may be exerting a strong influence on the model.
+
+```{r}
+plot(m, which = 5)
+```
+
+The "18" label allows us to easily investigate this observation. It appears this is one of the rare times there was a discount. And at 5%, this is the largest observed discount.
+
+```{r}
+heating[18, c("orders", "discount", "inventories", "sell_through")]
+```
+
+We can assess how our model changes by re-fitting without observation 18.
+
+```{r}
+m2 <- update(m, subset = -18)
+```
+
+The `compareCoefs()` function from the car package makes it easy to compare model coefficients side-by-side. It doesn't appear to change the substance of the results and we elect to keep the observation moving forward.
+
+```{r}
+compareCoefs(m, m2)
+```
+
+Computing confidence intervals on the coefficients can help with interpretation. It appears every additional one percentage point discount could boost orders by about 500 units, perhaps as much as 750 or higher. Of course with only 5 instances of discounts being used, this is far from a sure thing, especially for forecasting future orders. 
+
+The `inventories` coefficient is very small. One reason for that is because it's on the scale of single units. Multiplying by 100 yields a CI of [-21, -1]. This suggests every additional 100 units in stock may slightly decrease orders. Same with the `sell_through` coefficient. If we multiple by 100 we get a CI of [29, 119]. Every 100 number units sold the previous month suggests an increase of a few dozen orders.
+
+```{r}
+confint(m)
+```
+
+We can use our model to make a prediction. What's the expected mean number of orders with `inventories` at 2500 and `sell_through` at 900, assuming a 1% discount?
+
+```{r}
+predict(m, newdata = data.frame(inventories = 2500,
+                                sell_through = 900,
+                                discount = 1), 
+        interval = "confidence")
+```
+
+Based on the confidence interval, a conservative estimate would be about 1300 orders.
 
 ### References

@@ -3,5 +3,22 @@ title: "About"
 
 ---
 
-In the summer of 2022 we are posting weekly examples of statistical linear modeling in R. 
+This site contains worked examples of statistical modeling in R. It is a product of the [UVA Library StatLab](https://data.library.virginia.edu/statlab/) and a work in progress. 
 
+All examples use freely available data and come from texts which are cited. 
+
+### Statistical modeling
+
+Statistical modeling can be boiled down to three steps:
+
+1. Propose a model
+2. Assess if the model is "good"
+3. If the model is good, use it to quantify associations and/or calculate expected values or predictions
+
+The examples in this site follow these steps. 
+
+### Disclaimer
+
+The first step above -- proposing a model -- requires as much subject matter expertise as it does statistical knowledge. The models we propose are often suggested by the text from which the example came. If not, we stick to proposing models that err on the side of simplicity. 
+
+We do not endorse [data dredging](https://en.wikipedia.org/wiki/Data_dredging): repeatedly trying out models until landing on a good one and then presenting that model as if that was the first model proposed. If you must entertain multiple models, then report results for all models.
