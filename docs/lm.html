@@ -743,6 +743,16 @@ an upward trend in the first 9 months. After that orders seem rather
 sporadic.</p>
 <pre class="r"><code>plot(heating$orders, type = &quot;b&quot;)</code></pre>
 <p><img src="lm_files/figure-html/unnamed-chunk-29-1.png" width="672" /></p>
+<p>The <code>acf()</code> function allows us to formally check for
+autocorrelation (ie, self-correlation). At lag 0, we see
+<code>orders</code> is perfectly correlated with itself. That will
+always be the case for any variable. Of interest is autocorrelation at
+lag 1 and beyond. The area between the horizontal dashed lines is where
+we would expect to see random autocorrelation values hover for pure
+noise (ie, data with no autocorrelation). Other than at lag 5, we so no
+evidence for autocorrelation. And even there it appears rather weak.</p>
+<pre class="r"><code>acf(heating$orders)</code></pre>
+<p><img src="lm_files/figure-html/unnamed-chunk-30-1.png" width="672" /></p>
 <p>With only 43 observations and little knowledge of this industry, we
 decide to pursue a simple model with no interactions or non-linear
 effects. To help us decide which predictors to use, will use a bootstrap
@@ -817,7 +827,7 @@ index. We’re looking to see if residuals are consistently above or below
 phenomenon but nothing too severe.</p>
 <pre class="r"><code>plot(residuals(m), type = &quot;b&quot;)
 segments(x0 = 0, y0 = 0, x1 = 43, y1 = 0, lty = 2)</code></pre>
-<p><img src="lm_files/figure-html/unnamed-chunk-36-1.png" width="672" /></p>
+<p><img src="lm_files/figure-html/unnamed-chunk-37-1.png" width="672" /></p>
 <p>A test for autocorrelation is the Durbin-Watson Test. The car package
 <span class="citation">(Fox and Weisberg 2019)</span> provides a
 function for this test. The null hypothesis is the autocorrelation
@@ -828,7 +838,7 @@ against the null.</p>
 <pre class="r"><code>library(car)
 durbinWatsonTest(m)</code></pre>
 <pre><code>##  lag Autocorrelation D-W Statistic p-value
-##    1     -0.05006007      2.079992   0.888
+##    1     -0.05006007      2.079992   0.926
 ##  Alternative hypothesis: rho != 0</code></pre>
 <p>Based on our residual versus time plot and the result of the
 Durbin-Watson test, we decide to assume our residual errors are
@@ -839,11 +849,11 @@ example, has a fitted value of over 4000, but its residual is about
 1000, indicating the model under-predicted its order value by about 1000
 units.</p>
 <pre class="r"><code>plot(m, which = 1)</code></pre>
-<p><img src="lm_files/figure-html/unnamed-chunk-38-1.png" width="672" /></p>
+<p><img src="lm_files/figure-html/unnamed-chunk-39-1.png" width="672" /></p>
 <p>The Residuals versus Leverage plot indicates that observation 18 may
 be exerting a strong influence on the model.</p>
 <pre class="r"><code>plot(m, which = 5)</code></pre>
-<p><img src="lm_files/figure-html/unnamed-chunk-39-1.png" width="672" /></p>
+<p><img src="lm_files/figure-html/unnamed-chunk-40-1.png" width="672" /></p>
 <p>The “18” label allows us to easily investigate this observation. It
 appears this is one of the rare times there was a discount. And at 5%,
 this is the largest observed discount.</p>

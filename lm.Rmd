@@ -293,6 +293,12 @@ Since the data is in time order, we can plot `orders` against its index to inves
 plot(heating$orders, type = "b")
 ```
 
+The `acf()` function allows us to formally check for autocorrelation (ie,  self-correlation). At lag 0, we see `orders` is perfectly correlated with itself. That will always be the case for any variable. Of interest is autocorrelation at lag 1 and beyond. The area between the horizontal dashed lines is where we would expect to see random autocorrelation values hover for pure noise (ie, data with no autocorrelation). Other than at lag 5, we so no evidence for autocorrelation. And even there it appears rather weak.
+
+```{r}
+acf(heating$orders)
+```
+
 With only 43 observations and little knowledge of this industry, we decide to pursue a simple model with no interactions or non-linear effects. To help us decide which predictors to use, will use a bootstrap procedure to investigate the variability of model selection under the `stepAIC()` function from the MASS package [@MASS], which performs stepwise model selection by AIC. The `bootStepAIC()` function from the package of the same name allows us to easily implement this procedure. [@bootStepAIC]
 
 First we fit a "full" model with all predictors we would like to entertain, with the exception of year and month.
