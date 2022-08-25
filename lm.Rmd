@@ -45,6 +45,7 @@ This can also be found using an intercept-only linear model:
 ```{r}
 m <- lm(speed ~ 1)
 confint(m)
+#m$coefficients # prints out the intercept value aka the mean here 
 ```
 
 Does the sample appear to be from a Normal distribution? If so, the points in a QQ Plot should lie close to the diagonal line. See [this article](https://data.library.virginia.edu/understanding-q-q-plots/) for information on QQ Plots. This plot looks ok.
@@ -53,7 +54,6 @@ Does the sample appear to be from a Normal distribution? If so, the points in a 
 qqnorm(speed)
 qqline(speed)
 ```
-
 
 Using the model output:
 
@@ -107,14 +107,6 @@ library(dplyr)
 # histogram of absences
 hist(schooldays$absent)
 
-# bar plot of absences by gender
-schooldays_by_gender = schooldays %>% 
-  group_by(gender) %>% 
-  summarise(absent = sum(absent))
-
-ggplot(aes(x=gender, y=absent), data = schooldays_by_gender) +
-geom_bar(stat = "identity")
-
 # base r strip chart of absences by gender
 stripchart(absent ~ gender, data = schooldays,
            ylab = 'number of absences', xlab = 'gender', 
@@ -127,10 +119,12 @@ ggplot(schooldays, aes(x = gender, y = absent, color=learner)) +
 
 Next we model `absent` as a function of all other predictors.
 
+
 ```{r}
 m <- lm(absent ~ race + gender + school + learner, schooldays)
 summary(m)
 ```
+
 
 In the first section we would like to see Residuals centered around 0, with the min/max and 1Q/3Q having roughly the same absolute value. This indicates a uniform scatter of residuals, which is what a linear model assumes. 
 
@@ -212,6 +206,7 @@ The x-axis is Leverage, also called hat-values. Higher values of leverage mean a
 
 Conclusion: it looks like the number of days absent cannot be properly modeled or understood with these categorical predictors. 
 
+
 ### Linear model with categorical and numeric predictors
 
 The `bp.obese` data frame from the ISwR package has 102 rows and 3 columns. It contains data from a random sample of Mexican-American adults in a small California town. Analyze blood pressure (`bp`) as a function of obesity (`obese`) and gender (`sex`). Here `obese` is a ratio of actual weight to ideal weight from New York Metropolitan Life Tables. [@ISwR] 
@@ -226,6 +221,18 @@ Summary of data.
 ```{r}
 summary(bp.obese)
 ```
+
+```{r}
+m3 <- lm(bp ~ obese + sex, bp.obese)
+m3
+```
+
+```{r}
+m3$coefficients
+confint(m3)
+```
+
+
 
 ### Linear model with time ordered data
 

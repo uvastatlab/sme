@@ -426,6 +426,7 @@ tout$conf.int</code></pre>
 confint(m)</code></pre>
 <pre><code>##                2.5 %   97.5 %
 ## (Intercept) 8.045653 11.19244</code></pre>
+<pre class="r"><code>#m$coefficients # prints out the intercept value aka the mean here </code></pre>
 <p>Does the sample appear to be from a Normal distribution? If so, the
 points in a QQ Plot should lie close to the diagonal line. See <a
 href="https://data.library.virginia.edu/understanding-q-q-plots/">this
@@ -481,23 +482,15 @@ library(dplyr)
 # histogram of absences
 hist(schooldays$absent)</code></pre>
 <p><img src="lm_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
-<pre class="r"><code># bar plot of absences by gender
-schooldays_by_gender = schooldays %&gt;% 
-  group_by(gender) %&gt;% 
-  summarise(absent = sum(absent))
-
-ggplot(aes(x=gender, y=absent), data = schooldays_by_gender) +
-geom_bar(stat = &quot;identity&quot;)</code></pre>
-<p><img src="lm_files/figure-html/unnamed-chunk-11-2.png" width="672" /></p>
 <pre class="r"><code># base r strip chart of absences by gender
 stripchart(absent ~ gender, data = schooldays,
            ylab = &#39;number of absences&#39;, xlab = &#39;gender&#39;, 
            main = &#39;Stripchart of Absences by gender&#39;)</code></pre>
-<p><img src="lm_files/figure-html/unnamed-chunk-11-3.png" width="672" /></p>
+<p><img src="lm_files/figure-html/unnamed-chunk-11-2.png" width="672" /></p>
 <pre class="r"><code># ggplot strip chart of absences by gender
 ggplot(schooldays, aes(x = gender, y = absent, color=learner)) +
   geom_jitter(position = position_jitter(0.2))</code></pre>
-<p><img src="lm_files/figure-html/unnamed-chunk-11-4.png" width="672" /></p>
+<p><img src="lm_files/figure-html/unnamed-chunk-11-3.png" width="672" /></p>
 <p>Next we model <code>absent</code> as a function of all other
 predictors.</p>
 <pre class="r"><code>m &lt;- lm(absent ~ race + gender + school + learner, schooldays)
@@ -660,6 +653,23 @@ data(&quot;bp.obese&quot;)</code></pre>
 ##  Mean   :0.5686   Mean   :1.313   Mean   :127.0  
 ##  3rd Qu.:1.0000   3rd Qu.:1.430   3rd Qu.:137.5  
 ##  Max.   :1.0000   Max.   :2.390   Max.   :208.0</code></pre>
+<pre class="r"><code>m3 &lt;- lm(bp ~ obese + sex, bp.obese)
+m3</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = bp ~ obese + sex, data = bp.obese)
+## 
+## Coefficients:
+## (Intercept)        obese          sex  
+##       93.29        29.04        -7.73</code></pre>
+<pre class="r"><code>m3$coefficients</code></pre>
+<pre><code>## (Intercept)       obese         sex 
+##   93.286875   29.038216   -7.730165</code></pre>
+<pre class="r"><code>confint(m3)</code></pre>
+<pre><code>##                 2.5 %      97.5 %
+## (Intercept)  75.55321 111.0205442
+## obese        14.80766  43.2687683
+## sex         -15.10225  -0.3580819</code></pre>
 </div>
 <div id="linear-model-with-time-ordered-data" class="section level3">
 <h3>Linear model with time ordered data</h3>
@@ -692,7 +702,7 @@ contractors in previous month</li>
 </ol>
 <p>First we look at the distribution of orders.</p>
 <pre class="r"><code>hist(heating$orders)</code></pre>
-<p><img src="lm_files/figure-html/unnamed-chunk-22-1.png" width="672" /></p>
+<p><img src="lm_files/figure-html/unnamed-chunk-24-1.png" width="672" /></p>
 <p>We had negative orders one month and zero orders a couple of
 months</p>
 <pre class="r"><code>summary(heating$orders)</code></pre>
@@ -726,13 +736,13 @@ discount was not 0.</p>
 <p>Pairwise scatterplots again reveal that discount is mostly 0. But
 when greater than 0, it appears to be associated with higher orders.</p>
 <pre class="r"><code>pairs(heating[,1:7], lower.panel = NULL)</code></pre>
-<p><img src="lm_files/figure-html/unnamed-chunk-26-1.png" width="672" /></p>
+<p><img src="lm_files/figure-html/unnamed-chunk-28-1.png" width="672" /></p>
 <p>Since the data is in time order, we can plot <code>orders</code>
 against its index to investigate any trends in time. There appears to be
 an upward trend in the first 9 months. After that orders seem rather
 sporadic.</p>
 <pre class="r"><code>plot(heating$orders, type = &quot;b&quot;)</code></pre>
-<p><img src="lm_files/figure-html/unnamed-chunk-27-1.png" width="672" /></p>
+<p><img src="lm_files/figure-html/unnamed-chunk-29-1.png" width="672" /></p>
 <p>With only 43 observations and little knowledge of this industry, we
 decide to pursue a simple model with no interactions or non-linear
 effects. To help us decide which predictors to use, will use a bootstrap
@@ -807,7 +817,7 @@ index. We’re looking to see if residuals are consistently above or below
 phenomenon but nothing too severe.</p>
 <pre class="r"><code>plot(residuals(m), type = &quot;b&quot;)
 segments(x0 = 0, y0 = 0, x1 = 43, y1 = 0, lty = 2)</code></pre>
-<p><img src="lm_files/figure-html/unnamed-chunk-34-1.png" width="672" /></p>
+<p><img src="lm_files/figure-html/unnamed-chunk-36-1.png" width="672" /></p>
 <p>A test for autocorrelation is the Durbin-Watson Test. The car package
 <span class="citation">(Fox and Weisberg 2019)</span> provides a
 function for this test. The null hypothesis is the autocorrelation
@@ -818,7 +828,7 @@ against the null.</p>
 <pre class="r"><code>library(car)
 durbinWatsonTest(m)</code></pre>
 <pre><code>##  lag Autocorrelation D-W Statistic p-value
-##    1     -0.05006007      2.079992   0.908
+##    1     -0.05006007      2.079992   0.888
 ##  Alternative hypothesis: rho != 0</code></pre>
 <p>Based on our residual versus time plot and the result of the
 Durbin-Watson test, we decide to assume our residual errors are
@@ -829,11 +839,11 @@ example, has a fitted value of over 4000, but its residual is about
 1000, indicating the model under-predicted its order value by about 1000
 units.</p>
 <pre class="r"><code>plot(m, which = 1)</code></pre>
-<p><img src="lm_files/figure-html/unnamed-chunk-36-1.png" width="672" /></p>
+<p><img src="lm_files/figure-html/unnamed-chunk-38-1.png" width="672" /></p>
 <p>The Residuals versus Leverage plot indicates that observation 18 may
 be exerting a strong influence on the model.</p>
 <pre class="r"><code>plot(m, which = 5)</code></pre>
-<p><img src="lm_files/figure-html/unnamed-chunk-37-1.png" width="672" /></p>
+<p><img src="lm_files/figure-html/unnamed-chunk-39-1.png" width="672" /></p>
 <p>The “18” label allows us to easily investigate this observation. It
 appears this is one of the rare times there was a discount. And at 5%,
 this is the largest observed discount.</p>
