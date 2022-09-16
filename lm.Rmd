@@ -216,11 +216,35 @@ library(ISwR)
 data("bp.obese")
 ```
 
-Summary of data.
+First, we will look at summary statistics of the data.
 
 ```{r}
 summary(bp.obese)
 ```
+
+Next, we will visualize the distribution of blood pressure, totally and by sex.
+
+```{r}
+library(ggplot2)
+
+ggplot(bp.obese, aes(x = bp)) +
+  geom_histogram()
+
+ggplot(bp.obese, aes(x = bp, fill = as.factor(sex))) +
+  geom_histogram() +
+  labs(fill='sex') + 
+  scale_fill_manual(values = c('blue', 'red'),
+                    labels=c('men','women'))
+```
+
+Next, we will plot the relationship between the bp and obese variables.
+
+```{r}
+ggplot(bp.obese, aes(x = obese, y = bp)) +
+  geom_point()
+```
+
+Finally, we model bp as a function of obese and sex.
 
 ```{r}
 m3 <- lm(bp ~ obese + sex, bp.obese)
