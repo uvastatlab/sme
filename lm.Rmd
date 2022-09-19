@@ -244,7 +244,7 @@ ggplot(bp.obese, aes(x = obese, y = bp)) +
   geom_point()
 ```
 
-Finally, we model bp as a function of obese and sex.
+Finally, we model bp as a function of the variables obese and sex.
 
 ```{r}
 m3 <- lm(bp ~ obese + sex, bp.obese)
