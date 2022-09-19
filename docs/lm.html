@@ -13,7 +13,7 @@
 
 <title>Linear Modeling</title>
 
-<script src="site_libs/header-attrs-2.15/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.16/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
@@ -426,7 +426,6 @@ tout$conf.int</code></pre>
 confint(m)</code></pre>
 <pre><code>##                2.5 %   97.5 %
 ## (Intercept) 8.045653 11.19244</code></pre>
-<pre class="r"><code>#m$coefficients # prints out the intercept value aka the mean here </code></pre>
 <p>Does the sample appear to be from a Normal distribution? If so, the
 points in a QQ Plot should lie close to the diagonal line. See <a
 href="https://data.library.virginia.edu/understanding-q-q-plots/">this
@@ -446,7 +445,7 @@ other Normal QQ plots created with Normal data. Below we calculate the
 mean and standard deviation of our data, re-draw the original QQ Plot,
 and then generate 24 additional QQ plots from a Normal distribution with
 the same mean and standard deviation as our data. The QQ Plot of our
-observed data doesn’t seem too difference from the QQ Plots of Normal
+observed data doesn’t seem too different from the QQ Plots of Normal
 data.</p>
 <pre class="r"><code>m &lt;- mean(speed)
 s &lt;- sd(speed)
@@ -838,7 +837,7 @@ against the null.</p>
 <pre class="r"><code>library(car)
 durbinWatsonTest(m)</code></pre>
 <pre><code>##  lag Autocorrelation D-W Statistic p-value
-##    1     -0.05006007      2.079992   0.924
+##    1     -0.05006007      2.079992    0.91
 ##  Alternative hypothesis: rho != 0</code></pre>
 <p>Based on our residual versus time plot and the result of the
 Durbin-Watson test, we decide to assume our residual errors are
