@@ -445,49 +445,50 @@ data(&quot;malaria&quot;)</code></pre>
 ##  Mean   : 50.50   Mean   : 8.86   Mean   : 311.5   Mean   :0.27  
 ##  3rd Qu.: 75.25   3rd Qu.:12.00   3rd Qu.: 373.8   3rd Qu.:1.00  
 ##  Max.   :100.00   Max.   :15.00   Max.   :2066.0   Max.   :1.00</code></pre>
-<p>Split the data into training and testing data.</p>
-<pre class="r"><code>sf &lt;- nrow(malaria)*0.75
-train  &lt;- malaria[1:sf, ]
-test   &lt;- malaria[(sf+1):nrow(malaria), ]</code></pre>
 <p>Now let’s build our model. We will use the <code>glm()</code> function. <code>glm()</code> is used to fit a generalized linear model to the data. To specify logistic regression, in the argument we set the <code>family = binomial(link = "logit")</code>.</p>
-<pre class="r"><code>lrm &lt;- glm(mal ~ age + log(ab), family = binomial(link = &quot;logit&quot;), data = train)</code></pre>
+<pre class="r"><code>lrm &lt;- glm(mal ~ age + log(ab), family = binomial(link = &quot;logit&quot;), data = malaria)</code></pre>
 <p>Now we look at a summary of the model:</p>
 <pre class="r"><code>summary(lrm)</code></pre>
 <pre><code>## 
 ## Call:
 ## glm(formula = mal ~ age + log(ab), family = binomial(link = &quot;logit&quot;), 
-##     data = train)
+##     data = malaria)
 ## 
 ## Deviance Residuals: 
 ##     Min       1Q   Median       3Q      Max  
-## -1.8030  -0.6373  -0.4387  -0.2539   2.5547  
+## -1.8492  -0.7536  -0.4838   0.8809   2.5796  
 ## 
 ## Coefficients:
-##             Estimate Std. Error z value Pr(&gt;|z|)   
-## (Intercept)  1.71216    1.43537   1.193  0.23293   
-## age          0.02167    0.11295   0.192  0.84783   
-## log(ab)     -0.72282    0.22568  -3.203  0.00136 **
+##             Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)  2.57234    0.95184   2.702 0.006883 ** 
+## age         -0.06546    0.06772  -0.967 0.333703    
+## log(ab)     -0.68235    0.19552  -3.490 0.000483 ***
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
 ## 
 ## (Dispersion parameter for binomial family taken to be 1)
 ## 
-##     Null deviance: 77.751  on 74  degrees of freedom
-## Residual deviance: 64.545  on 72  degrees of freedom
-## AIC: 70.545
+##     Null deviance: 116.652  on 99  degrees of freedom
+## Residual deviance:  98.017  on 97  degrees of freedom
+## AIC: 104.02
 ## 
 ## Number of Fisher Scoring iterations: 5</code></pre>
 <p>We can also look at the model coefficients and confidence intervals.</p>
 <pre class="r"><code>lrm$coefficients</code></pre>
 <pre><code>## (Intercept)         age     log(ab) 
-##  1.71216249  0.02167454 -0.72281840</code></pre>
+##  2.57233727 -0.06546061 -0.68235363</code></pre>
 <pre class="r"><code>confint(lrm)</code></pre>
 <pre><code>##                  2.5 %     97.5 %
-## (Intercept) -1.0315024  4.6824220
-## age         -0.2023959  0.2474160
-## log(ab)     -1.2118952 -0.3136871</code></pre>
-<p>Now let’s test our model on the training data and see how well it performs.</p>
-<pre class="r"><code>prediction &lt;- predict(lrm, newdata = test, type=&quot;response&quot;)</code></pre>
+## (Intercept)  0.7810426  4.5452306
+## age         -0.2024576  0.0655621
+## log(ab)     -1.0985294 -0.3239378</code></pre>
+<p>If we wanted to, we could have split the data into training and testing data:</p>
+<pre class="r"><code>set.seed(1)  # make reproducible
+i &lt;- sample(x = nrow(malaria), size = 0.75*floor(nrow(malaria)))
+malaria.train &lt;- malaria[i,]
+malaria.test &lt;- malaria[-i,]</code></pre>
+<p>We can then test our model on the training data and see how well it performs.</p>
+<pre class="r"><code>prediction &lt;- predict(lrm, newdata = malaria.test, type=&quot;response&quot;)</code></pre>
 </div>
 <div id="logistic-regression-with-numeric-predictors-2" class="section level3">
 <h3>Logistic regression with numeric predictors (2)</h3>

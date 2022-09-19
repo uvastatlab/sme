@@ -57,18 +57,10 @@ To start, let's take a quick look at the summary of the data using the `summary(
 summary(malaria)
 ```
 
-Split the data into training and testing data.
-
-```{r}
-sf <- nrow(malaria)*0.75
-train  <- malaria[1:sf, ]
-test   <- malaria[(sf+1):nrow(malaria), ]
-```
-
 Now let's build our model. We will use the `glm()` function. `glm()` is used to fit a generalized linear model to the data. To specify logistic regression, in the argument we set the `family = binomial(link = "logit")`. 
 
 ```{r}
-lrm <- glm(mal ~ age + log(ab), family = binomial(link = "logit"), data = train)
+lrm <- glm(mal ~ age + log(ab), family = binomial(link = "logit"), data = malaria)
 ```
 
 Now we look at a summary of the model:
@@ -84,10 +76,19 @@ lrm$coefficients
 confint(lrm)
 ```
 
-Now let's test our model on the training data and see how well it performs. 
+If we wanted to, we could have split the data into training and testing data:
 
 ```{r}
-prediction <- predict(lrm, newdata = test, type="response")
+set.seed(1)  # make reproducible
+i <- sample(x = nrow(malaria), size = 0.75*floor(nrow(malaria)))
+malaria.train <- malaria[i,]
+malaria.test <- malaria[-i,]
+```
+
+We can then test our model on the training data and see how well it performs. 
+
+```{r}
+prediction <- predict(lrm, newdata = malaria.test, type="response")
 ```
 
 
