@@ -401,11 +401,17 @@ eggs, and if so, which treatment seems superior?</p>
 <pre class="r"><code>library(faraway)
 data(&quot;eggprod&quot;)
 
+# Base R
+## Creating lists for `stripchart()`
 treat &lt;- list(&quot;E&quot;=eggprod[eggprod$treat==&quot;E&quot;,&quot;eggs&quot;], 
               &quot;F&quot;=eggprod[eggprod$treat==&quot;F&quot;,&quot;eggs&quot;],
               &quot;O&quot;=eggprod[eggprod$treat==&quot;O&quot;,&quot;eggs&quot;])
+block &lt;- list(&quot;1&quot;=eggprod[eggprod$block==&quot;1&quot;,&quot;eggs&quot;], 
+              &quot;2&quot;=eggprod[eggprod$block==&quot;2&quot;,&quot;eggs&quot;],
+              &quot;3&quot;=eggprod[eggprod$block==&quot;3&quot;,&quot;eggs&quot;],
+              &quot;4&quot;=eggprod[eggprod$block==&quot;4&quot;,&quot;eggs&quot;])
 
-# Base R
+## Plotting eggs ~ treat
 stripchart(treat,
            main=&quot;Eggs by Treat&quot;,
            xlab=&quot;Eggs&quot;,
@@ -415,11 +421,7 @@ stripchart(treat,
            pch=16
 )</code></pre>
 <p><img src="lme_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
-<pre class="r"><code>block &lt;- list(&quot;1&quot;=eggprod[eggprod$block==&quot;1&quot;,&quot;eggs&quot;], 
-              &quot;2&quot;=eggprod[eggprod$block==&quot;2&quot;,&quot;eggs&quot;],
-              &quot;3&quot;=eggprod[eggprod$block==&quot;3&quot;,&quot;eggs&quot;],
-              &quot;4&quot;=eggprod[eggprod$block==&quot;4&quot;,&quot;eggs&quot;])
-
+<pre class="r"><code>## Plotting eggs ~ block
 stripchart(block,
            main=&quot;Eggs by Block&quot;,
            xlab=&quot;Eggs&quot;,
@@ -431,11 +433,21 @@ stripchart(block,
 <p><img src="lme_files/figure-html/unnamed-chunk-1-2.png" width="672" /></p>
 <pre class="r"><code># ggplot2
 library(ggplot2)
-ggplot(eggprod, aes(x=treat, y=eggs)) + 
-  geom_violin(trim = FALSE) +
-  geom_jitter(position=position_jitter(0.2)) + 
-  coord_flip()</code></pre>
+
+## Plotting eggs ~ treat
+ggplot(eggprod, aes(x=treat, y=eggs, color = treat)) + # Plotting eggs~treat, color by treat
+  geom_violin(trim = FALSE) + # Adding violin to show probability density at different values since sample size is small
+  geom_jitter(position=position_jitter(0.2)) + # Creating a jitter plot,  staggering groups
+  coord_flip() + # Flipping x and y coordinates to mimic Base R plotting
+  theme_classic() # Using classic theme</code></pre>
 <p><img src="lme_files/figure-html/unnamed-chunk-1-3.png" width="672" /></p>
+<pre class="r"><code>## Plotting eggs ~ block
+ggplot(eggprod, aes(x=block, y=eggs, color = block)) + # Plotting eggs~treat, color by treat
+  geom_violin(trim = FALSE) + # Adding violin to show probability density at different values since sample size is small
+  geom_jitter(position=position_jitter(0.2)) + # Creating a jitter plot,  staggering groups
+  coord_flip() + # Flipping x and y coordinates to mimic Base R plotting
+  theme_classic() # Using classic theme</code></pre>
+<p><img src="lme_files/figure-html/unnamed-chunk-1-4.png" width="672" /></p>
 </div>
 <div id="longitudinal-modeling" class="section level3">
 <h3>longitudinal modeling</h3>
