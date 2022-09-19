@@ -13,7 +13,7 @@
 
 <title>Mixed-Effect Models</title>
 
-<script src="site_libs/header-attrs-2.16/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.14/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
@@ -166,15 +166,11 @@ $(document).ready(function () {
     href = "index.html";
   var menuAnchor = $('a[href="' + href + '"]');
 
-  // mark the anchor link active (and if it's in a dropdown, also mark that active)
-  var dropdown = menuAnchor.closest('li.dropdown');
-  if (window.bootstrap) { // Bootstrap 4+
-    menuAnchor.addClass('active');
-    dropdown.find('> .dropdown-toggle').addClass('active');
-  } else { // Bootstrap 3
-    menuAnchor.parent().addClass('active');
-    dropdown.addClass('active');
-  }
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
 
   // Navbar adjustments
   var navHeight = $(".navbar").first().height() + 15;
@@ -403,7 +399,35 @@ eggs produced with <code>treat</code> as a fixed effect and
 2006)</span> Does <code>treat</code> appear to affect the number of
 eggs, and if so, which treatment seems superior?</p>
 <pre class="r"><code>library(faraway)
-data(&quot;eggprod&quot;)</code></pre>
+data(&quot;eggprod&quot;)
+
+treat &lt;- list(&quot;E&quot;=eggprod[eggprod$treat==&quot;E&quot;,&quot;eggs&quot;], 
+              &quot;F&quot;=eggprod[eggprod$treat==&quot;F&quot;,&quot;eggs&quot;],
+              &quot;O&quot;=eggprod[eggprod$treat==&quot;O&quot;,&quot;eggs&quot;])
+
+stripchart(treat,
+           main=&quot;Eggs by Treat&quot;,
+           xlab=&quot;Eggs&quot;,
+           ylab=&quot;Treat&quot;,
+           method=&quot;jitter&quot;,
+           col=c(&quot;orange&quot;,&quot;red&quot;,&quot;blue&quot;),
+           pch=16
+)</code></pre>
+<p><img src="lme_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
+<pre class="r"><code>block &lt;- list(&quot;1&quot;=eggprod[eggprod$block==&quot;1&quot;,&quot;eggs&quot;], 
+              &quot;2&quot;=eggprod[eggprod$block==&quot;2&quot;,&quot;eggs&quot;],
+              &quot;3&quot;=eggprod[eggprod$block==&quot;3&quot;,&quot;eggs&quot;],
+              &quot;4&quot;=eggprod[eggprod$block==&quot;4&quot;,&quot;eggs&quot;])
+
+stripchart(block,
+           main=&quot;Eggs by Block&quot;,
+           xlab=&quot;Eggs&quot;,
+           ylab=&quot;Block&quot;,
+           method=&quot;jitter&quot;,
+           col=c(&quot;orange&quot;,&quot;red&quot;,&quot;blue&quot;,&quot;green&quot;),
+           pch=16
+)</code></pre>
+<p><img src="lme_files/figure-html/unnamed-chunk-1-2.png" width="672" /></p>
 </div>
 <div id="longitudinal-modeling" class="section level3">
 <h3>longitudinal modeling</h3>

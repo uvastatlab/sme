@@ -18,6 +18,33 @@ The `eggprod` data in the faraway package contains data on egg production. [@far
 ```{r}
 library(faraway)
 data("eggprod")
+
+treat <- list("E"=eggprod[eggprod$treat=="E","eggs"], 
+              "F"=eggprod[eggprod$treat=="F","eggs"],
+              "O"=eggprod[eggprod$treat=="O","eggs"])
+
+stripchart(treat,
+           main="Eggs by Treat",
+           xlab="Eggs",
+           ylab="Treat",
+           method="jitter",
+           col=c("orange","red","blue"),
+           pch=16
+)
+
+block <- list("1"=eggprod[eggprod$block=="1","eggs"], 
+              "2"=eggprod[eggprod$block=="2","eggs"],
+              "3"=eggprod[eggprod$block=="3","eggs"],
+              "4"=eggprod[eggprod$block=="4","eggs"])
+
+stripchart(block,
+           main="Eggs by Block",
+           xlab="Eggs",
+           ylab="Block",
+           method="jitter",
+           col=c("orange","red","blue","green"),
+           pch=16
+)
 ```
 
 
