@@ -23,6 +23,7 @@ treat <- list("E"=eggprod[eggprod$treat=="E","eggs"],
               "F"=eggprod[eggprod$treat=="F","eggs"],
               "O"=eggprod[eggprod$treat=="O","eggs"])
 
+# Base R
 stripchart(treat,
            main="Eggs by Treat",
            xlab="Eggs",
@@ -45,6 +46,13 @@ stripchart(block,
            col=c("orange","red","blue","green"),
            pch=16
 )
+
+# ggplot2
+library(ggplot2)
+ggplot(eggprod, aes(x=treat, y=eggs)) + 
+  geom_violin(trim = FALSE) +
+  geom_jitter(position=position_jitter(0.2)) + 
+  coord_flip()
 ```
 
 

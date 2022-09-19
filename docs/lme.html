@@ -405,6 +405,7 @@ treat &lt;- list(&quot;E&quot;=eggprod[eggprod$treat==&quot;E&quot;,&quot;eggs&q
               &quot;F&quot;=eggprod[eggprod$treat==&quot;F&quot;,&quot;eggs&quot;],
               &quot;O&quot;=eggprod[eggprod$treat==&quot;O&quot;,&quot;eggs&quot;])
 
+# Base R
 stripchart(treat,
            main=&quot;Eggs by Treat&quot;,
            xlab=&quot;Eggs&quot;,
@@ -428,6 +429,13 @@ stripchart(block,
            pch=16
 )</code></pre>
 <p><img src="lme_files/figure-html/unnamed-chunk-1-2.png" width="672" /></p>
+<pre class="r"><code># ggplot2
+library(ggplot2)
+ggplot(eggprod, aes(x=treat, y=eggs)) + 
+  geom_violin(trim = FALSE) +
+  geom_jitter(position=position_jitter(0.2)) + 
+  coord_flip()</code></pre>
+<p><img src="lme_files/figure-html/unnamed-chunk-1-3.png" width="672" /></p>
 </div>
 <div id="longitudinal-modeling" class="section level3">
 <h3>longitudinal modeling</h3>
