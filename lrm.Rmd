@@ -51,6 +51,47 @@ library(ISwR)
 data("malaria")
 ```
 
+To start, let's take a quick look at the summary of the data using the `summary()` function:
+
+```{r}
+summary(malaria)
+```
+
+Split the data into training and testing data.
+
+```{r}
+sf <- nrow(malaria)*0.75
+train  <- malaria[1:sf, ]
+test   <- malaria[(sf+1):nrow(malaria), ]
+```
+
+Now let's build our model. We will use the `glm()` function. `glm()` is used to fit a generalized linear model to the data. To specify logistic regression, in the argument we set the `family = binomial(link = "logit")`. 
+
+```{r}
+lrm <- glm(mal ~ age + log(ab), family = binomial(link = "logit"), data = train)
+```
+
+Now we look at a summary of the model:
+
+```{r}
+summary(lrm)
+```
+
+We can also look at the model coefficients and confidence intervals. 
+
+```{r}
+lrm$coefficients
+confint(lrm)
+```
+
+Now let's test our model on the training data and see how well it performs. 
+
+```{r}
+prediction <- predict(lrm, newdata = test, type="response")
+```
+
+
+
 ### Logistic regression with numeric predictors (2)
 
 The `pima` data frame from the faraway package contains data on 768 adult female Pima Indians living near Phoenix [@faraway]. This data was collected by [The National Institute of Diabetes and Digestive and Kidney Diseases](https://www.niddk.nih.gov/). The purpose of the study was to investigate factors related to diabetes. The variable `test` indicates whether the patient showed signs of diabetes (coded 0 if negative, 1 if positive). Model `test` as a function of all other predictors.

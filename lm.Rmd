@@ -45,7 +45,6 @@ This can also be found using an intercept-only linear model:
 ```{r}
 m <- lm(speed ~ 1)
 confint(m)
-#m$coefficients # prints out the intercept value aka the mean here 
 ```
 
 Does the sample appear to be from a Normal distribution? If so, the points in a QQ Plot should lie close to the diagonal line. See [this article](https://data.library.virginia.edu/understanding-q-q-plots/) for information on QQ Plots. This plot looks ok.
@@ -69,7 +68,7 @@ speed[c(1, 3, 21)]
 
 There was a fast reader and a couple of slower readers.
 
-If a Normal QQ Plot if your data looks suspect, try comparing it to other Normal QQ plots created with Normal data. Below we calculate the mean and standard deviation of our data, re-draw the original QQ Plot, and then generate 24 additional QQ plots from a Normal distribution with the same mean and standard deviation as our data. The QQ Plot of our observed data doesn't seem too difference from the QQ Plots of Normal data.
+If a Normal QQ Plot if your data looks suspect, try comparing it to other Normal QQ plots created with Normal data. Below we calculate the mean and standard deviation of our data, re-draw the original QQ Plot, and then generate 24 additional QQ plots from a Normal distribution with the same mean and standard deviation as our data. The QQ Plot of our observed data doesn't seem too different from the QQ Plots of Normal data.
 
 ```{r}
 m <- mean(speed)

@@ -6,15 +6,19 @@ https://uvastatlab.github.io/sme/
 
 ## Instructions
 
+### Getting started
 1. Clone the repo to your computer: `git clone git@github.com:uvastatlab/sme.git`
 2. Open the file `sme.Rproj` in RStudio. This will open the `sme` project in RStudio.
-3. Work modeling examples in one of the four Rmd files:
+
+### Workflow
+1. `git pull origin main` to obtain the latest changes (if any)
+2. Work modeling examples in your assigned Rmd file:
     + `lm.Rmd` - linear models
     + `lrm.Rmd` - logistic regression models
     + `cm.Rmd` - count models
     + `lme.Rmd` - linear mixed-effect models
-4. When ready to publish, click "Build Website" in the "Build" pane of RStudio. This renders html pages to the "docs" folder.
-5. Add, Commit, and Push changes to GitHub.
+3. When ready to publish, click "Build Website" in the "Build" pane of RStudio. This renders html pages to the "docs" folder.
+4. Add, Commit, and Push changes to GitHub.
 
 ## Tips and reminders
 
