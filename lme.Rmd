@@ -22,14 +22,12 @@ data("eggprod")
 library(ggplot2)
 # Plotting eggs ~ treat
 ggplot(eggprod, aes(x=treat, y=eggs, color = treat)) + # Plotting eggs~treat, color by treat
-  geom_violin(trim = FALSE) + # Adding violin to show probability density at different values since sample size is small
   geom_jitter(position=position_jitter(0.2)) + # Creating a jitter plot,  staggering groups
   coord_flip() + # Flipping x and y coordinates to mimic Base R plotting
   theme_classic() # Using classic theme
 
 # Plotting eggs ~ block
 ggplot(eggprod, aes(x=block, y=eggs, color = block)) + # Plotting eggs~treat, color by treat
-  geom_violin(trim = FALSE) + # Adding violin to show probability density at different values since sample size is small
   geom_jitter(position=position_jitter(0.2)) + # Creating a jitter plot,  staggering groups
   coord_flip() + # Flipping x and y coordinates to mimic Base R plotting
   theme_classic() # Using classic theme
