@@ -13,7 +13,7 @@
 
 <title>Count Models</title>
 
-<script src="site_libs/header-attrs-2.13/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.16/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
@@ -166,11 +166,15 @@ $(document).ready(function () {
     href = "index.html";
   var menuAnchor = $('a[href="' + href + '"]');
 
-  // mark it active
-  menuAnchor.tab('show');
-
-  // if it's got a parent navbar menu mark it active as well
-  menuAnchor.closest('li.dropdown').addClass('active');
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
 
   // Navbar adjustments
   var navHeight = $(".navbar").first().height() + 15;
@@ -389,19 +393,26 @@ div.tocify {
 
 <div id="poisson-regression" class="section level3">
 <h3>Poisson regression</h3>
-<p>The AirCrash dataset in the vcdExtra package contains data on all fatal commercial airplane crashes from 1993–2015. <span class="citation">(Friendly 2022)</span> How does the number of fatalities depend on other variables? Fit a main effects Poisson regression model. <span class="citation">(Friendly and Meyer 2016)</span></p>
-<pre class="r"><code>library(vcdExtra)</code></pre>
-<pre><code>## Warning: package &#39;vcdExtra&#39; was built under R version 4.1.2</code></pre>
-<pre><code>## Warning: package &#39;vcd&#39; was built under R version 4.1.2</code></pre>
-<pre><code>## Warning: package &#39;gnm&#39; was built under R version 4.1.2</code></pre>
-<pre class="r"><code>data(&quot;AirCrash&quot;)</code></pre>
+<p>The AirCrash dataset in the vcdExtra package contains data on all
+fatal commercial airplane crashes from 1993–2015. <span
+class="citation">(Friendly 2022)</span> How does the number of
+fatalities depend on other variables? Fit a main effects Poisson
+regression model. <span class="citation">(Friendly and Meyer
+2016)</span></p>
+<pre class="r"><code>library(vcdExtra)
+data(&quot;AirCrash&quot;)</code></pre>
 </div>
 <div id="rate-model" class="section level3">
 <h3>Rate model</h3>
-<p>The <code>esdcomp</code> data frame from the <code>faraway</code> package <span class="citation">(Faraway 2016)</span> contains data on complaints about emergency room doctors. Data was recorded on 44 doctors working in an emergency service at a hospital to study the factors affecting the number of complaints received. Build a model for the <em>rate</em> of complaints received. <span class="citation">(Faraway 2006)</span> Use <code>visits</code> as an offset in the model.</p>
-<pre class="r"><code>library(faraway)</code></pre>
-<pre><code>## Warning: package &#39;faraway&#39; was built under R version 4.1.2</code></pre>
-<pre class="r"><code>data(&quot;esdcomp&quot;)</code></pre>
+<p>The <code>esdcomp</code> data frame from the <code>faraway</code>
+package <span class="citation">(Faraway 2016)</span> contains data on
+complaints about emergency room doctors. Data was recorded on 44 doctors
+working in an emergency service at a hospital to study the factors
+affecting the number of complaints received. Build a model for the
+<em>rate</em> of complaints received. <span class="citation">(Faraway
+2006)</span> Use <code>visits</code> as an offset in the model.</p>
+<pre class="r"><code>library(faraway)
+data(&quot;esdcomp&quot;)</code></pre>
 </div>
 <div id="negative-binomial-model" class="section level3">
 <h3>Negative-Binomial model</h3>
@@ -413,16 +424,23 @@ div.tocify {
 <h3 class="unnumbered">References</h3>
 <div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-faraway_book" class="csl-entry">
-Faraway, Julian. 2006. <em>Extending the Linear Model with <span>R</span></em>. CRC press. <a href="https://julianfaraway.github.io/faraway/ELM/">https://julianfaraway.github.io/faraway/ELM/</a>.
+Faraway, Julian. 2006. <em>Extending the Linear Model with
+<span>R</span></em>. CRC press. <a
+href="https://julianfaraway.github.io/faraway/ELM/">https://julianfaraway.github.io/faraway/ELM/</a>.
 </div>
 <div id="ref-faraway" class="csl-entry">
-———. 2016. <em>Faraway: Functions and Datasets for Books by Julian Faraway</em>. <a href="https://CRAN.R-project.org/package=faraway">https://CRAN.R-project.org/package=faraway</a>.
+———. 2016. <em>Faraway: Functions and Datasets for Books by Julian
+Faraway</em>. <a
+href="https://CRAN.R-project.org/package=faraway">https://CRAN.R-project.org/package=faraway</a>.
 </div>
 <div id="ref-vcdextra" class="csl-entry">
-Friendly, Michael. 2022. <em>vcdExtra: ’Vcd’ Extensions and Additions</em>. <a href="https://CRAN.R-project.org/package=vcdExtra">https://CRAN.R-project.org/package=vcdExtra</a>.
+Friendly, Michael. 2022. <em>vcdExtra: ’Vcd’ Extensions and
+Additions</em>. <a
+href="https://CRAN.R-project.org/package=vcdExtra">https://CRAN.R-project.org/package=vcdExtra</a>.
 </div>
 <div id="ref-friendly2016" class="csl-entry">
-Friendly, Michael, and David Meyer. 2016. <em>Discrete Data Analysis with <span>R</span></em>. Boca Raton: <span>CRC</span> Press.
+Friendly, Michael, and David Meyer. 2016. <em>Discrete Data Analysis
+with <span>R</span></em>. Boca Raton: <span>CRC</span> Press.
 </div>
 </div>
 </div>

@@ -208,7 +208,7 @@ Conclusion: it looks like the number of days absent cannot be properly modeled o
 
 ### Linear model with categorical and numeric predictors
 
-The `bp.obese` data frame from the ISwR package has 102 rows and 3 columns. It contains data from a random sample of Mexican-American adults in a small California town. Analyze blood pressure (`bp`) as a function of obesity (`obese`) and gender (`sex`). Here `obese` is a ratio of actual weight to ideal weight from New York Metropolitan Life Tables. [@ISwR] 
+The `bp.obese` data frame from the ISwR package has 102 rows and 3 columns. It contains data from a random sample of Mexican-American adults in a small California town. Analyze [systolic blood pressure](https://www.mayoclinic.org/diseases-conditions/high-blood-pressure/in-depth/blood-pressure/art-20050982) in mm Hg (`bp`) as a function of obesity (`obese`) and sex (`sex`), where male = 0 and female = 1. Here `obese` is a ratio of actual weight to ideal weight from New York Metropolitan Life Tables. [@ISwR] 
 
 ```{r}
 library(ISwR)
@@ -243,15 +243,14 @@ ggplot(bp.obese, aes(x = obese, y = bp)) +
   geom_point()
 ```
 
-Finally, we model bp as a function of the variables obese and sex.
+Below we model bp as a function of the variables obese and sex.
 
 ```{r}
 m3 <- lm(bp ~ obese + sex, bp.obese)
-m3
+summary(m3)
 ```
 
 ```{r}
-m3$coefficients
 confint(m3)
 ```
 
@@ -423,6 +422,6 @@ predict(m, newdata = data.frame(inventories = 2500,
         interval = "confidence")
 ```
 
-Based on the confidence interval, a conservative estimate would be about 1300 orders.
+Based on the confidence interval, a conservative estimate would be about 1200 orders.
 
 ### References

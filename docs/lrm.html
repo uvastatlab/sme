@@ -13,7 +13,7 @@
 
 <title>Logistic Regression Models</title>
 
-<script src="site_libs/header-attrs-2.13/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.16/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
@@ -166,11 +166,15 @@ $(document).ready(function () {
     href = "index.html";
   var menuAnchor = $('a[href="' + href + '"]');
 
-  // mark it active
-  menuAnchor.tab('show');
-
-  // if it's got a parent navbar menu mark it active as well
-  menuAnchor.closest('li.dropdown').addClass('active');
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
 
   // Navbar adjustments
   var navHeight = $(".navbar").first().height() + 15;
@@ -387,9 +391,14 @@ div.tocify {
 </div>
 
 
-<div id="logistic-regression-with-no-predictors-intercept-only" class="section level3">
+<div id="logistic-regression-with-no-predictors-intercept-only"
+class="section level3">
 <h3>Logistic regression with no predictors (intercept only)</h3>
-<p>100 Hershey’s Kisses are put into a large cup and dumped on a table. We want to estimate the proportion of Kisses we can expect to land on their base. <span class="citation">(Bilder and Loughin 2015)</span> In our experiment we observe 39 out of 100. What is the 95% confidence interval on the proportion?</p>
+<p>100 Hershey’s Kisses are put into a large cup and dumped on a table.
+We want to estimate the proportion of Kisses we can expect to land on
+their base. <span class="citation">(Bilder and Loughin 2015)</span> In
+our experiment we observe 39 out of 100. What is the 95% confidence
+interval on the proportion?</p>
 <pre class="r"><code>prop.test(x = 39, n = 100)</code></pre>
 <pre><code>## 
 ##  1-sample proportions test with continuity correction
@@ -408,15 +417,17 @@ pout$conf.int</code></pre>
 <pre><code>## [1] 0.2955674 0.4929886
 ## attr(,&quot;conf.level&quot;)
 ## [1] 0.95</code></pre>
-<p>This can be analyzed as an intercept-only binary logistic regression model. The confidence interval is slightly different.</p>
+<p>This can be analyzed as an intercept-only binary logistic regression
+model. The confidence interval is slightly different.</p>
 <pre class="r"><code>m &lt;- glm(cbind(39, 100-39) ~ 1, family = binomial)
 plogis(confint(m))</code></pre>
 <pre><code>##     2.5 %    97.5 % 
 ## 0.2980745 0.4874909</code></pre>
-<p>There are many confidence intervals that can be calculated for proportions. The binom package calculates 11 of them. <span class="citation">(Dorai-Raj 2022)</span></p>
-<pre class="r"><code>library(binom)</code></pre>
-<pre><code>## Warning: package &#39;binom&#39; was built under R version 4.1.2</code></pre>
-<pre class="r"><code>binom.confint(x = 39, n = 100)</code></pre>
+<p>There are many confidence intervals that can be calculated for
+proportions. The binom package calculates 11 of them. <span
+class="citation">(Dorai-Raj 2022)</span></p>
+<pre class="r"><code>library(binom)
+binom.confint(x = 39, n = 100)</code></pre>
 <pre><code>##           method  x   n      mean     lower     upper
 ## 1  agresti-coull 39 100 0.3900000 0.3000839 0.4880547
 ## 2     asymptotic 39 100 0.3900000 0.2944028 0.4855972
@@ -429,14 +440,24 @@ plogis(confint(m))</code></pre>
 ## 9            lrt 39 100 0.3900000 0.2980690 0.4875128
 ## 10     prop.test 39 100 0.3900000 0.2955674 0.4929886
 ## 11        wilson 39 100 0.3900000 0.3001687 0.4879698</code></pre>
-<p>The “prop.test” and “profile” versions are the two we calculated above.</p>
+<p>The “prop.test” and “profile” versions are the two we calculated
+above.</p>
 </div>
-<div id="logistic-regression-with-numeric-predictors-1" class="section level3">
+<div id="logistic-regression-with-numeric-predictors-1"
+class="section level3">
 <h3>Logistic regression with numeric predictors (1)</h3>
-<p>The <code>malaria</code> data frame from the ISwR package has 100 rows and 4 columns. It contains data on a sample of 100 children aged 3–15 years from a village in Ghana. Model the risk of malaria (<code>mal</code>) as a function of age (<code>age</code>) and log-transformed antibody levels (<code>log(ab)</code>). <span class="citation">(Dalgaard 2020)</span></p>
+<p>The <code>malaria</code> data frame from the ISwR package has 100
+rows and 4 columns. It contains data on a sample of 100 children aged
+3–15 years from a village in Ghana. Based on observations during the
+study period, the children were categorized into two groups: individuals
+with and without symptoms of malaria. Model the risk of malaria
+(<code>mal</code>) as a function of age (<code>age</code>) and
+log-transformed antibody levels (<code>log(ab)</code>). <span
+class="citation">(Dalgaard 2020)</span></p>
 <pre class="r"><code>library(ISwR)
 data(&quot;malaria&quot;)</code></pre>
-<p>To start, let’s take a quick look at the summary of the data using the <code>summary()</code> function:</p>
+<p>To start, let’s take a quick look at the summary of the data using
+the <code>summary()</code> function:</p>
 <pre class="r"><code>summary(malaria)</code></pre>
 <pre><code>##     subject            age              ab              mal      
 ##  Min.   :  1.00   Min.   : 3.00   Min.   :   2.0   Min.   :0.00  
@@ -445,7 +466,10 @@ data(&quot;malaria&quot;)</code></pre>
 ##  Mean   : 50.50   Mean   : 8.86   Mean   : 311.5   Mean   :0.27  
 ##  3rd Qu.: 75.25   3rd Qu.:12.00   3rd Qu.: 373.8   3rd Qu.:1.00  
 ##  Max.   :100.00   Max.   :15.00   Max.   :2066.0   Max.   :1.00</code></pre>
-<p>Now let’s build our model. We will use the <code>glm()</code> function. <code>glm()</code> is used to fit a generalized linear model to the data. To specify logistic regression, in the argument we set the <code>family = binomial(link = "logit")</code>.</p>
+<p>Now let’s build our model. We will use the <code>glm()</code>
+function. <code>glm()</code> is used to fit a generalized linear model
+to the data. To specify logistic regression, in the argument we set the
+<code>family = binomial(link = "logit")</code>.</p>
 <pre class="r"><code>lrm &lt;- glm(mal ~ age + log(ab), family = binomial(link = &quot;logit&quot;), data = malaria)</code></pre>
 <p>Now we look at a summary of the model:</p>
 <pre class="r"><code>summary(lrm)</code></pre>
@@ -473,7 +497,8 @@ data(&quot;malaria&quot;)</code></pre>
 ## AIC: 104.02
 ## 
 ## Number of Fisher Scoring iterations: 5</code></pre>
-<p>We can also look at the model coefficients and confidence intervals.</p>
+<p>We can also look at the model coefficients and confidence
+intervals.</p>
 <pre class="r"><code>lrm$coefficients</code></pre>
 <pre><code>## (Intercept)         age     log(ab) 
 ##  2.57233727 -0.06546061 -0.68235363</code></pre>
@@ -482,20 +507,33 @@ data(&quot;malaria&quot;)</code></pre>
 ## (Intercept)  0.7810426  4.5452306
 ## age         -0.2024576  0.0655621
 ## log(ab)     -1.0985294 -0.3239378</code></pre>
-<p>If we wanted to, we could have split the data into training and testing data:</p>
+<p>If we wanted to, we could have split the data into training and
+testing data:</p>
 <pre class="r"><code>set.seed(1)  # make reproducible
 i &lt;- sample(x = nrow(malaria), size = 0.75*floor(nrow(malaria)))
 malaria.train &lt;- malaria[i,]
 malaria.test &lt;- malaria[-i,]</code></pre>
-<p>We can then test our model on the training data and see how well it performs.</p>
+<p>We can then test our model on the training data and see how well it
+performs.</p>
 <pre class="r"><code>prediction &lt;- predict(lrm, newdata = malaria.test, type=&quot;response&quot;)</code></pre>
 </div>
-<div id="logistic-regression-with-numeric-predictors-2" class="section level3">
+<div id="logistic-regression-with-numeric-predictors-2"
+class="section level3">
 <h3>Logistic regression with numeric predictors (2)</h3>
-<p>The <code>pima</code> data frame from the faraway package contains data on 768 adult female Pima Indians living near Phoenix <span class="citation">(Faraway 2016)</span>. This data was collected by <a href="https://www.niddk.nih.gov/">The National Institute of Diabetes and Digestive and Kidney Diseases</a>. The purpose of the study was to investigate factors related to diabetes. The variable <code>test</code> indicates whether the patient showed signs of diabetes (coded 0 if negative, 1 if positive). Model <code>test</code> as a function of all other predictors.</p>
+<p>The <code>pima</code> data frame from the faraway package contains
+data on 768 adult female Pima Indians living near Phoenix <span
+class="citation">(Faraway 2016)</span>. This data was collected by <a
+href="https://www.niddk.nih.gov/">The National Institute of Diabetes and
+Digestive and Kidney Diseases</a>. The purpose of the study was to
+investigate factors related to diabetes. The variable <code>test</code>
+indicates whether the patient showed signs of diabetes (coded 0 if
+negative, 1 if positive). Model <code>test</code> as a function of all
+other predictors.</p>
 <pre class="r"><code>library(faraway)
 data(&quot;pima&quot;)</code></pre>
-<p>What is the difference in odds of testing positive for diabetes for a subject with BMI in the first quartile compared to a subject with BMI at the third quartile? <span class="citation">(Faraway 2006)</span></p>
+<p>What is the difference in odds of testing positive for diabetes for a
+subject with BMI in the first quartile compared to a subject with BMI at
+the third quartile? <span class="citation">(Faraway 2006)</span></p>
 <pre class="r"><code>library(emmeans)
 bmi_vals &lt;- quantile(pima$bmi, probs = c(0.25,0.75))
 rg &lt;- ref_grid(m, at = list(bmi = bmi_vals))
@@ -504,44 +542,72 @@ emmeans(rg, specs = &quot;bmi&quot;, type = &quot;response&quot;) |&gt;
 </div>
 <div id="ordered-logistic-regression" class="section level3">
 <h3>Ordered logistic regression</h3>
-<p>The <code>Vietnam</code> data frame in the vcdExtra package <span class="citation">(Friendly 2022)</span> contains survey data from 1967 on student opinions of the Vietnam War. Students were asked to indicate which policy out of A, B, C or D they supported. The response categories were:</p>
+<p>The <code>Vietnam</code> data frame in the vcdExtra package <span
+class="citation">(Friendly 2022)</span> contains survey data from 1967
+on student opinions of the Vietnam War. Students were asked to indicate
+which policy out of A, B, C or D they supported. The response categories
+were:</p>
 <ul>
 <li>A: Defeat North Vietnam by widespread bombing and land invasion</li>
 <li>B: Maintain the present policy</li>
-<li>C: De-escalate military activity, stop bombing and begin negotiations</li>
+<li>C: De-escalate military activity, stop bombing and begin
+negotiations</li>
 <li>D: Withdraw military forces Immediately</li>
 </ul>
-<p>These are ordered levels, moving from very pro-war (A) to anti-war (D). Fit a proportional odds model to the data, modeling <code>response</code> as a function of <code>sex</code>, <code>year</code>, and their interaction. <span class="citation">(Friendly and Meyer 2016)</span> (<code>year</code> is an integer ranging from 1 - 5, corresponding to Freshmen, Sophomore, Junior, Senior, and Grad student.)</p>
+<p>These are ordered levels, moving from very pro-war (A) to anti-war
+(D). Fit a proportional odds model to the data, modeling
+<code>response</code> as a function of <code>sex</code>,
+<code>year</code>, and their interaction. <span
+class="citation">(Friendly and Meyer 2016)</span> (<code>year</code> is
+an integer ranging from 1 - 5, corresponding to Freshmen, Sophomore,
+Junior, Senior, and Grad student.)</p>
 <pre class="r"><code>library(vcdExtra)
 data(&quot;Vietnam&quot;)</code></pre>
-<p>This will require using the <code>weights</code> argument with the <code>polr()</code> function. <span class="citation">(Venables and Ripley 2002)</span></p>
+<p>This will require using the <code>weights</code> argument with the
+<code>polr()</code> function. <span class="citation">(Venables and
+Ripley 2002)</span></p>
 </div>
 <div id="references" class="section level3 unnumbered">
 <h3 class="unnumbered">References</h3>
 <div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-bilder2015" class="csl-entry">
-Bilder, Christopher R., and Thomas M. Loughin. 2015. <em>Analysis of Categorical Data in <span>R</span></em>. Boca Raton: <span>CRC</span> Press.
+Bilder, Christopher R., and Thomas M. Loughin. 2015. <em>Analysis of
+Categorical Data in <span>R</span></em>. Boca Raton: <span>CRC</span>
+Press.
 </div>
 <div id="ref-ISwR" class="csl-entry">
-Dalgaard, Peter. 2020. <em>ISwR: Introductory Statistics with <span>R</span></em>. <a href="https://CRAN.R-project.org/package=ISwR">https://CRAN.R-project.org/package=ISwR</a>.
+Dalgaard, Peter. 2020. <em>ISwR: Introductory Statistics with
+<span>R</span></em>. <a
+href="https://CRAN.R-project.org/package=ISwR">https://CRAN.R-project.org/package=ISwR</a>.
 </div>
 <div id="ref-binom" class="csl-entry">
-Dorai-Raj, Sundar. 2022. <em>Binom: Binomial Confidence Intervals for Several Parameterizations</em>. <a href="https://CRAN.R-project.org/package=binom">https://CRAN.R-project.org/package=binom</a>.
+Dorai-Raj, Sundar. 2022. <em>Binom: Binomial Confidence Intervals for
+Several Parameterizations</em>. <a
+href="https://CRAN.R-project.org/package=binom">https://CRAN.R-project.org/package=binom</a>.
 </div>
 <div id="ref-faraway_book" class="csl-entry">
-Faraway, Julian. 2006. <em>Extending the Linear Model with <span>R</span></em>. CRC press. <a href="https://julianfaraway.github.io/faraway/ELM/">https://julianfaraway.github.io/faraway/ELM/</a>.
+Faraway, Julian. 2006. <em>Extending the Linear Model with
+<span>R</span></em>. CRC press. <a
+href="https://julianfaraway.github.io/faraway/ELM/">https://julianfaraway.github.io/faraway/ELM/</a>.
 </div>
 <div id="ref-faraway" class="csl-entry">
-———. 2016. <em>Faraway: Functions and Datasets for Books by Julian Faraway</em>. <a href="https://CRAN.R-project.org/package=faraway">https://CRAN.R-project.org/package=faraway</a>.
+———. 2016. <em>Faraway: Functions and Datasets for Books by Julian
+Faraway</em>. <a
+href="https://CRAN.R-project.org/package=faraway">https://CRAN.R-project.org/package=faraway</a>.
 </div>
 <div id="ref-vcdextra" class="csl-entry">
-Friendly, Michael. 2022. <em>vcdExtra: ’Vcd’ Extensions and Additions</em>. <a href="https://CRAN.R-project.org/package=vcdExtra">https://CRAN.R-project.org/package=vcdExtra</a>.
+Friendly, Michael. 2022. <em>vcdExtra: ’Vcd’ Extensions and
+Additions</em>. <a
+href="https://CRAN.R-project.org/package=vcdExtra">https://CRAN.R-project.org/package=vcdExtra</a>.
 </div>
 <div id="ref-friendly2016" class="csl-entry">
-Friendly, Michael, and David Meyer. 2016. <em>Discrete Data Analysis with <span>R</span></em>. Boca Raton: <span>CRC</span> Press.
+Friendly, Michael, and David Meyer. 2016. <em>Discrete Data Analysis
+with <span>R</span></em>. Boca Raton: <span>CRC</span> Press.
 </div>
 <div id="ref-MASS" class="csl-entry">
-Venables, W. N., and B. D. Ripley. 2002. <em>Modern Applied Statistics with s</em>. Fourth. New York: Springer. <a href="https://www.stats.ox.ac.uk/pub/MASS4/">https://www.stats.ox.ac.uk/pub/MASS4/</a>.
+Venables, W. N., and B. D. Ripley. 2002. <em>Modern Applied Statistics
+with s</em>. Fourth. New York: Springer. <a
+href="https://www.stats.ox.ac.uk/pub/MASS4/">https://www.stats.ox.ac.uk/pub/MASS4/</a>.
 </div>
 </div>
 </div>
