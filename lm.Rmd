@@ -221,39 +221,57 @@ First, we will look at summary statistics of the data.
 summary(bp.obese)
 ```
 
-Next, we will visualize the distribution of blood pressure, totally and by sex.
+Sex is encoded with 0s (male) and 1s (female). Sex's mean of 0.5686 tells us that about half of the people are female. Obese is a ratio representing participants weight. 1 indicates actual weight equals ideal weight. >1 indicates actual weight is greater than ideal weight. And <1 the opposite.
+
+
+Next, we will visualize the distribution of blood pressure, for all subjects and by sex.
 
 ```{r}
 library(ggplot2)
 
-ggplot(bp.obese, aes(x = bp)) +
-  geom_histogram()
+# ggplot(bp.obese, aes(x = bp)) +
+#   geom_density()
 
-ggplot(bp.obese, aes(x = bp, fill = as.factor(sex))) +
-  geom_histogram() +
+ggplot() +
+  geom_density(bp.obese, mapping = aes(x = bp, fill=as.factor(sex)), alpha=1/3) +
   labs(fill='sex') + 
   scale_fill_manual(values = c('blue', 'red'),
-                    labels=c('men','women'))
+                    labels=c('male','female'))
 ```
+The distribution of bp appears to skew right, and does not differ much between male and female.
 
-Next, we will plot the relationship between the bp and obese variables.
+Next, we will plot the relationship between the variables bp and obese.
 
 ```{r}
 ggplot(bp.obese, aes(x = obese, y = bp)) +
   geom_point()
 ```
+Most participants have above ideal weight and below 150 bp. The relationship between obese and bp, in general, appears to be positive and somewhat linear. But obese does not entirely explain bp. For example, the 3 participants with obese  greater than 2 have bps at about or below 150. Then, the 2 participants with bp greater than 180 have obese less that 1.75.
 
 Below we model bp as a function of the variables obese and sex.
 
 ```{r}
+bp.obese$sex <- as.factor(bp.obese$sex)
 m3 <- lm(bp ~ obese + sex, bp.obese)
 summary(m3)
 ```
+Next, we will calculate confidence intervals for each of the coefficients in the model.
 
 ```{r}
 confint(m3)
 ```
 
+For the obese variable, the 95% confidence interval goes from 14.8 to 43.3. According to the confidence interval, generally a 1 unit increase in obese will increase bp by about 14 to 43 units. If a participant's obese measure increased from 1 to 2, then they started at their "ideal" weight and increased to to twice their ideal weight.
+
+We can use an example to better understand the relevance of the obese variable. A participant weighs 200 pounds and their ideal weight is 150 pounds. This makes their obese measure about 1.3. Then the participant gains 20 pounds, making their obese measure about 1.5. What happens if the obese measure increases by 0.2? To determine how much bp increases for every 0.1 unit increase in obese, we can divide the confidence interval by 10.
+
+```{r}
+confint(m3)['obese',]/10
+```
+
+So generally, for every 0.1 unit increase in obese, bp increases by 1.5 to 4.3 units. If a participant increases in obese by 0.2, the model predicts about a 2.0 to 8.6 unit increase in bp.
+
+For the sex variable, a 1 unit difference means switching from one sex to another. According to the model, switching sex from male to female generally decreases bp.
 
 
 ### Linear model with time ordered data
