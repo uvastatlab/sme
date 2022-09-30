@@ -57,6 +57,23 @@ To start, let's take a quick look at the summary of the data using the `summary(
 summary(malaria)
 ```
 
+```{r}
+boxplot(ab ~ mal, data = malaria)
+
+boxplot(log(ab) ~ mal, data = malaria)
+
+boxplot(age ~ mal, data = malaria)
+```
+
+From these plots we can see that the median age 
+
+```{r}
+library(ggplot2)
+
+ggplot(malaria, aes(x = log(ab))) + geom_histogram()
+```
+
+
 Now let's build our model. We will use the `glm()` function. `glm()` is used to fit a generalized linear model to the data. To specify logistic regression, in the argument we set the `family = binomial(link = "logit")`. 
 
 ```{r}
