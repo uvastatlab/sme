@@ -21,6 +21,166 @@ library(vcdExtra)
 data("AirCrash")
 ```
 
+The AirCrash data frame has data on 439 crashes with the following 5 variables:
+
+```{r}
+str(AirCrash)
+```
+
+The Fatalities variable records the number of fatalities per crash. We can see the distribution of Fatalities is severely skewed by some large crashes. Notice the mean is over twice as large as the mean.
+
+```{r}
+summary(AirCrash$Fatalities)
+```
+
+A Histogram reveals the extent of the skewness. 
+
+```{r}
+hist(AirCrash$Fatalities, breaks = 100)
+```
+
+The Phase variable tells us in which one of the five phases of flight the plane crashed: 
+
+- standing 
+- take-off 
+- en route 
+- landing 
+- unknown
+
+Since it's a factor we can get counts by calling `summary()` on the variable.
+
+```{r}
+summary(AirCrash$Phase)
+```
+
+The Cause variable tells us the cause of the crash (if known):
+
+- criminal 
+- human error 
+- mechanical 
+- unknown 
+- weather
+
+It, too, is a factor.
+
+```{r}
+summary(AirCrash$Cause)
+```
+
+The Year column tells us in what year the crash occurred. We can use `tapply()` to quickly sum Fatalities by Year and pipe into the `barplot()` function. A barplot reveals Fatalities slightly decreasing over time for the most part, [except in 2001](https://en.wikipedia.org/wiki/September_11_attacks). The argument `las = 2` sets axis labels perpendicular to the axis.
+
+```{r}
+tapply(AirCrash$Fatalities, AirCrash$Year, sum) |> 
+  barplot(las = 2)
+```
+
+How does Fatalities vary with Phase and Cause? Simple stripcharts are effective for quickly exploring this question. It appears two unusually high cases of fatalities happened en route due to criminal activity.
+
+```{r}
+stripchart(Fatalities ~ Phase, data = AirCrash, method = "jitter", 
+           vertical = TRUE)
+```
+
+
+```{r}
+stripchart(Fatalities ~ Cause, data = AirCrash, method = "jitter",
+           vertical = TRUE)
+```
+
+A common distribution used to model count data is the Poisson distribution. The Poisson distribution has one parameter, the mean. The variance of the distribution is also the mean. As the mean gets bigger, so to does the variance.
+
+We can model count data using the `glm()` function with `family=poisson`. Let's model Fatalities as function of Phase and Cause.
+
+```{r}
+m <- glm(Fatalities ~ Phase + Cause, data = AirCrash, family = poisson)
+```
+
+To determine if Phase and/or Cause helps explain the variability in Fatalities we can assess the analysis of deviance table using the `Anova()` function in the car package [@car]. It appears both explain a substantial amount of variability.
+
+```{r}
+car::Anova(m)
+```
+
+The `drop1()` function in the stats package performs the same tests and includes information on the change in AIC if we drop the variable. For example, if we drop Cause from the model, the AIC increases from 35036 to 38111. Recall that lower AIC is desirable. 
+
+```{r}
+drop1(m, test = "Chisq")
+```
+
+While both variables seem highly "significant" we should assess the model's goodness of fit. One effective way to do this for count models is creating a rootogram with the countreg package [@rootograms]. The tops of the bars are the _expected frequencies_ of the counts given the model. The counts are plotted on the square-root scale to help visualize smaller frequencies. The red line shows the fitted frequencies as a smooth curve. The x-axis is a horizontal reference line. Bars that hang below the line show underfitting, bars that hang above show overfitting. We see our model is extremely ill-fitting for Fatalities ranging from 1 - 100.
+
+```{r}
+# Need to install from R-Forge instead of CRAN
+# install.packages("countreg", repos="http://R-Forge.R-project.org")
+library(countreg)
+rootogram(m, max = 100)
+```
+
+One reason for such an ill-fitting model may be the choice of family distribution we used with `glm()`. The Poisson distribution assumes equivalent mean and variance. A more flexible model would allow the mean and variance to differ. One such model that allows this is the negative binomial model. We can fit a negative binomial model using the `glm.nb()` function in the MASS package. [@MASS]
+
+
+```{r}
+library(MASS)
+m2 <- glm.nb(Fatalities ~ Phase + Cause, data = AirCrash)
+rootogram(m2, max = 100)
+```
+
+This rootogram looks much better though it's far from good. However it's probably not reasonable to expect to sufficiently model something like air crash fatalities using only two categorical variables. 
+
+We may wish to entertain an interaction between Phase and Cause. For example, the effect of landing on Fatalities may depend on whether cause is human error or weather. But before we fit an interaction we should look at a cross-tabulation of Phase and Cause to see if we have any _sparse cells_. Indeed we do. We have five cells of 0 counts and seven cells of counts 3 and under. 
+
+```{r}
+xtabs(~ Phase + Cause, data = AirCrash)
+```
+
+Therefore we forego fitting an interaction.
+
+Let's add Year to the model. It appears to make a marginal contribution to explaining Fatalities.
+
+```{r}
+m3 <- glm.nb(Fatalities ~ Phase + Cause + Year, data = AirCrash)
+car::Anova(m3)
+```
+
+But now our model is in some sense restricted to summarizing data that happened between 1993 and 2015. (The interested reader may wish to verify that adding Year to the model doesn't appreciably change the rootogram.)
+
+Our final model summary is not easy to interpret.
+
+```{r}
+summary(m3)
+```
+
+Effect plots can help us visualize the model.
+
+```{r}
+library(ggeffects)
+ggpredict(m3, terms = "Cause") |> plot()
+```
+
+```{r}
+ggpredict(m3, terms = "Phase") |> plot()
+```
+
+The Year predictor seems to suggest there was a slightly positive trend in fatalities from 1993 - 2015.
+
+```{r}
+ggpredict(m3, terms = "Year") |> plot()
+```
+
+However, if we add our observed data to the plot, we see this positive trend may be driven by two outlying values.
+
+```{r}
+ggpredict(m3, terms = "Year") |> plot(add.data = TRUE)
+```
+
+A sensitivity analysis.
+
+```{r}
+AirCrash2 <- subset(AirCrash, Fatalities < 500)
+m4 <- glm.nb(Fatalities ~ Phase + Cause + Year, data = AirCrash2)
+ggpredict(m4, terms = "Year", ) |> plot(add.data = TRUE)
+```
+
 
 ### Rate model
 
