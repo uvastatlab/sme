@@ -238,6 +238,7 @@ ggplot() +
   scale_fill_manual(values = c('blue', 'red'),
                     labels=c('male','female'))
 ```
+
 The distribution of bp appears to skew right, and does not differ much between male and female.
 
 Next, we will plot the relationship between the variables bp and obese.
@@ -246,6 +247,7 @@ Next, we will plot the relationship between the variables bp and obese.
 ggplot(bp.obese, aes(x = obese, y = bp)) +
   geom_point()
 ```
+
 Most participants have above ideal weight and below 150 bp. The relationship between obese and bp, in general, appears to be positive and somewhat linear. But obese does not entirely explain bp. For example, the 3 participants with obese  greater than 2 have bps at about or below 150. Then, the 2 participants with bp greater than 180 have obese less that 1.75.
 
 Below we model bp as a function of the variables obese and sex.
@@ -255,13 +257,14 @@ bp.obese$sex <- as.factor(bp.obese$sex)
 m3 <- lm(bp ~ obese + sex, bp.obese)
 summary(m3)
 ```
+
 Next, we will calculate confidence intervals for each of the coefficients in the model.
 
 ```{r}
 confint(m3)
 ```
 
-For the obese variable, the 95% confidence interval goes from 14.8 to 43.3. According to the confidence interval, generally a 1 unit increase in obese will increase bp by about 14 to 43 units. If a participant's obese measure increased from 1 to 2, then they started at their "ideal" weight and increased to to twice their ideal weight.
+For the obese variable, the 95% confidence interval goes from 14.8 to 43.3. According to the confidence interval, generally a 1 unit increase in obese will increase bp by about 14 to 43 units. If a participant's obese measure increased from 1 to 2, then they started at their "ideal" weight and increased to twice their ideal weight.
 
 We can use an example to better understand the relevance of the obese variable. A participant weighs 200 pounds and their ideal weight is 150 pounds. This makes their obese measure about 1.3. Then the participant gains 20 pounds, making their obese measure about 1.5. What happens if the obese measure increases by 0.2? To determine how much bp increases for every 0.1 unit increase in obese, we can divide the confidence interval by 10.
 

@@ -13,7 +13,7 @@
 
 <title>Linear Modeling</title>
 
-<script src="site_libs/header-attrs-2.14/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.16/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
@@ -166,11 +166,15 @@ $(document).ready(function () {
     href = "index.html";
   var menuAnchor = $('a[href="' + href + '"]');
 
-  // mark it active
-  menuAnchor.tab('show');
-
-  // if it's got a parent navbar menu mark it active as well
-  menuAnchor.closest('li.dropdown').addClass('active');
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
 
   // Navbar adjustments
   var navHeight = $(".navbar").first().height() + 15;
@@ -650,26 +654,40 @@ data(&quot;bp.obese&quot;)</code></pre>
 ##  Mean   :0.5686   Mean   :1.313   Mean   :127.0  
 ##  3rd Qu.:1.0000   3rd Qu.:1.430   3rd Qu.:137.5  
 ##  Max.   :1.0000   Max.   :2.390   Max.   :208.0</code></pre>
-<p>Next, we will visualize the distribution of blood pressure, totally
-and by sex.</p>
+<p>Sex is encoded with 0s (male) and 1s (female). Sex’s mean of 0.5686
+tells us that about half of the people are female. Obese is a ratio
+representing participants weight. 1 indicates actual weight equals ideal
+weight. &gt;1 indicates actual weight is greater than ideal weight. And
+&lt;1 the opposite.</p>
+<p>Next, we will visualize the distribution of blood pressure, for all
+subjects and by sex.</p>
 <pre class="r"><code>library(ggplot2)
 
-ggplot(bp.obese, aes(x = bp)) +
-  geom_histogram()</code></pre>
-<p><img src="lm_files/figure-html/unnamed-chunk-21-1.png" width="672" /></p>
-<pre class="r"><code>ggplot(bp.obese, aes(x = bp, fill = as.factor(sex))) +
-  geom_histogram() +
+# ggplot(bp.obese, aes(x = bp)) +
+#   geom_density()
+
+ggplot() +
+  geom_density(bp.obese, mapping = aes(x = bp, fill=as.factor(sex)), alpha=1/3) +
   labs(fill=&#39;sex&#39;) + 
   scale_fill_manual(values = c(&#39;blue&#39;, &#39;red&#39;),
-                    labels=c(&#39;men&#39;,&#39;women&#39;))</code></pre>
-<p><img src="lm_files/figure-html/unnamed-chunk-21-2.png" width="672" /></p>
-<p>Next, we will plot the relationship between the bp and obese
-variables.</p>
+                    labels=c(&#39;male&#39;,&#39;female&#39;))</code></pre>
+<p><img src="lm_files/figure-html/unnamed-chunk-21-1.png" width="672" /></p>
+<p>The distribution of bp appears to skew right, and does not differ
+much between male and female.</p>
+<p>Next, we will plot the relationship between the variables bp and
+obese.</p>
 <pre class="r"><code>ggplot(bp.obese, aes(x = obese, y = bp)) +
   geom_point()</code></pre>
 <p><img src="lm_files/figure-html/unnamed-chunk-22-1.png" width="672" /></p>
+<p>Most participants have above ideal weight and below 150 bp. The
+relationship between obese and bp, in general, appears to be positive
+and somewhat linear. But obese does not entirely explain bp. For
+example, the 3 participants with obese greater than 2 have bps at about
+or below 150. Then, the 2 participants with bp greater than 180 have
+obese less that 1.75.</p>
 <p>Below we model bp as a function of the variables obese and sex.</p>
-<pre class="r"><code>m3 &lt;- lm(bp ~ obese + sex, bp.obese)
+<pre class="r"><code>bp.obese$sex &lt;- as.factor(bp.obese$sex)
+m3 &lt;- lm(bp ~ obese + sex, bp.obese)
 summary(m3)</code></pre>
 <pre><code>## 
 ## Call:
@@ -683,18 +701,41 @@ summary(m3)</code></pre>
 ##             Estimate Std. Error t value Pr(&gt;|t|)    
 ## (Intercept)   93.287      8.937  10.438  &lt; 2e-16 ***
 ## obese         29.038      7.172   4.049 0.000102 ***
-## sex           -7.730      3.715  -2.081 0.040053 *  
+## sex1          -7.730      3.715  -2.081 0.040053 *  
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
 ## 
 ## Residual standard error: 17 on 99 degrees of freedom
 ## Multiple R-squared:  0.1438, Adjusted R-squared:  0.1265 
 ## F-statistic: 8.314 on 2 and 99 DF,  p-value: 0.0004596</code></pre>
+<p>Next, we will calculate confidence intervals for each of the
+coefficients in the model.</p>
 <pre class="r"><code>confint(m3)</code></pre>
 <pre><code>##                 2.5 %      97.5 %
 ## (Intercept)  75.55321 111.0205442
 ## obese        14.80766  43.2687683
-## sex         -15.10225  -0.3580819</code></pre>
+## sex1        -15.10225  -0.3580819</code></pre>
+<p>For the obese variable, the 95% confidence interval goes from 14.8 to
+43.3. According to the confidence interval, generally a 1 unit increase
+in obese will increase bp by about 14 to 43 units. If a participant’s
+obese measure increased from 1 to 2, then they started at their “ideal”
+weight and increased to twice their ideal weight.</p>
+<p>We can use an example to better understand the relevance of the obese
+variable. A participant weighs 200 pounds and their ideal weight is 150
+pounds. This makes their obese measure about 1.3. Then the participant
+gains 20 pounds, making their obese measure about 1.5. What happens if
+the obese measure increases by 0.2? To determine how much bp increases
+for every 0.1 unit increase in obese, we can divide the confidence
+interval by 10.</p>
+<pre class="r"><code>confint(m3)[&#39;obese&#39;,]/10</code></pre>
+<pre><code>##    2.5 %   97.5 % 
+## 1.480766 4.326877</code></pre>
+<p>So generally, for every 0.1 unit increase in obese, bp increases by
+1.5 to 4.3 units. If a participant increases in obese by 0.2, the model
+predicts about a 2.0 to 8.6 unit increase in bp.</p>
+<p>For the sex variable, a 1 unit difference means switching from one
+sex to another. According to the model, switching sex from male to
+female generally decreases bp.</p>
 </div>
 <div id="linear-model-with-time-ordered-data" class="section level3">
 <h3>Linear model with time ordered data</h3>
@@ -727,7 +768,7 @@ contractors in previous month</li>
 </ol>
 <p>First we look at the distribution of orders.</p>
 <pre class="r"><code>hist(heating$orders)</code></pre>
-<p><img src="lm_files/figure-html/unnamed-chunk-26-1.png" width="672" /></p>
+<p><img src="lm_files/figure-html/unnamed-chunk-27-1.png" width="672" /></p>
 <p>We had negative orders one month and zero orders a couple of
 months</p>
 <pre class="r"><code>summary(heating$orders)</code></pre>
@@ -761,13 +802,13 @@ discount was not 0.</p>
 <p>Pairwise scatterplots again reveal that discount is mostly 0. But
 when greater than 0, it appears to be associated with higher orders.</p>
 <pre class="r"><code>pairs(heating[,1:7], lower.panel = NULL)</code></pre>
-<p><img src="lm_files/figure-html/unnamed-chunk-30-1.png" width="672" /></p>
+<p><img src="lm_files/figure-html/unnamed-chunk-31-1.png" width="672" /></p>
 <p>Since the data is in time order, we can plot <code>orders</code>
 against its index to investigate any trends in time. There appears to be
 an upward trend in the first 9 months. After that orders seem rather
 sporadic.</p>
 <pre class="r"><code>plot(heating$orders, type = &quot;b&quot;)</code></pre>
-<p><img src="lm_files/figure-html/unnamed-chunk-31-1.png" width="672" /></p>
+<p><img src="lm_files/figure-html/unnamed-chunk-32-1.png" width="672" /></p>
 <p>The <code>acf()</code> function allows us to formally check for
 autocorrelation (ie, self-correlation). At lag 0, we see
 <code>orders</code> is perfectly correlated with itself. That will
@@ -777,7 +818,7 @@ we would expect to see random autocorrelation values hover for pure
 noise (ie, data with no autocorrelation). Other than at lag 5, we so no
 evidence for autocorrelation. And even there it appears rather weak.</p>
 <pre class="r"><code>acf(heating$orders)</code></pre>
-<p><img src="lm_files/figure-html/unnamed-chunk-32-1.png" width="672" /></p>
+<p><img src="lm_files/figure-html/unnamed-chunk-33-1.png" width="672" /></p>
 <p>With only 43 observations and little knowledge of this industry, we
 decide to pursue a simple model with no interactions or non-linear
 effects. To help us decide which predictors to use, will use a bootstrap
@@ -852,7 +893,7 @@ index. We’re looking to see if residuals are consistently above or below
 phenomenon but nothing too severe.</p>
 <pre class="r"><code>plot(residuals(m), type = &quot;b&quot;)
 segments(x0 = 0, y0 = 0, x1 = 43, y1 = 0, lty = 2)</code></pre>
-<p><img src="lm_files/figure-html/unnamed-chunk-39-1.png" width="672" /></p>
+<p><img src="lm_files/figure-html/unnamed-chunk-40-1.png" width="672" /></p>
 <p>A test for autocorrelation is the Durbin-Watson Test. The car package
 <span class="citation">(Fox and Weisberg 2019)</span> provides a
 function for this test. The null hypothesis is the autocorrelation
@@ -863,7 +904,7 @@ against the null.</p>
 <pre class="r"><code>library(car)
 durbinWatsonTest(m)</code></pre>
 <pre><code>##  lag Autocorrelation D-W Statistic p-value
-##    1     -0.05006007      2.079992   0.962
+##    1     -0.05006007      2.079992   0.916
 ##  Alternative hypothesis: rho != 0</code></pre>
 <p>Based on our residual versus time plot and the result of the
 Durbin-Watson test, we decide to assume our residual errors are
@@ -874,11 +915,11 @@ example, has a fitted value of over 4000, but its residual is about
 1000, indicating the model under-predicted its order value by about 1000
 units.</p>
 <pre class="r"><code>plot(m, which = 1)</code></pre>
-<p><img src="lm_files/figure-html/unnamed-chunk-41-1.png" width="672" /></p>
+<p><img src="lm_files/figure-html/unnamed-chunk-42-1.png" width="672" /></p>
 <p>The Residuals versus Leverage plot indicates that observation 18 may
 be exerting a strong influence on the model.</p>
 <pre class="r"><code>plot(m, which = 5)</code></pre>
-<p><img src="lm_files/figure-html/unnamed-chunk-42-1.png" width="672" /></p>
+<p><img src="lm_files/figure-html/unnamed-chunk-43-1.png" width="672" /></p>
 <p>The “18” label allows us to easily investigate this observation. It
 appears this is one of the rare times there was a discount. And at 5%,
 this is the largest observed discount.</p>
