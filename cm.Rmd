@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE)
 
 ### Poisson regression
 
-The AirCrash dataset in the vcdExtra package contains data on all fatal commercial airplane crashes from 1993–2015. [@vcdextra] How does the number of fatalities depend on other variables? Fit a main effects Poisson regression model. [@friendly2016]
+The AirCrash dataset in the vcdExtra package contains data on all fatal commercial airplane crashes from 1993–2015. [@vcdextra]  The data excludes small planes (less than 6 passengers) and non-commercial aircraft such as cargo, military, and private planes. How does the number of fatalities depend on other variables? Fit a main effects Poisson regression model. [@friendly2016]
 
 
 ```{r message=FALSE}
@@ -27,16 +27,18 @@ The AirCrash data frame has data on 439 crashes with the following 5 variables:
 str(AirCrash)
 ```
 
-The Fatalities variable records the number of fatalities per crash. We can see the distribution of Fatalities is severely skewed by some large crashes. Notice the mean is over twice as large as the mean.
+An interesting aspect of this data is that it is technically not a sample. We have _all the data_. We could argue that no inferential statistics or modeling is necessary. We should simply summarize and describe the data. On the other hand, we could argue that the data we have is just one of many possible outcomes from a population of possibilities. We can't rewind time and take another sample, but we can imagine that there were many possible outcomes from 1993 to 2015. What we observed -- and all that we can observe -- was one possible outcome. Therefore, we might use the data to estimate what the future holds. We take the latter approach.
+
+The Fatalities variable is our dependent variable. It records the number of fatalities per crash. This is count variable; it only takes integer values greater than or equal to 0. We can see the distribution of Fatalities is severely skewed by some large crashes. Notice the mean is over twice as large as the median. We also notice there are no commercial airplane crashes with 0 fatalities.
 
 ```{r}
 summary(AirCrash$Fatalities)
 ```
 
-A Histogram reveals the extent of the skewness. 
+A Histogram reveals the extent of the skewness. We set `breaks = 50` to increase the number of bins in the histogram.
 
 ```{r}
-hist(AirCrash$Fatalities, breaks = 100)
+hist(AirCrash$Fatalities, breaks = 50)
 ```
 
 The Phase variable tells us in which one of the five phases of flight the plane crashed: 
@@ -87,7 +89,7 @@ stripchart(Fatalities ~ Cause, data = AirCrash, method = "jitter",
            vertical = TRUE)
 ```
 
-A common distribution used to model count data is the Poisson distribution. The Poisson distribution has one parameter, the mean. The variance of the distribution is also the mean. As the mean gets bigger, so to does the variance.
+A common distribution used to model count data is the Poisson distribution. The Poisson distribution has one parameter, the mean. The variance of the distribution is also the mean. As the mean gets bigger, so does the variance.
 
 We can model count data using the `glm()` function with `family=poisson`. Let's model Fatalities as function of Phase and Cause.
 
@@ -133,7 +135,7 @@ We may wish to entertain an interaction between Phase and Cause. For example, th
 xtabs(~ Phase + Cause, data = AirCrash)
 ```
 
-Therefore we forego fitting an interaction.
+Therefore we forego the interaction. We do not want to model interactions that we did not observe.
 
 Let's add Year to the model. It appears to make a marginal contribution to explaining Fatalities.
 
@@ -142,7 +144,7 @@ m3 <- glm.nb(Fatalities ~ Phase + Cause + Year, data = AirCrash)
 car::Anova(m3)
 ```
 
-But now our model is in some sense restricted to summarizing data that happened between 1993 and 2015. (The interested reader may wish to verify that adding Year to the model doesn't appreciably change the rootogram.)
+The interested reader may wish to verify that adding Year to the model doesn't appreciably change the rootogram.
 
 Our final model summary is not easy to interpret.
 
@@ -150,36 +152,99 @@ Our final model summary is not easy to interpret.
 summary(m3)
 ```
 
-Effect plots can help us visualize the model.
+Effect plots can help us visualize the model. Using the `ggpredict()` and associated `plot()` function from the ggeffects package we plot expected counts given Cause and Phase. [@ggeffects]. It looks like expected fatalities are around 200 when the cause is criminal, but there is a great deal of uncertainty. All other expected counts are about 50. We should note these predictions are made holding Phase at "en route" and Year at 2000.
 
 ```{r}
 library(ggeffects)
 ggpredict(m3, terms = "Cause") |> plot()
 ```
 
+We can see this by calling `ggpredict()` without `plot()`.
+
+```{r}
+ggpredict(m3, terms = "Cause")
+```
+
+If we wanted to change the Phase and Year values, we could do so as follows:
+
+```{r}
+ggpredict(m3, terms = "Cause", 
+          condition = c(Phase = "landing", Year = 2005)) |> 
+  plot()
+```
+
+The expected counts are a little different, but the general theme remains: a criminal cause appears to have the potential for around 100 more fatalities than the other causes.
+
+When we visualize the effect of Phase we get an usually big confidence interval for "unknown".
+
 ```{r}
 ggpredict(m3, terms = "Phase") |> plot()
 ```
 
-The Year predictor seems to suggest there was a slightly positive trend in fatalities from 1993 - 2015.
+This is because we only have 3 observations of crashes in an unknown phase. We simply don't have enough data to estimate a count for that phase with any confidence. 
+
+The Year predictor seems to suggest there was a slightly positive trend in fatalities from 1993 - 2015 that could continue into the future. But the confidence band is so wide and uncertain that it's entirely possible the trend could stay steady or decline. 
 
 ```{r}
-ggpredict(m3, terms = "Year") |> plot()
+ggpredict(m3, terms = "Year") |> 
+  plot()
 ```
 
-However, if we add our observed data to the plot, we see this positive trend may be driven by two outlying values.
+Recall that `ggpredict()` is _adjusting_ for Cause and Phase when creating the above plot. The above plot is created holding Phase = "en route" and Cause = "criminal".
+
+Another way to create an effect plot is to hold Phase and Cause at their _mean values_. But how do you hold categorical variables at their mean levels? You simply take the proportions of each and plug into the model. The effects package does this for us. [@effects]
+
+First let's see the plot it creates. Notice this plot seems a little more certain. We also get a "rug" at the bottom of the plot to remind us how much data we have. We see we have fewer observations after 2010.
 
 ```{r}
-ggpredict(m3, terms = "Year") |> plot(add.data = TRUE)
+library(effects)
+Effect(focal.predictors = "Year", mod = m3) |>
+  plot()
 ```
 
-A sensitivity analysis.
+If we save the call to `Effect()` as an object, we can look at the "model.matrix" element to see what values Phase and Cause were held at.
 
 ```{r}
-AirCrash2 <- subset(AirCrash, Fatalities < 500)
-m4 <- glm.nb(Fatalities ~ Phase + Cause + Year, data = AirCrash2)
-ggpredict(m4, terms = "Year", ) |> plot(add.data = TRUE)
+e <- Effect(focal.predictors = "Year", mod = m3)
+e$model.matrix
 ```
+
+These values are simply the proportions of observations at each level. For example, compare the above values for Phase to the observed proportions of Phase in the data.
+
+```{r}
+table(AirCrash$Phase) |> proportions()
+```
+
+We see that "landing", "standing", "take-off", and "unknown" are held at their proportions. ("en route" is the reference level and not directly modeled.) While these values are not plausible in real life, they allow us to incorporate all their effects at proportional levels for the purpose of visualizing the effect of Year. Changing these values does not change the shape of the Year effect other than to shift it up or down the y-axis.
+
+The above plot was created with the lattice package [@lattice]. We can create the same plot in ggplot2 [@ggplot2] using the `ggeffect()` function from the ggeffects package. In fact the `ggeffect()` function simply uses the `Effect()` function from the effects package.
+
+```{r}
+ggeffect(m3, terms = "Year") |> 
+  plot()
+```
+
+While the effect plots give us some indication of how expected fatalities differ between Phase and Cause, they don't directly quantify how they differ. For this type of analysis we can use the emmeans package. [@emmeans] Below we estimate differences in expected fatalities between Phases using the `emmeans()` function. The syntax `pairwise ~ Phase` says to calculate all pairwise differences between the levels of Phase. The argument `regrid = "response"` says to calculate the differences on the original response scale, which is a count. Finally the `$contrasts` notation extracts just the contrasts. (Without `$contrasts` the result also includes estimated means at each level of Phase.) The largest significant difference is between "en route" and "standing", which estimates about 75 more fatalities for plans "en route" versus plans standing on a runway. That seems to make sense. 
+
+```{r}
+library(emmeans)
+emmeans(m3, pairwise ~ Phase, regrid = "response")$contrasts
+```
+
+We can also pipe this result into `plot()` to see the difference in expected values visualized along with 95% confidence intervals.
+
+```{r}
+emmeans(m3, pairwise ~ Phase, regrid = "response")$contrasts |>
+  plot()
+```
+
+To see the actual values of the 95% confidence intervals, we can pipe the result into the `confint()` function. The difference between "en route" and "standing" is plausibly anywhere between 45.3 and 104.6.
+
+```{r}
+emmeans(m3, pairwise ~ Phase, regrid = "response")$contrasts |>
+  confint()
+```
+
 
 
 ### Rate model
