@@ -493,7 +493,8 @@ Fatalities we can assess the analysis of deviance table using the
 <code>Anova()</code> function in the car package <span
 class="citation">(Fox and Weisberg 2019)</span>. It appears both explain
 a substantial amount of variability.</p>
-<pre class="r"><code>car::Anova(m)</code></pre>
+<pre class="r"><code>library(car)
+Anova(m)</code></pre>
 <pre><code>## Analysis of Deviance Table (Type II tests)
 ## 
 ## Response: Fatalities
@@ -566,7 +567,7 @@ interactions that we did not observe.</p>
 <p>Let’s add Year to the model. It appears to make a marginal
 contribution to explaining Fatalities.</p>
 <pre class="r"><code>m3 &lt;- glm.nb(Fatalities ~ Phase + Cause + Year, data = AirCrash)
-car::Anova(m3)</code></pre>
+Anova(m3)</code></pre>
 <pre><code>## Analysis of Deviance Table (Type II tests)
 ## 
 ## Response: Fatalities
@@ -578,7 +579,47 @@ car::Anova(m3)</code></pre>
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p>The interested reader may wish to verify that adding Year to the
 model doesn’t appreciably change the rootogram.</p>
-<p>Our final model summary is not easy to interpret.</p>
+<p>Diagnostic plots can help us assess if the model does a good job of
+representing the data. A useful diagnostic plot function,
+<code>influencePlot()</code>, is available in the car package. We simply
+give it our model object and it returns a scatter plot of Studentized
+Residuals versus Hat-Values (leverage), with point size mapped to Cook’s
+D (influence). By default the five most “noteworthy” points are labeled.
+The numbers refer to the row number in the data frame.</p>
+<pre class="r"><code>influencePlot(m3)</code></pre>
+<p><img src="cm_files/figure-html/unnamed-chunk-17-1.png" width="672" /></p>
+<pre><code>##        StudRes        Hat       CookD
+## 14   2.4499231 0.02360668 0.072971602
+## 222  2.9897351 0.04688623 0.232270205
+## 437 -0.2380636 0.34328385 0.003153681
+## 438 -1.8694688 0.34423047 0.055350359
+## 439  0.9817622 0.34111672 0.083016892</code></pre>
+<ul>
+<li><strong>Studentized Residuals</strong>: This is the scaled
+difference between the response for case <em>i</em> and the fitted value
+<em>computed without case</em> <em>i</em>. This can help identify
+outliers that might not otherwise be identified because they’re so
+influential they produce a model in which they’re not an outlier. High
+values indicate a big difference between what we observed and what our
+model predicts.</li>
+<li><strong>Hat-Values</strong>: This measures how far cases are away
+from the center of the predictor space. In other words, these are
+predictors with high values that could influence the fit of the model.
+High values could mean a case is exerting undue leverage on the fit of
+the model.</li>
+<li><strong>Cook’s D</strong>: This is a measure of influence. High
+values could indicate a case is unduly influencing the model
+coefficients.</li>
+</ul>
+<p>Row 222 has the highest Cook’s D value and Residual. This one of the
+planes that were crashed en route on September 11, 2001.</p>
+<pre class="r"><code>AirCrash[222,]</code></pre>
+<pre><code>##        Phase    Cause       date Fatalities Year
+## 222 en route criminal 2001-09-11       1692 2001</code></pre>
+<p>When cases appear to have high leverage or influence, we may want to
+re-fit the model without them (one at a time) to see if the results
+change. In this case we choose to use all available data.</p>
+<p>Our final model summary is as follows:</p>
 <pre class="r"><code>summary(m3)</code></pre>
 <pre><code>## 
 ## Call:
@@ -617,7 +658,28 @@ model doesn’t appreciably change the rootogram.</p>
 ##           Std. Err.:  0.0443 
 ## 
 ##  2 x log-likelihood:  -4185.7620</code></pre>
-<p>Effect plots can help us visualize the model. Using the
+<p>Since Phase and Cause have five levels each, both have four
+coefficients. The reference levels are “en route” and “criminal”,
+respectively. The coefficients for the other levels are relative to the
+reference levels. For example, the coefficient for “standing” Phase is
+about -3.58. This says the expected <em>log count</em> of Fatalities
+when Phase is “standing” is about 3.58 less than when Phase is “en
+route”, all other variables held constant.</p>
+<p>Log counts are hard to understand. If we exponentiate we get a
+multiplicative interpretation.</p>
+<pre class="r"><code>exp(coef(m3)[&quot;Phasestanding&quot;])</code></pre>
+<pre><code>## Phasestanding 
+##    0.02776239</code></pre>
+<p>This says the expected count of Fatalities when Phase is “standing”
+is about 1 - 0.03 = 97% less than the expected count when Phase is “en
+route”, all other variables held constant.</p>
+<p>Exponentiating the Year coefficient returns the following:</p>
+<pre class="r"><code>exp(coef(m3)[&quot;Year&quot;])</code></pre>
+<pre><code>##     Year 
+## 1.024835</code></pre>
+<p>This says air crash Fatalities increased by about 2% each year from
+1993 - 2015.</p>
+<p>Effect plots can help us visualize our count model. Using the
 <code>ggpredict()</code> and associated <code>plot()</code> function
 from the ggeffects package we plot expected counts given Cause and
 Phase. <span class="citation">(Lüdecke 2018)</span>. It looks like
@@ -627,7 +689,7 @@ We should note these predictions are made holding Phase at “en route”
 and Year at 2000.</p>
 <pre class="r"><code>library(ggeffects)
 ggpredict(m3, terms = &quot;Cause&quot;) |&gt; plot()</code></pre>
-<p><img src="cm_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
+<p><img src="cm_files/figure-html/unnamed-chunk-22-1.png" width="672" /></p>
 <p>We can see this by calling <code>ggpredict()</code> without
 <code>plot()</code>.</p>
 <pre class="r"><code>ggpredict(m3, terms = &quot;Cause&quot;)</code></pre>
@@ -649,14 +711,14 @@ follows:</p>
 <pre class="r"><code>ggpredict(m3, terms = &quot;Cause&quot;, 
           condition = c(Phase = &quot;landing&quot;, Year = 2005)) |&gt; 
   plot()</code></pre>
-<p><img src="cm_files/figure-html/unnamed-chunk-20-1.png" width="672" /></p>
+<p><img src="cm_files/figure-html/unnamed-chunk-24-1.png" width="672" /></p>
 <p>The expected counts are a little different, but the general theme
 remains: a criminal cause appears to have the potential for around 100
 more fatalities than the other causes.</p>
 <p>When we visualize the effect of Phase we get an usually big
 confidence interval for “unknown”.</p>
 <pre class="r"><code>ggpredict(m3, terms = &quot;Phase&quot;) |&gt; plot()</code></pre>
-<p><img src="cm_files/figure-html/unnamed-chunk-21-1.png" width="672" /></p>
+<p><img src="cm_files/figure-html/unnamed-chunk-25-1.png" width="672" /></p>
 <p>This is because we only have 3 observations of crashes in an unknown
 phase. We simply don’t have enough data to estimate a count for that
 phase with any confidence.</p>
@@ -666,7 +728,7 @@ future. But the confidence band is so wide and uncertain that it’s
 entirely possible the trend could stay steady or decline.</p>
 <pre class="r"><code>ggpredict(m3, terms = &quot;Year&quot;) |&gt; 
   plot()</code></pre>
-<p><img src="cm_files/figure-html/unnamed-chunk-22-1.png" width="672" /></p>
+<p><img src="cm_files/figure-html/unnamed-chunk-26-1.png" width="672" /></p>
 <p>Recall that <code>ggpredict()</code> is <em>adjusting</em> for Cause
 and Phase when creating the above plot. The above plot is created
 holding Phase = “en route” and Cause = “criminal”.</p>
@@ -681,7 +743,7 @@ how much data we have. We see we have fewer observations after 2010.</p>
 <pre class="r"><code>library(effects)
 Effect(focal.predictors = &quot;Year&quot;, mod = m3) |&gt;
   plot()</code></pre>
-<p><img src="cm_files/figure-html/unnamed-chunk-23-1.png" width="672" /></p>
+<p><img src="cm_files/figure-html/unnamed-chunk-27-1.png" width="672" /></p>
 <p>If we save the call to <code>Effect()</code> as an object, we can
 look at the “model.matrix” element to see what values Phase and Cause
 were held at.</p>
@@ -729,7 +791,7 @@ ggplot2 <span class="citation">(Wickham 2016)</span> using the
 function from the effects package.</p>
 <pre class="r"><code>ggeffect(m3, terms = &quot;Year&quot;) |&gt; 
   plot()</code></pre>
-<p><img src="cm_files/figure-html/unnamed-chunk-26-1.png" width="672" /></p>
+<p><img src="cm_files/figure-html/unnamed-chunk-30-1.png" width="672" /></p>
 <p>While the effect plots give us some indication of how expected
 fatalities differ between Phase and Cause, they don’t directly quantify
 how they differ. For this type of analysis we can use the emmeans
@@ -767,7 +829,7 @@ difference in expected values visualized along with 95% confidence
 intervals.</p>
 <pre class="r"><code>emmeans(m3, pairwise ~ Phase, regrid = &quot;response&quot;)$contrasts |&gt;
   plot()</code></pre>
-<p><img src="cm_files/figure-html/unnamed-chunk-28-1.png" width="672" /></p>
+<p><img src="cm_files/figure-html/unnamed-chunk-32-1.png" width="672" /></p>
 <p>To see the actual values of the 95% confidence intervals, we can pipe
 the result into the <code>confint()</code> function. The difference
 between “en route” and “standing” is plausibly anywhere between 45.3 and

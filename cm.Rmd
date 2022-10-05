@@ -100,7 +100,8 @@ m <- glm(Fatalities ~ Phase + Cause, data = AirCrash, family = poisson)
 To determine if Phase and/or Cause helps explain the variability in Fatalities we can assess the analysis of deviance table using the `Anova()` function in the car package [@car]. It appears both explain a substantial amount of variability.
 
 ```{r}
-car::Anova(m)
+library(car)
+Anova(m)
 ```
 
 The `drop1()` function in the stats package performs the same tests and includes information on the change in AIC if we drop the variable. For example, if we drop Cause from the model, the AIC increases from 35036 to 38111. Recall that lower AIC is desirable. 
@@ -141,18 +142,54 @@ Let's add Year to the model. It appears to make a marginal contribution to expla
 
 ```{r}
 m3 <- glm.nb(Fatalities ~ Phase + Cause + Year, data = AirCrash)
-car::Anova(m3)
+Anova(m3)
 ```
 
 The interested reader may wish to verify that adding Year to the model doesn't appreciably change the rootogram.
 
-Our final model summary is not easy to interpret.
+Diagnostic plots can help us assess if the model does a good job of representing the data. A useful diagnostic plot function, `influencePlot()`, is available in the car package. We simply give it our model object and it returns a scatter plot of Studentized Residuals versus Hat-Values (leverage), with point size mapped to Cook's D (influence). By default the five most "noteworthy" points are labeled. The numbers refer to the row number in the data frame.
+
+```{r}
+influencePlot(m3)
+```
+
+- **Studentized Residuals**: This is the scaled difference between the response for case _i_ and the fitted value _computed without case_ _i_. This can help identify outliers that might not otherwise be identified because they're so influential they produce a model in which they're not an outlier. High values indicate a big difference between what we observed and what our model predicts.
+- **Hat-Values**: This measures how far cases are away from the center of the predictor space. In other words, these are predictors with high values that could influence the fit of the model. High values could mean a case is exerting undue leverage on the fit of the model.
+- **Cook's D**: This is a measure of influence. High values could indicate a case is unduly influencing the model coefficients.
+
+Row 222 has the highest Cook's D value and Residual. This one of the planes that were crashed en route on September 11, 2001.
+
+```{r}
+AirCrash[222,]
+```
+
+When cases appear to have high leverage or influence, we may want to re-fit the model without them (one at a time) to see if the results change. In this case we choose to use all available data.
+
+Our final model summary is as follows:
 
 ```{r}
 summary(m3)
 ```
 
-Effect plots can help us visualize the model. Using the `ggpredict()` and associated `plot()` function from the ggeffects package we plot expected counts given Cause and Phase. [@ggeffects]. It looks like expected fatalities are around 200 when the cause is criminal, but there is a great deal of uncertainty. All other expected counts are about 50. We should note these predictions are made holding Phase at "en route" and Year at 2000.
+Since Phase and Cause have five levels each, both have four coefficients. The reference levels are "en route" and "criminal", respectively. The coefficients for the other levels are relative to the reference levels. For example, the coefficient for "standing" Phase is about -3.58. This says the expected _log count_ of Fatalities when Phase is "standing" is about 3.58 less than when Phase is "en route", all other variables held constant. 
+
+Log counts are hard to understand. If we exponentiate we get a multiplicative interpretation.
+
+```{r}
+exp(coef(m3)["Phasestanding"])
+```
+
+This says the expected count of Fatalities when Phase is "standing" is about 1 - 0.03 = 97% less than the expected count when Phase is "en route", all other variables held constant.
+
+Exponentiating the Year coefficient returns the following:
+
+```{r}
+exp(coef(m3)["Year"])
+```
+
+This says air crash Fatalities increased by about 2% each year from 1993 - 2015.
+
+Effect plots can help us visualize our count model. Using the `ggpredict()` and associated `plot()` function from the ggeffects package we plot expected counts given Cause and Phase. [@ggeffects]. It looks like expected fatalities are around 200 when the cause is criminal, but there is a great deal of uncertainty. All other expected counts are about 50. We should note these predictions are made holding Phase at "en route" and Year at 2000.
 
 ```{r}
 library(ggeffects)
