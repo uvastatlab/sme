@@ -422,7 +422,7 @@ What we observed – and all that we can observe – was one possible
 outcome. Therefore, we might use the data to estimate what the future
 holds. We take the latter approach.</p>
 <p>The Fatalities variable is our dependent variable. It records the
-number of fatalities per crash. This is count variable; it only takes
+number of fatalities per crash. This is a count variable; it only takes
 integer values greater than or equal to 0. We can see the distribution
 of Fatalities is severely skewed by some large crashes. Notice the mean
 is over twice as large as the median. We also notice there are no
@@ -521,9 +521,9 @@ increases from 35036 to 38111. Recall that lower AIC is desirable.</p>
 <p>While both variables seem highly “significant” we should assess the
 model’s goodness of fit. One effective way to do this for count models
 is creating a rootogram with the countreg package <span
-class="citation">(C and A 2016)</span>. The tops of the bars are the
-<em>expected frequencies</em> of the counts given the model. The counts
-are plotted on the square-root scale to help visualize smaller
+class="citation">(Kleiber and Zeileis 2016)</span>. The tops of the bars
+are the <em>expected frequencies</em> of the counts given the model. The
+counts are plotted on the square-root scale to help visualize smaller
 frequencies. The red line shows the fitted frequencies as a smooth
 curve. The x-axis is a horizontal reference line. Bars that hang below
 the line show underfitting, bars that hang above show overfitting. We
@@ -873,11 +873,6 @@ data(&quot;esdcomp&quot;)</code></pre>
 <div id="references" class="section level3 unnumbered">
 <h3 class="unnumbered">References</h3>
 <div id="refs" class="references csl-bib-body hanging-indent">
-<div id="ref-rootograms" class="csl-entry">
-C, Kleiber, and Zeileis A. 2016. <span>“Visualizing Count Data
-Regressions Using Rootograms,”</span> 296–303. <a
-href="https://doi.org/10.1080/00031305.2016.1173590">https://doi.org/10.1080/00031305.2016.1173590</a>.
-</div>
 <div id="ref-faraway_book" class="csl-entry">
 Faraway, Julian. 2006. <em>Extending the Linear Model with
 <span>R</span></em>. CRC press. <a
@@ -908,6 +903,11 @@ href="https://CRAN.R-project.org/package=vcdExtra">https://CRAN.R-project.org/pa
 <div id="ref-friendly2016" class="csl-entry">
 Friendly, Michael, and David Meyer. 2016. <em>Discrete Data Analysis
 with <span>R</span></em>. Boca Raton: <span>CRC</span> Press.
+</div>
+<div id="ref-rootograms" class="csl-entry">
+Kleiber, C, and A Zeileis. 2016. <span>“Visualizing Count Data
+Regressions Using Rootograms,”</span> 296–303. <a
+href="https://doi.org/10.1080/00031305.2016.1173590">https://doi.org/10.1080/00031305.2016.1173590</a>.
 </div>
 <div id="ref-emmeans" class="csl-entry">
 Lenth, Russell V. 2022. <em>Emmeans: Estimated Marginal Means, Aka

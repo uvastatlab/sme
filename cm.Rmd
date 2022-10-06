@@ -29,7 +29,7 @@ str(AirCrash)
 
 An interesting aspect of this data is that it is technically not a sample. We have _all the data_. We could argue that no inferential statistics or modeling is necessary. We should simply summarize and describe the data. On the other hand, we could argue that the data we have is just one of many possible outcomes from a population of possibilities. We can't rewind time and take another sample, but we can imagine that there were many possible outcomes from 1993 to 2015. What we observed -- and all that we can observe -- was one possible outcome. Therefore, we might use the data to estimate what the future holds. We take the latter approach.
 
-The Fatalities variable is our dependent variable. It records the number of fatalities per crash. This is count variable; it only takes integer values greater than or equal to 0. We can see the distribution of Fatalities is severely skewed by some large crashes. Notice the mean is over twice as large as the median. We also notice there are no commercial airplane crashes with 0 fatalities.
+The Fatalities variable is our dependent variable. It records the number of fatalities per crash. This is a count variable; it only takes integer values greater than or equal to 0. We can see the distribution of Fatalities is severely skewed by some large crashes. Notice the mean is over twice as large as the median. We also notice there are no commercial airplane crashes with 0 fatalities.
 
 ```{r}
 summary(AirCrash$Fatalities)
@@ -157,7 +157,7 @@ influencePlot(m3)
 - **Hat-Values**: This measures how far cases are away from the center of the predictor space. In other words, these are predictors with high values that could influence the fit of the model. High values could mean a case is exerting undue leverage on the fit of the model.
 - **Cook's D**: This is a measure of influence. High values could indicate a case is unduly influencing the model coefficients.
 
-Row 222 has the highest Cook's D value and Residual. This one of the planes that were crashed en route on September 11, 2001.
+Row 222 has the highest Cook's D value and Residual. This is one of the planes that was crashed en route on September 11, 2001.
 
 ```{r}
 AirCrash[222,]
