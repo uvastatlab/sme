@@ -611,8 +611,8 @@ the model.</li>
 values could indicate a case is unduly influencing the model
 coefficients.</li>
 </ul>
-<p>Row 222 has the highest Cook’s D value and Residual. This one of the
-planes that were crashed en route on September 11, 2001.</p>
+<p>Row 222 has the highest Cook’s D value and Residual. This is one of
+the planes that was crashed en route on September 11, 2001.</p>
 <pre class="r"><code>AirCrash[222,]</code></pre>
 <pre><code>##        Phase    Cause       date Fatalities Year
 ## 222 en route criminal 2001-09-11       1692 2001</code></pre>
@@ -865,7 +865,31 @@ affecting the number of complaints received. Build a model for the
 data(&quot;esdcomp&quot;)</code></pre>
 </div>
 <div id="negative-binomial-model" class="section level3">
-<h3>Negative-Binomial model</h3>
+<h3>Negative binomial model</h3>
+<p><em>Categorical Data Analysis 2nd ed</em> <span
+class="citation">(Agresti 2002)</span> presents data on nesting
+horseshoe crabs. Each record represents one female crab with a male crab
+resident in her nest. Of interest is the number of additional male crabs
+residing nearby, called “satellites”. Potential variables that might
+explain the number of satellites include the color of the female crab
+(<code>color</code>), the spine condition (<code>spine</code>), <a
+href="https://www.fiddlercrab.info/morphology/Carapace.html">carapace</a>
+width in cm (<code>width</code>), and the weight of the crab in kg
+(<code>weight</code>).</p>
+<p>The color and spine variables are categorical with levels defined as
+follows:</p>
+<pre class="r"><code>crabs &lt;- read.csv(&quot;data/crabs.csv&quot;)
+crabs$color &lt;- factor(crabs$color, 
+                      labels = c(&quot;light medium&quot;, 
+                                 &quot;medium&quot;, 
+                                 &quot;dark medium&quot;, 
+                                 &quot;dark&quot;))
+crabs$spine &lt;- factor(crabs$spine, 
+                      labels = c(&quot;both good&quot;,
+                                 &quot;one worn or broken&quot;,
+                                 &quot;both worn or broken&quot;))</code></pre>
+<p>Fit a negative binomial regression model to the data using width and
+color as predictors. (Agresti 2002, problem 13.16)</p>
 </div>
 <div id="zero-inflated-model" class="section level3">
 <h3>Zero-Inflated model</h3>
@@ -873,6 +897,9 @@ data(&quot;esdcomp&quot;)</code></pre>
 <div id="references" class="section level3 unnumbered">
 <h3 class="unnumbered">References</h3>
 <div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-agresti" class="csl-entry">
+Agresti, Alan. 2002. <em>Categorical Data Analysis</em>. Wiley.
+</div>
 <div id="ref-faraway_book" class="csl-entry">
 Faraway, Julian. 2006. <em>Extending the Linear Model with
 <span>R</span></em>. CRC press. <a

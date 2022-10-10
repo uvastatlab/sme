@@ -295,7 +295,27 @@ data("esdcomp")
 ```
 
 
-### Negative-Binomial model
+### Negative binomial model
+
+_Categorical Data Analysis 2nd ed_ [@agresti] presents data on nesting horseshoe crabs. Each record represents one female crab with a male crab resident in her nest. Of interest is the number of additional male crabs residing nearby, called "satellites". Potential variables that might explain the number of satellites include the color of the female crab (`color`), the spine condition (`spine`), [carapace](https://www.fiddlercrab.info/morphology/Carapace.html) width in cm (`width`), and the weight of the crab in kg (`weight`).
+
+The color and spine variables are categorical with levels defined as follows:
+
+```{r}
+crabs <- read.csv("data/crabs.csv")
+crabs$color <- factor(crabs$color, 
+                      labels = c("light medium", 
+                                 "medium", 
+                                 "dark medium", 
+                                 "dark"))
+crabs$spine <- factor(crabs$spine, 
+                      labels = c("both good",
+                                 "one worn or broken",
+                                 "both worn or broken"))
+```
+
+Fit a negative binomial regression model to the data using width and color as predictors. (Agresti 2002, problem 13.16)
+
 
 
 ### Zero-Inflated model
