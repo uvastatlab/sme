@@ -297,18 +297,18 @@ data("esdcomp")
 
 ### Negative binomial model
 
-_Categorical Data Analysis 2nd ed_ [@agresti] presents data on nesting horseshoe crabs. Each record represents one female crab with a male crab resident in her nest. Of interest is the number of additional male crabs residing nearby, called "satellites". Potential variables that might explain the number of satellites include the color of the female crab (`color`), the spine condition (`spine`), [carapace](https://www.fiddlercrab.info/morphology/Carapace.html) width in cm (`width`), and the weight of the crab in kg (`weight`).
+_Categorical Data Analysis 2nd ed_ [@agresti] presents data on nesting horseshoe crabs. Each record represents one female crab with a male crab resident in her nest. Of interest is the number of additional male crabs residing nearby, called "satellites" (`satell`). Potential variables that might explain the number of satellites include the color of the female crab (`color`), the spine condition (`spine`), [carapace](https://www.fiddlercrab.info/morphology/Carapace.html) width in cm (`width`), and the weight of the crab in kg (`weight`).
 
 The color and spine variables are categorical with levels defined as follows:
 
 ```{r}
-crabs <- read.csv("data/crabs.csv")
-crabs$color <- factor(crabs$color, 
+hsc <- read.csv("data/crabs.csv")
+hsc$color <- factor(hsc$color, 
                       labels = c("light medium", 
                                  "medium", 
                                  "dark medium", 
                                  "dark"))
-crabs$spine <- factor(crabs$spine, 
+hsc$spine <- factor(hsc$spine, 
                       labels = c("both good",
                                  "one worn or broken",
                                  "both worn or broken"))
@@ -316,9 +316,106 @@ crabs$spine <- factor(crabs$spine,
 
 Fit a negative binomial regression model to the data using width and color as predictors. (Agresti 2002, problem 13.16)
 
+To begin let's explore the data. Our variable of interest, `satell`, ranges from 0 to 15 with a fair amount of zeroes.
+
+```{r}
+summary(hsc$satell)
+```
+
+In fact over a third of the crabs had 0 satellites.
+
+```{r}
+mean(hsc$satell == 0)
+```
+
+Instead of a histogram, we generate a barplot of counts. In addition to the spike at 0 we see an interesting dip at 2.
+
+```{r}
+table(hsc$satell)|> barplot()
+```
+
+Most crabs are medium color.
+
+```{r}
+summary(hsc$color)
+```
+
+The median number of satellites by color increases as coloring of the crab gets lighter.
+
+```{r}
+library(ggplot2)
+ggplot(hsc) +
+  aes(x = satell, y = color) + 
+  geom_boxplot(outlier.shape = NA) +
+  geom_jitter(width = 0, height = 0.1, alpha = 1/2) 
+```
+
+It appears number of satellites has a positive association with width of the female crab.
+
+```{r}
+ggplot(hsc) +
+  aes(x = width, y = satell) + 
+  geom_point() +
+  geom_smooth(se = FALSE)
+```
+
+However it appears the positive relationship between width and number of satellites may change depending on color of the crab.
+
+```{r}
+ggplot(hsc) +
+  aes(x = width, y = satell) + 
+  geom_point() +
+  geom_smooth(se = FALSE) +
+  facet_wrap(~ color)
+
+```
+
+
+```{r}
+library(MASS)
+m <- glm.nb(satell ~ width * color, data = hsc)
+drop1(m, test = "F")
+```
+
+```{r}
+m2 <- glm.nb(satell ~ width + color, data = hsc)
+drop1(m2, test = "F")
+```
+
+
+```{r}
+library(car)
+densityPlot(hsc$satell, from = 0, to = 15, normalize=TRUE)
+sim <- simulate(m, nsim = 50)
+for(i in 1:50)lines(density(sim[[i]], from=0), col = "grey90")
+```
+
+
+```{r}
+library(countreg)
+rootogram(m2)
+```
+
+
+```{r}
+library(ggeffects)
+ggeffect(m2, terms = "width") |> plot()
+```
+
+Interpret the coefficient.
+
+```{r}
+Confint(m2, exponentiate = TRUE)
+```
+
+
 
 
 ### Zero-Inflated model
+
+
+
+
 
 
 
