@@ -340,7 +340,7 @@ Most crabs are medium color.
 summary(hsc$color)
 ```
 
-The median number of satellites by color increases as coloring of the crab gets lighter.
+The median number of satellites increases as coloring of the crab gets lighter.
 
 ```{r}
 library(ggplot2)
@@ -350,7 +350,7 @@ ggplot(hsc) +
   geom_jitter(width = 0, height = 0.1, alpha = 1/2) 
 ```
 
-It appears number of satellites has a positive association with width of the female crab.
+It also appears number of satellites has a weak positive association with width of the female crab.
 
 ```{r}
 ggplot(hsc) +
@@ -370,53 +370,149 @@ ggplot(hsc) +
 
 ```
 
+To fit the negative binomial model we'll use the `glm.nb()` function from the MASS package. [@MASS] We model satell as a function of width, color and their interaction. The syntax `width * color` is shorthand for `width + color + width:color`. Before we inspect the model summary we use the `Anova()` function from the car package to assess the interaction. 
 
 ```{r}
 library(MASS)
+library(car)
 m <- glm.nb(satell ~ width * color, data = hsc)
-drop1(m, test = "F")
+Anova(m, test = "F")
 ```
+
+The low F value and high p-value for the `width:color` term indicates the interaction adds little value to the model. The null hypothesis of the test in this case is that the model without the interaction and the model with interaction fit equally well. We fail to reject that hypothesis given the evidence. 
+
+We therefore proceed to fitting a simpler model without the interaction. There is no requirement we do this, but a model without an interaction can be easier to interpret. Again we look at the Analysis of Deviance Table and associated tests using the `Anova()` function. The F value is very low for the color term. The null hypothesis is that a model with width and color fits as well as a model with with just width. There appears to be no evidence to reject this hypothesis. However we'll retain this term in the model going forward. 
 
 ```{r}
 m2 <- glm.nb(satell ~ width + color, data = hsc)
-drop1(m2, test = "F")
+Anova(m2, test = "F")
 ```
 
+Before we interpret the model let's assess the fit. A good model should generate data that's similar to the data used to fit the model. Below we use the `densityPlot()` function from the car package to plot a smooth histogram of the observed counts. That's the solid dark line. We see the spike of zeroes and the little bump at 4. Next we use the `simulate()` function to generate 50 sets of data from our model. The result is a data frame we named "sim". Then we use a for loop with the `lines()` function to plot smooth histograms of the 50 simulated data sets. 
 
 ```{r}
-library(car)
 densityPlot(hsc$satell, from = 0, to = 15, normalize=TRUE)
 sim <- simulate(m, nsim = 50)
 for(i in 1:50)lines(density(sim[[i]], from=0), col = "grey90")
 ```
 
+Notice we're underpredicting 0 counts and in the range of 3 - 6. We're also overpredicting in the area of 1 and 2.
+
+Another type of fit assessment for count models can be performed with a rootogram. The tops of the bars are the _expected frequencies_ of the counts given the model. The counts are plotted on the square-root scale to help visualize smaller frequencies. The red line shows the fitted frequencies as a smooth curve. The x-axis is a horizontal reference line. Bars that hang below the line show underpredicting, bars that hang above show overpredicting. We see our model is ill-fitting for satellites in the 0 - 6 range, but not too bad for the higher counts.
 
 ```{r}
 library(countreg)
 rootogram(m2)
 ```
 
+Using the `Confint()` function (from the car package) with `exponentiate = TRUE` returns the multiplicative effect of the coefficients. For example it appears that for every 1 cm increase in carapace width results in about a 20% increase in counts (95% CI: [8, 31]).
+
+```{r}
+Confint(m2, exponentiate = TRUE)
+```
+
+We can visualize this effect using the ggeffects package [@ggeffects]. Below we use the `ggeffect()` function to make predictions of satel for various values of width, holding color at the proportional values. We see our estimate becomes very uncertain past 28 cm since we have few horseshoe crabs that wide.
 
 ```{r}
 library(ggeffects)
 ggeffect(m2, terms = "width") |> plot()
 ```
 
-Interpret the coefficient.
+A similar plot can be made for color that suggests a light medium color may lead to more satellites, but we're very uncertain about that given how few crabs we have of that color (only 12 out of 173). 
 
 ```{r}
-Confint(m2, exponentiate = TRUE)
+ggeffect(m2, terms = "color") |> plot()
 ```
-
-
 
 
 ### Zero-Inflated model
 
+The horseshoe crab data, analyzed in the previous example (Negative Binomial model), appeared to have a surplus of zeroes. One approach to modeling data of this nature is to entertain a _mixture model_. This is a model that uses a mix of two models to approximate the data generating process. A zero-inflated model is a mixture of two models:
+
+1. a binary logistic regression model for zeroes. 
+2. a count model for zeroes and positive values. 
+
+This model basically says there are two types of female horseshoe crabs:
+
+1. some that will never have satellites (for whatever reason). Their counts will _always_ be 0.
+2. some that can have satellites but may not. Their count _could_ be 0.
+
+Let's read in the data and investigate the zeroes.
+
+```{r}
+hsc <- read.csv("data/crabs.csv")
+hsc$color <- factor(hsc$color, 
+                      labels = c("light medium", 
+                                 "medium", 
+                                 "dark medium", 
+                                 "dark"))
+hsc$spine <- factor(hsc$spine, 
+                      labels = c("both good",
+                                 "one worn or broken",
+                                 "both worn or broken"))
+```
+
+```{r}
+table(hsc$satell) |> 
+  plot(type = "h")
+```
 
 
+```{r}
+table(hsc$color, hsc$satell == 0) |> 
+  mosaicplot(shade = TRUE)
+```
 
 
+```{r}
+hsc$zero <- as.numeric(hsc$satell == 0)
+glm(zero ~ width, data = hsc, family = binomial) |>
+  summary()
+```
+
+
+```{r}
+glm(zero ~ width, data = hsc, family = binomial) |>
+  ggeffect("width") |>
+  plot()
+```
+
+
+```{r}
+library(pscl)
+library(splines)
+zm <- zeroinfl(satell ~ ns(width, 3) + color | 1, 
+               data = hsc, dist = "negbin")
+zm1 <- zeroinfl(satell ~ ns(width, 3) + color | width, 
+                data = hsc, dist = "negbin")
+zm2 <- zeroinfl(satell ~ ns(width, 3) + color | color, 
+                data = hsc, dist = "negbin")
+zm3 <- zeroinfl(satell ~ ns(width, 3) + color | width + color, 
+                data = hsc, dist = "negbin")
+zm4 <- zeroinfl(satell ~ ns(width, 3) + color, 
+                data = hsc, dist = "negbin")
+
+AIC(zm, zm1, zm2, zm3, zm4)
+
+```
+
+Model zm1 appears to give us the most bang for the buck.
+
+```{r}
+rootogram(zm1)
+```
+
+
+```{r}
+ggpredict(zm1, terms = "width [all]", type = "zero_inflated") |> 
+  plot()
+```
+
+This model improves on the negative binomial model.
+
+```{r}
+AIC(zm1, m2)
+```
 
 
 ### References

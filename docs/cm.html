@@ -870,29 +870,271 @@ data(&quot;esdcomp&quot;)</code></pre>
 class="citation">(Agresti 2002)</span> presents data on nesting
 horseshoe crabs. Each record represents one female crab with a male crab
 resident in her nest. Of interest is the number of additional male crabs
-residing nearby, called “satellites”. Potential variables that might
-explain the number of satellites include the color of the female crab
-(<code>color</code>), the spine condition (<code>spine</code>), <a
+residing nearby, called “satellites” (<code>satell</code>). Potential
+variables that might explain the number of satellites include the color
+of the female crab (<code>color</code>), the spine condition
+(<code>spine</code>), <a
 href="https://www.fiddlercrab.info/morphology/Carapace.html">carapace</a>
 width in cm (<code>width</code>), and the weight of the crab in kg
 (<code>weight</code>).</p>
 <p>The color and spine variables are categorical with levels defined as
 follows:</p>
-<pre class="r"><code>crabs &lt;- read.csv(&quot;data/crabs.csv&quot;)
-crabs$color &lt;- factor(crabs$color, 
+<pre class="r"><code>hsc &lt;- read.csv(&quot;data/crabs.csv&quot;)
+hsc$color &lt;- factor(hsc$color, 
                       labels = c(&quot;light medium&quot;, 
                                  &quot;medium&quot;, 
                                  &quot;dark medium&quot;, 
                                  &quot;dark&quot;))
-crabs$spine &lt;- factor(crabs$spine, 
+hsc$spine &lt;- factor(hsc$spine, 
                       labels = c(&quot;both good&quot;,
                                  &quot;one worn or broken&quot;,
                                  &quot;both worn or broken&quot;))</code></pre>
 <p>Fit a negative binomial regression model to the data using width and
 color as predictors. (Agresti 2002, problem 13.16)</p>
+<p>To begin let’s explore the data. Our variable of interest,
+<code>satell</code>, ranges from 0 to 15 with a fair amount of
+zeroes.</p>
+<pre class="r"><code>summary(hsc$satell)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##   0.000   0.000   2.000   2.919   5.000  15.000</code></pre>
+<p>In fact over a third of the crabs had 0 satellites.</p>
+<pre class="r"><code>mean(hsc$satell == 0)</code></pre>
+<pre><code>## [1] 0.3583815</code></pre>
+<p>Instead of a histogram, we generate a barplot of counts. In addition
+to the spike at 0 we see an interesting dip at 2.</p>
+<pre class="r"><code>table(hsc$satell)|&gt; barplot()</code></pre>
+<p><img src="cm_files/figure-html/unnamed-chunk-38-1.png" width="672" /></p>
+<p>Most crabs are medium color.</p>
+<pre class="r"><code>summary(hsc$color)</code></pre>
+<pre><code>## light medium       medium  dark medium         dark 
+##           12           95           44           22</code></pre>
+<p>The median number of satellites increases as coloring of the crab
+gets lighter.</p>
+<pre class="r"><code>library(ggplot2)
+ggplot(hsc) +
+  aes(x = satell, y = color) + 
+  geom_boxplot(outlier.shape = NA) +
+  geom_jitter(width = 0, height = 0.1, alpha = 1/2) </code></pre>
+<p><img src="cm_files/figure-html/unnamed-chunk-40-1.png" width="672" /></p>
+<p>It also appears number of satellites has a weak positive association
+with width of the female crab.</p>
+<pre class="r"><code>ggplot(hsc) +
+  aes(x = width, y = satell) + 
+  geom_point() +
+  geom_smooth(se = FALSE)</code></pre>
+<p><img src="cm_files/figure-html/unnamed-chunk-41-1.png" width="672" /></p>
+<p>However it appears the positive relationship between width and number
+of satellites may change depending on color of the crab.</p>
+<pre class="r"><code>ggplot(hsc) +
+  aes(x = width, y = satell) + 
+  geom_point() +
+  geom_smooth(se = FALSE) +
+  facet_wrap(~ color)</code></pre>
+<p><img src="cm_files/figure-html/unnamed-chunk-42-1.png" width="672" /></p>
+<p>To fit the negative binomial model we’ll use the
+<code>glm.nb()</code> function from the MASS package. <span
+class="citation">(Venables and Ripley 2002)</span> We model satell as a
+function of width, color and their interaction. The syntax
+<code>width * color</code> is shorthand for
+<code>width + color + width:color</code>. Before we inspect the model
+summary we use the <code>Anova()</code> function from the car package to
+assess the interaction.</p>
+<pre class="r"><code>library(MASS)
+library(car)
+m &lt;- glm.nb(satell ~ width * color, data = hsc)
+Anova(m, test = &quot;F&quot;)</code></pre>
+<pre><code>## Analysis of Deviance Table (Type II tests)
+## 
+## Response: satell
+## Error estimate based on Pearson residuals 
+## 
+##              Sum Sq  Df F value    Pr(&gt;F)    
+## width        14.744   1 15.1595 0.0001432 ***
+## color         2.774   3  0.9507 0.4175644    
+## width:color   2.100   3  0.7196 0.5416109    
+## Residuals   160.483 165                      
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p>The low F value and high p-value for the <code>width:color</code>
+term indicates the interaction adds little value to the model. The null
+hypothesis of the test in this case is that the model without the
+interaction and the model with interaction fit equally well. We fail to
+reject that hypothesis given the evidence.</p>
+<p>We therefore proceed to fitting a simpler model without the
+interaction. There is no requirement we do this, but a model without an
+interaction can be easier to interpret. Again we look at the Analysis of
+Deviance Table and associated tests using the <code>Anova()</code>
+function. The F value is very low for the color term. The null
+hypothesis is that a model with width and color fits as well as a model
+with with just width. There appears to be no evidence to reject this
+hypothesis. However we’ll retain this term in the model going
+forward.</p>
+<pre class="r"><code>m2 &lt;- glm.nb(satell ~ width + color, data = hsc)
+Anova(m2, test = &quot;F&quot;)</code></pre>
+<pre><code>## Analysis of Deviance Table (Type II tests)
+## 
+## Response: satell
+## Error estimate based on Pearson residuals 
+## 
+##            Sum Sq  Df F value    Pr(&gt;F)    
+## width      14.470   1 15.9110 9.892e-05 ***
+## color       2.723   3  0.9982    0.3952    
+## Residuals 152.785 168                      
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p>Before we interpret the model let’s assess the fit. A good model
+should generate data that’s similar to the data used to fit the model.
+Below we use the <code>densityPlot()</code> function from the car
+package to plot a smooth histogram of the observed counts. That’s the
+solid dark line. We see the spike of zeroes and the little bump at 4.
+Next we use the <code>simulate()</code> function to generate 50 sets of
+data from our model. The result is a data frame we named “sim”. Then we
+use a for loop with the <code>lines()</code> function to plot smooth
+histograms of the 50 simulated data sets.</p>
+<pre class="r"><code>densityPlot(hsc$satell, from = 0, to = 15, normalize=TRUE)
+sim &lt;- simulate(m, nsim = 50)
+for(i in 1:50)lines(density(sim[[i]], from=0), col = &quot;grey90&quot;)</code></pre>
+<p><img src="cm_files/figure-html/unnamed-chunk-45-1.png" width="672" /></p>
+<p>Notice we’re underpredicting 0 counts and in the range of 3 - 6.
+We’re also overpredicting in the area of 1 and 2.</p>
+<p>Another type of fit assessment for count models can be performed with
+a rootogram. The tops of the bars are the <em>expected frequencies</em>
+of the counts given the model. The counts are plotted on the square-root
+scale to help visualize smaller frequencies. The red line shows the
+fitted frequencies as a smooth curve. The x-axis is a horizontal
+reference line. Bars that hang below the line show underpredicting, bars
+that hang above show overpredicting. We see our model is ill-fitting for
+satellites in the 0 - 6 range, but not too bad for the higher
+counts.</p>
+<pre class="r"><code>library(countreg)
+rootogram(m2)</code></pre>
+<p><img src="cm_files/figure-html/unnamed-chunk-46-1.png" width="672" /></p>
+<p>Using the <code>Confint()</code> function (from the car package) with
+<code>exponentiate = TRUE</code> returns the multiplicative effect of
+the coefficients. For example it appears that for every 1 cm increase in
+carapace width results in about a 20% increase in counts (95% CI: [8,
+31]).</p>
+<pre class="r"><code>Confint(m2, exponentiate = TRUE)</code></pre>
+<pre><code>## 
+## Exponentiated Coefficients and Confidence Bounds</code></pre>
+<pre><code>##                    Estimate       2.5 %    97.5 %
+## (Intercept)      0.03500076 0.002560117 0.4531445
+## width            1.19529162 1.089259341 1.3153087
+## colormedium      0.75886462 0.362037718 1.4724292
+## colordark medium 0.59432532 0.270255682 1.2280651
+## colordark        0.58506859 0.245133460 1.3434182</code></pre>
+<p>We can visualize this effect using the ggeffects package <span
+class="citation">(Lüdecke 2018)</span>. Below we use the
+<code>ggeffect()</code> function to make predictions of satel for
+various values of width, holding color at the proportional values. We
+see our estimate becomes very uncertain past 28 cm since we have few
+horseshoe crabs that wide.</p>
+<pre class="r"><code>library(ggeffects)
+ggeffect(m2, terms = &quot;width&quot;) |&gt; plot()</code></pre>
+<p><img src="cm_files/figure-html/unnamed-chunk-48-1.png" width="672" /></p>
+<p>A similar plot can be made for color that suggests a light medium
+color may lead to more satellites, but we’re very uncertain about that
+given how few crabs we have of that color (only 12 out of 173).</p>
+<pre class="r"><code>ggeffect(m2, terms = &quot;color&quot;) |&gt; plot()</code></pre>
+<p><img src="cm_files/figure-html/unnamed-chunk-49-1.png" width="672" /></p>
 </div>
 <div id="zero-inflated-model" class="section level3">
 <h3>Zero-Inflated model</h3>
+<p>The horseshoe crab data, analyzed in the previous example (Negative
+Binomial model), appeared to have a surplus of zeroes. One approach to
+modeling data of this nature is to entertain a <em>mixture model</em>.
+This is a model that uses a mix of two models to approximate the data
+generating process. A zero-inflated model is a mixture of two
+models:</p>
+<ol style="list-style-type: decimal">
+<li>a binary logistic regression model for zeroes.</li>
+<li>a count model for zeroes and positive values.</li>
+</ol>
+<p>This model basically says there are two types of female horseshoe
+crabs:</p>
+<ol style="list-style-type: decimal">
+<li>some that will never have satellites (for whatever reason). Their
+counts will <em>always</em> be 0.</li>
+<li>some that can have satellites but may not. Their count
+<em>could</em> be 0.</li>
+</ol>
+<p>Let’s read in the data and investigate the zeroes.</p>
+<pre class="r"><code>hsc &lt;- read.csv(&quot;data/crabs.csv&quot;)
+hsc$color &lt;- factor(hsc$color, 
+                      labels = c(&quot;light medium&quot;, 
+                                 &quot;medium&quot;, 
+                                 &quot;dark medium&quot;, 
+                                 &quot;dark&quot;))
+hsc$spine &lt;- factor(hsc$spine, 
+                      labels = c(&quot;both good&quot;,
+                                 &quot;one worn or broken&quot;,
+                                 &quot;both worn or broken&quot;))</code></pre>
+<pre class="r"><code>table(hsc$satell) |&gt; 
+  plot(type = &quot;h&quot;)</code></pre>
+<p><img src="cm_files/figure-html/unnamed-chunk-51-1.png" width="672" /></p>
+<pre class="r"><code>table(hsc$color, hsc$satell == 0) |&gt; 
+  mosaicplot(shade = TRUE)</code></pre>
+<p><img src="cm_files/figure-html/unnamed-chunk-52-1.png" width="672" /></p>
+<pre class="r"><code>hsc$zero &lt;- as.numeric(hsc$satell == 0)
+glm(zero ~ width, data = hsc, family = binomial) |&gt;
+  summary()</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = zero ~ width, family = binomial, data = hsc)
+## 
+## Deviance Residuals: 
+##     Min       1Q   Median       3Q      Max  
+## -1.6942  -0.9066  -0.5480   1.0458   2.0281  
+## 
+## Coefficients:
+##             Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)  12.3508     2.6287   4.698 2.62e-06 ***
+## width        -0.4972     0.1017  -4.887 1.02e-06 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 225.76  on 172  degrees of freedom
+## Residual deviance: 194.45  on 171  degrees of freedom
+## AIC: 198.45
+## 
+## Number of Fisher Scoring iterations: 4</code></pre>
+<pre class="r"><code>glm(zero ~ width, data = hsc, family = binomial) |&gt;
+  ggeffect(&quot;width&quot;) |&gt;
+  plot()</code></pre>
+<p><img src="cm_files/figure-html/unnamed-chunk-54-1.png" width="672" /></p>
+<pre class="r"><code>library(pscl)
+library(splines)
+zm &lt;- zeroinfl(satell ~ ns(width, 3) + color | 1, 
+               data = hsc, dist = &quot;negbin&quot;)
+zm1 &lt;- zeroinfl(satell ~ ns(width, 3) + color | width, 
+                data = hsc, dist = &quot;negbin&quot;)
+zm2 &lt;- zeroinfl(satell ~ ns(width, 3) + color | color, 
+                data = hsc, dist = &quot;negbin&quot;)
+zm3 &lt;- zeroinfl(satell ~ ns(width, 3) + color | width + color, 
+                data = hsc, dist = &quot;negbin&quot;)
+zm4 &lt;- zeroinfl(satell ~ ns(width, 3) + color, 
+                data = hsc, dist = &quot;negbin&quot;)
+
+AIC(zm, zm1, zm2, zm3, zm4)</code></pre>
+<pre><code>##     df      AIC
+## zm   9 743.2456
+## zm1 10 720.3417
+## zm2 12 735.2694
+## zm3 13 718.3807
+## zm4 15 720.7720</code></pre>
+<p>Model zm1 appears to give us the most bang for the buck.</p>
+<pre class="r"><code>rootogram(zm1)</code></pre>
+<p><img src="cm_files/figure-html/unnamed-chunk-56-1.png" width="672" /></p>
+<pre class="r"><code>ggpredict(zm1, terms = &quot;width [all]&quot;, type = &quot;zero_inflated&quot;) |&gt; 
+  plot()</code></pre>
+<p><img src="cm_files/figure-html/unnamed-chunk-57-1.png" width="672" /></p>
+<p>This model improves on the negative binomial model.</p>
+<pre class="r"><code>AIC(zm1, m2)</code></pre>
+<pre><code>##     df      AIC
+## zm1 10 720.3417
+## m2   6 760.5958</code></pre>
 </div>
 <div id="references" class="section level3 unnumbered">
 <h3 class="unnumbered">References</h3>
