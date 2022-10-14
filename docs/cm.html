@@ -13,7 +13,7 @@
 
 <title>Count Models</title>
 
-<script src="site_libs/header-attrs-2.16/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.13/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
@@ -166,15 +166,11 @@ $(document).ready(function () {
     href = "index.html";
   var menuAnchor = $('a[href="' + href + '"]');
 
-  // mark the anchor link active (and if it's in a dropdown, also mark that active)
-  var dropdown = menuAnchor.closest('li.dropdown');
-  if (window.bootstrap) { // Bootstrap 4+
-    menuAnchor.addClass('active');
-    dropdown.find('> .dropdown-toggle').addClass('active');
-  } else { // Bootstrap 3
-    menuAnchor.parent().addClass('active');
-    dropdown.addClass('active');
-  }
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
 
   // Navbar adjustments
   var navHeight = $(".navbar").first().height() + 15;
@@ -393,17 +389,13 @@ div.tocify {
 
 <div id="poisson-regression" class="section level3">
 <h3>Poisson regression</h3>
-<p>The AirCrash dataset in the vcdExtra package contains data on all
-fatal commercial airplane crashes from 1993–2015. <span
-class="citation">(Friendly 2022)</span> The data excludes small planes
-(less than 6 passengers) and non-commercial aircraft such as cargo,
-military, and private planes. How does the number of fatalities depend
-on other variables? Fit a main effects Poisson regression model. <span
-class="citation">(Friendly and Meyer 2016)</span></p>
-<pre class="r"><code>library(vcdExtra)
-data(&quot;AirCrash&quot;)</code></pre>
-<p>The AirCrash data frame has data on 439 crashes with the following 5
-variables:</p>
+<p>The AirCrash dataset in the vcdExtra package contains data on all fatal commercial airplane crashes from 1993–2015. <span class="citation">(Friendly 2022)</span> The data excludes small planes (less than 6 passengers) and non-commercial aircraft such as cargo, military, and private planes. How does the number of fatalities depend on other variables? Fit a main effects Poisson regression model. <span class="citation">(Friendly and Meyer 2016)</span></p>
+<pre class="r"><code>library(vcdExtra)</code></pre>
+<pre><code>## Warning: package &#39;vcdExtra&#39; was built under R version 4.1.2</code></pre>
+<pre><code>## Warning: package &#39;vcd&#39; was built under R version 4.1.2</code></pre>
+<pre><code>## Warning: package &#39;gnm&#39; was built under R version 4.1.2</code></pre>
+<pre class="r"><code>data(&quot;AirCrash&quot;)</code></pre>
+<p>The AirCrash data frame has data on 439 crashes with the following 5 variables:</p>
 <pre class="r"><code>str(AirCrash)</code></pre>
 <pre><code>## &#39;data.frame&#39;:    439 obs. of  5 variables:
 ##  $ Phase     : Factor w/ 5 levels &quot;en route&quot;,&quot;landing&quot;,..: 2 2 2 2 2 2 2 2 2 2 ...
@@ -411,32 +403,15 @@ variables:</p>
 ##  $ date      : Date, format: &quot;1993-09-21&quot; &quot;1993-09-22&quot; ...
 ##  $ Fatalities: int  27 108 125 112 41 19 8 22 14 43 ...
 ##  $ Year      : int  1993 1993 1996 2002 1993 1993 1994 2000 2002 2004 ...</code></pre>
-<p>An interesting aspect of this data is that it is technically not a
-sample. We have <em>all the data</em>. We could argue that no
-inferential statistics or modeling is necessary. We should simply
-summarize and describe the data. On the other hand, we could argue that
-the data we have is just one of many possible outcomes from a population
-of possibilities. We can’t rewind time and take another sample, but we
-can imagine that there were many possible outcomes from 1993 to 2015.
-What we observed – and all that we can observe – was one possible
-outcome. Therefore, we might use the data to estimate what the future
-holds. We take the latter approach.</p>
-<p>The Fatalities variable is our dependent variable. It records the
-number of fatalities per crash. This is a count variable; it only takes
-integer values greater than or equal to 0. We can see the distribution
-of Fatalities is severely skewed by some large crashes. Notice the mean
-is over twice as large as the median. We also notice there are no
-commercial airplane crashes with 0 fatalities.</p>
+<p>An interesting aspect of this data is that it is technically not a sample. We have <em>all the data</em>. We could argue that no inferential statistics or modeling is necessary. We should simply summarize and describe the data. On the other hand, we could argue that the data we have is just one of many possible outcomes from a population of possibilities. We can’t rewind time and take another sample, but we can imagine that there were many possible outcomes from 1993 to 2015. What we observed – and all that we can observe – was one possible outcome. Therefore, we might use the data to estimate what the future holds. We take the latter approach.</p>
+<p>The Fatalities variable is our dependent variable. It records the number of fatalities per crash. This is a count variable; it only takes integer values greater than or equal to 0. We can see the distribution of Fatalities is severely skewed by some large crashes. Notice the mean is over twice as large as the median. We also notice there are no commercial airplane crashes with 0 fatalities.</p>
 <pre class="r"><code>summary(AirCrash$Fatalities)</code></pre>
 <pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
 ##    1.00    7.00   19.00   50.68   60.00 1692.00</code></pre>
-<p>A Histogram reveals the extent of the skewness. We set
-<code>breaks = 50</code> to increase the number of bins in the
-histogram.</p>
+<p>A Histogram reveals the extent of the skewness. We set <code>breaks = 50</code> to increase the number of bins in the histogram.</p>
 <pre class="r"><code>hist(AirCrash$Fatalities, breaks = 50)</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
-<p>The Phase variable tells us in which one of the five phases of flight
-the plane crashed:</p>
+<p>The Phase variable tells us in which one of the five phases of flight the plane crashed:</p>
 <ul>
 <li>standing</li>
 <li>take-off</li>
@@ -444,8 +419,7 @@ the plane crashed:</p>
 <li>landing</li>
 <li>unknown</li>
 </ul>
-<p>Since it’s a factor we can get counts by calling
-<code>summary()</code> on the variable.</p>
+<p>Since it’s a factor we can get counts by calling <code>summary()</code> on the variable.</p>
 <pre class="r"><code>summary(AirCrash$Phase)</code></pre>
 <pre><code>## en route  landing standing take-off  unknown 
 ##      157      210        4       65        3</code></pre>
@@ -461,40 +435,25 @@ the plane crashed:</p>
 <pre class="r"><code>summary(AirCrash$Cause)</code></pre>
 <pre><code>##    criminal human error  mechanical     unknown     weather 
 ##          23         207          74          52          83</code></pre>
-<p>The Year column tells us in what year the crash occurred. We can use
-<code>tapply()</code> to quickly sum Fatalities by Year and pipe into
-the <code>barplot()</code> function. A barplot reveals Fatalities
-slightly decreasing over time for the most part, <a
-href="https://en.wikipedia.org/wiki/September_11_attacks">except in
-2001</a>. The argument <code>las = 2</code> sets axis labels
-perpendicular to the axis.</p>
+<p>The Year column tells us in what year the crash occurred. We can use <code>tapply()</code> to quickly sum Fatalities by Year and pipe into the <code>barplot()</code> function. A barplot reveals Fatalities slightly decreasing over time for the most part, <a href="https://en.wikipedia.org/wiki/September_11_attacks">except in 2001</a>. The argument <code>las = 2</code> sets axis labels perpendicular to the axis.</p>
 <pre class="r"><code>tapply(AirCrash$Fatalities, AirCrash$Year, sum) |&gt; 
   barplot(las = 2)</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
-<p>How does Fatalities vary with Phase and Cause? Simple stripcharts are
-effective for quickly exploring this question. It appears two unusually
-high cases of fatalities happened en route due to criminal activity.</p>
+<p>How does Fatalities vary with Phase and Cause? Simple stripcharts are effective for quickly exploring this question. It appears two unusually high cases of fatalities happened en route due to criminal activity.</p>
 <pre class="r"><code>stripchart(Fatalities ~ Phase, data = AirCrash, method = &quot;jitter&quot;, 
            vertical = TRUE)</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
 <pre class="r"><code>stripchart(Fatalities ~ Cause, data = AirCrash, method = &quot;jitter&quot;,
            vertical = TRUE)</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
-<p>A common distribution used to model count data is the Poisson
-distribution. The Poisson distribution has one parameter, the mean. The
-variance of the distribution is also the mean. As the mean gets bigger,
-so does the variance.</p>
-<p>We can model count data using the <code>glm()</code> function with
-<code>family=poisson</code>. Let’s model Fatalities as function of Phase
-and Cause.</p>
+<p>A common distribution used to model count data is the Poisson distribution. The Poisson distribution has one parameter, the mean. The variance of the distribution is also the mean. As the mean gets bigger, so does the variance.</p>
+<p>We can model count data using the <code>glm()</code> function with <code>family=poisson</code>. Let’s model Fatalities as function of Phase and Cause.</p>
 <pre class="r"><code>m &lt;- glm(Fatalities ~ Phase + Cause, data = AirCrash, family = poisson)</code></pre>
-<p>To determine if Phase and/or Cause helps explain the variability in
-Fatalities we can assess the analysis of deviance table using the
-<code>Anova()</code> function in the car package <span
-class="citation">(Fox and Weisberg 2019)</span>. It appears both explain
-a substantial amount of variability.</p>
-<pre class="r"><code>library(car)
-Anova(m)</code></pre>
+<p>To determine if Phase and/or Cause helps explain the variability in Fatalities we can assess the analysis of deviance table using the <code>Anova()</code> function in the car package <span class="citation">(Fox and Weisberg 2019)</span>. It appears both explain a substantial amount of variability.</p>
+<pre class="r"><code>library(car)</code></pre>
+<pre><code>## Warning: package &#39;car&#39; was built under R version 4.1.2</code></pre>
+<pre><code>## Warning: package &#39;carData&#39; was built under R version 4.1.2</code></pre>
+<pre class="r"><code>Anova(m)</code></pre>
 <pre><code>## Analysis of Deviance Table (Type II tests)
 ## 
 ## Response: Fatalities
@@ -503,10 +462,7 @@ Anova(m)</code></pre>
 ## Cause   4718.1  4  &lt; 2.2e-16 ***
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<p>The <code>drop1()</code> function in the stats package performs the
-same tests and includes information on the change in AIC if we drop the
-variable. For example, if we drop Cause from the model, the AIC
-increases from 35036 to 38111. Recall that lower AIC is desirable.</p>
+<p>The <code>drop1()</code> function in the stats package performs the same tests and includes information on the change in AIC if we drop the variable. For example, if we drop Cause from the model, the AIC increases from 35036 to 38111. Recall that lower AIC is desirable.</p>
 <pre class="r"><code>drop1(m, test = &quot;Chisq&quot;)</code></pre>
 <pre><code>## Single term deletions
 ## 
@@ -518,42 +474,19 @@ increases from 35036 to 38111. Recall that lower AIC is desirable.</p>
 ## Cause   4    35987 38111 4718.1 &lt; 2.2e-16 ***
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<p>While both variables seem highly “significant” we should assess the
-model’s goodness of fit. One effective way to do this for count models
-is creating a rootogram with the countreg package <span
-class="citation">(Kleiber and Zeileis 2016)</span>. The tops of the bars
-are the <em>expected frequencies</em> of the counts given the model. The
-counts are plotted on the square-root scale to help visualize smaller
-frequencies. The red line shows the fitted frequencies as a smooth
-curve. The x-axis is a horizontal reference line. Bars that hang below
-the line show underfitting, bars that hang above show overfitting. We
-see our model is extremely ill-fitting for Fatalities ranging from 1 -
-100.</p>
+<p>While both variables seem highly “significant” we should assess the model’s goodness of fit. One effective way to do this for count models is creating a rootogram with the countreg package <span class="citation">(Kleiber and Zeileis 2016)</span>. The tops of the bars are the <em>expected frequencies</em> of the counts given the model. The counts are plotted on the square-root scale to help visualize smaller frequencies. The red line shows the fitted frequencies as a smooth curve. The x-axis is a horizontal reference line. Bars that hang below the line show underfitting, bars that hang above show overfitting. We see our model is extremely ill-fitting for Fatalities ranging from 1 - 100.</p>
 <pre class="r"><code># Need to install from R-Forge instead of CRAN
 # install.packages(&quot;countreg&quot;, repos=&quot;http://R-Forge.R-project.org&quot;)
 library(countreg)
 rootogram(m, max = 100)</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
-<p>One reason for such an ill-fitting model may be the choice of family
-distribution we used with <code>glm()</code>. The Poisson distribution
-assumes equivalent mean and variance. A more flexible model would allow
-the mean and variance to differ. One such model that allows this is the
-negative binomial model. We can fit a negative binomial model using the
-<code>glm.nb()</code> function in the MASS package. <span
-class="citation">(Venables and Ripley 2002)</span></p>
+<p>One reason for such an ill-fitting model may be the choice of family distribution we used with <code>glm()</code>. The Poisson distribution assumes equivalent mean and variance. A more flexible model would allow the mean and variance to differ. One such model that allows this is the negative binomial model. We can fit a negative binomial model using the <code>glm.nb()</code> function in the MASS package. <span class="citation">(Venables and Ripley 2002)</span></p>
 <pre class="r"><code>library(MASS)
 m2 &lt;- glm.nb(Fatalities ~ Phase + Cause, data = AirCrash)
 rootogram(m2, max = 100)</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
-<p>This rootogram looks much better though it’s far from good. However
-it’s probably not reasonable to expect to sufficiently model something
-like air crash fatalities using only two categorical variables.</p>
-<p>We may wish to entertain an interaction between Phase and Cause. For
-example, the effect of landing on Fatalities may depend on whether cause
-is human error or weather. But before we fit an interaction we should
-look at a cross-tabulation of Phase and Cause to see if we have any
-<em>sparse cells</em>. Indeed we do. We have five cells of 0 counts and
-seven cells of counts 3 and under.</p>
+<p>This rootogram looks much better though it’s far from good. However it’s probably not reasonable to expect to sufficiently model something like air crash fatalities using only two categorical variables.</p>
+<p>We may wish to entertain an interaction between Phase and Cause. For example, the effect of landing on Fatalities may depend on whether cause is human error or weather. But before we fit an interaction we should look at a cross-tabulation of Phase and Cause to see if we have any <em>sparse cells</em>. Indeed we do. We have five cells of 0 counts and seven cells of counts 3 and under.</p>
 <pre class="r"><code>xtabs(~ Phase + Cause, data = AirCrash)</code></pre>
 <pre><code>##           Cause
 ## Phase      criminal human error mechanical unknown weather
@@ -562,10 +495,8 @@ seven cells of counts 3 and under.</p>
 ##   standing        2           0          2       0       0
 ##   take-off        1          29         24       8       3
 ##   unknown         0           1          0       1       1</code></pre>
-<p>Therefore we forego the interaction. We do not want to model
-interactions that we did not observe.</p>
-<p>Let’s add Year to the model. It appears to make a marginal
-contribution to explaining Fatalities.</p>
+<p>Therefore we forego the interaction. We do not want to model interactions that we did not observe.</p>
+<p>Let’s add Year to the model. It appears to make a marginal contribution to explaining Fatalities.</p>
 <pre class="r"><code>m3 &lt;- glm.nb(Fatalities ~ Phase + Cause + Year, data = AirCrash)
 Anova(m3)</code></pre>
 <pre><code>## Analysis of Deviance Table (Type II tests)
@@ -577,15 +508,8 @@ Anova(m3)</code></pre>
 ## Year     6.137  1  0.0132396 *  
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<p>The interested reader may wish to verify that adding Year to the
-model doesn’t appreciably change the rootogram.</p>
-<p>Diagnostic plots can help us assess if the model does a good job of
-representing the data. A useful diagnostic plot function,
-<code>influencePlot()</code>, is available in the car package. We simply
-give it our model object and it returns a scatter plot of Studentized
-Residuals versus Hat-Values (leverage), with point size mapped to Cook’s
-D (influence). By default the five most “noteworthy” points are labeled.
-The numbers refer to the row number in the data frame.</p>
+<p>The interested reader may wish to verify that adding Year to the model doesn’t appreciably change the rootogram.</p>
+<p>Diagnostic plots can help us assess if the model does a good job of representing the data. A useful diagnostic plot function, <code>influencePlot()</code>, is available in the car package. We simply give it our model object and it returns a scatter plot of Studentized Residuals versus Hat-Values (leverage), with point size mapped to Cook’s D (influence). By default the five most “noteworthy” points are labeled. The numbers refer to the row number in the data frame.</p>
 <pre class="r"><code>influencePlot(m3)</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-17-1.png" width="672" /></p>
 <pre><code>##        StudRes        Hat       CookD
@@ -595,30 +519,15 @@ The numbers refer to the row number in the data frame.</p>
 ## 438 -1.8694688 0.34423047 0.055350359
 ## 439  0.9817622 0.34111672 0.083016892</code></pre>
 <ul>
-<li><strong>Studentized Residuals</strong>: This is the scaled
-difference between the response for case <em>i</em> and the fitted value
-<em>computed without case</em> <em>i</em>. This can help identify
-outliers that might not otherwise be identified because they’re so
-influential they produce a model in which they’re not an outlier. High
-values indicate a big difference between what we observed and what our
-model predicts.</li>
-<li><strong>Hat-Values</strong>: This measures how far cases are away
-from the center of the predictor space. In other words, these are
-predictors with high values that could influence the fit of the model.
-High values could mean a case is exerting undue leverage on the fit of
-the model.</li>
-<li><strong>Cook’s D</strong>: This is a measure of influence. High
-values could indicate a case is unduly influencing the model
-coefficients.</li>
+<li><strong>Studentized Residuals</strong>: This is the scaled difference between the response for case <em>i</em> and the fitted value <em>computed without case</em> <em>i</em>. This can help identify outliers that might not otherwise be identified because they’re so influential they produce a model in which they’re not an outlier. High values indicate a big difference between what we observed and what our model predicts.</li>
+<li><strong>Hat-Values</strong>: This measures how far cases are away from the center of the predictor space. In other words, these are predictors with high values that could influence the fit of the model. High values could mean a case is exerting undue leverage on the fit of the model.</li>
+<li><strong>Cook’s D</strong>: This is a measure of influence. High values could indicate a case is unduly influencing the model coefficients.</li>
 </ul>
-<p>Row 222 has the highest Cook’s D value and Residual. This is one of
-the planes that was crashed en route on September 11, 2001.</p>
+<p>Row 222 has the highest Cook’s D value and Residual. This is one of the planes that was crashed en route on September 11, 2001.</p>
 <pre class="r"><code>AirCrash[222,]</code></pre>
 <pre><code>##        Phase    Cause       date Fatalities Year
 ## 222 en route criminal 2001-09-11       1692 2001</code></pre>
-<p>When cases appear to have high leverage or influence, we may want to
-re-fit the model without them (one at a time) to see if the results
-change. In this case we choose to use all available data.</p>
+<p>When cases appear to have high leverage or influence, we may want to re-fit the model without them (one at a time) to see if the results change. In this case we choose to use all available data.</p>
 <p>Our final model summary is as follows:</p>
 <pre class="r"><code>summary(m3)</code></pre>
 <pre><code>## 
@@ -658,40 +567,22 @@ change. In this case we choose to use all available data.</p>
 ##           Std. Err.:  0.0443 
 ## 
 ##  2 x log-likelihood:  -4185.7620</code></pre>
-<p>Since Phase and Cause have five levels each, both have four
-coefficients. The reference levels are “en route” and “criminal”,
-respectively. The coefficients for the other levels are relative to the
-reference levels. For example, the coefficient for “standing” Phase is
-about -3.58. This says the expected <em>log count</em> of Fatalities
-when Phase is “standing” is about 3.58 less than when Phase is “en
-route”, all other variables held constant.</p>
-<p>Log counts are hard to understand. If we exponentiate we get a
-multiplicative interpretation.</p>
+<p>Since Phase and Cause have five levels each, both have four coefficients. The reference levels are “en route” and “criminal”, respectively. The coefficients for the other levels are relative to the reference levels. For example, the coefficient for “standing” Phase is about -3.58. This says the expected <em>log count</em> of Fatalities when Phase is “standing” is about 3.58 less than when Phase is “en route”, all other variables held constant.</p>
+<p>Log counts are hard to understand. If we exponentiate we get a multiplicative interpretation.</p>
 <pre class="r"><code>exp(coef(m3)[&quot;Phasestanding&quot;])</code></pre>
 <pre><code>## Phasestanding 
 ##    0.02776239</code></pre>
-<p>This says the expected count of Fatalities when Phase is “standing”
-is about 1 - 0.03 = 97% less than the expected count when Phase is “en
-route”, all other variables held constant.</p>
+<p>This says the expected count of Fatalities when Phase is “standing” is about 1 - 0.03 = 97% less than the expected count when Phase is “en route”, all other variables held constant.</p>
 <p>Exponentiating the Year coefficient returns the following:</p>
 <pre class="r"><code>exp(coef(m3)[&quot;Year&quot;])</code></pre>
 <pre><code>##     Year 
 ## 1.024835</code></pre>
-<p>This says air crash Fatalities increased by about 2% each year from
-1993 - 2015.</p>
-<p>Effect plots can help us visualize our count model. Using the
-<code>ggpredict()</code> and associated <code>plot()</code> function
-from the ggeffects package we plot expected counts given Cause and
-Phase. <span class="citation">(Lüdecke 2018)</span>. It looks like
-expected fatalities are around 200 when the cause is criminal, but there
-is a great deal of uncertainty. All other expected counts are about 50.
-We should note these predictions are made holding Phase at “en route”
-and Year at 2000.</p>
+<p>This says air crash Fatalities increased by about 2% each year from 1993 - 2015.</p>
+<p>Effect plots can help us visualize our count model. Using the <code>ggpredict()</code> and associated <code>plot()</code> function from the ggeffects package we plot expected counts given Cause and Phase. <span class="citation">(Lüdecke 2018)</span>. It looks like expected fatalities are around 200 when the cause is criminal, but there is a great deal of uncertainty. All other expected counts are about 50. We should note these predictions are made holding Phase at “en route” and Year at 2000.</p>
 <pre class="r"><code>library(ggeffects)
 ggpredict(m3, terms = &quot;Cause&quot;) |&gt; plot()</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-22-1.png" width="672" /></p>
-<p>We can see this by calling <code>ggpredict()</code> without
-<code>plot()</code>.</p>
+<p>We can see this by calling <code>ggpredict()</code> without <code>plot()</code>.</p>
 <pre class="r"><code>ggpredict(m3, terms = &quot;Cause&quot;)</code></pre>
 <pre><code>## # Predicted counts of Fatalities
 ## 
@@ -706,47 +597,29 @@ ggpredict(m3, terms = &quot;Cause&quot;) |&gt; plot()</code></pre>
 ## Adjusted for:
 ## * Phase = en route
 ## *  Year =  2000.00</code></pre>
-<p>If we wanted to change the Phase and Year values, we could do so as
-follows:</p>
+<p>If we wanted to change the Phase and Year values, we could do so as follows:</p>
 <pre class="r"><code>ggpredict(m3, terms = &quot;Cause&quot;, 
           condition = c(Phase = &quot;landing&quot;, Year = 2005)) |&gt; 
   plot()</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-24-1.png" width="672" /></p>
-<p>The expected counts are a little different, but the general theme
-remains: a criminal cause appears to have the potential for around 100
-more fatalities than the other causes.</p>
-<p>When we visualize the effect of Phase we get an usually big
-confidence interval for “unknown”.</p>
+<p>The expected counts are a little different, but the general theme remains: a criminal cause appears to have the potential for around 100 more fatalities than the other causes.</p>
+<p>When we visualize the effect of Phase we get an usually big confidence interval for “unknown”.</p>
 <pre class="r"><code>ggpredict(m3, terms = &quot;Phase&quot;) |&gt; plot()</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-25-1.png" width="672" /></p>
-<p>This is because we only have 3 observations of crashes in an unknown
-phase. We simply don’t have enough data to estimate a count for that
-phase with any confidence.</p>
-<p>The Year predictor seems to suggest there was a slightly positive
-trend in fatalities from 1993 - 2015 that could continue into the
-future. But the confidence band is so wide and uncertain that it’s
-entirely possible the trend could stay steady or decline.</p>
+<p>This is because we only have 3 observations of crashes in an unknown phase. We simply don’t have enough data to estimate a count for that phase with any confidence.</p>
+<p>The Year predictor seems to suggest there was a slightly positive trend in fatalities from 1993 - 2015 that could continue into the future. But the confidence band is so wide and uncertain that it’s entirely possible the trend could stay steady or decline.</p>
 <pre class="r"><code>ggpredict(m3, terms = &quot;Year&quot;) |&gt; 
   plot()</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-26-1.png" width="672" /></p>
-<p>Recall that <code>ggpredict()</code> is <em>adjusting</em> for Cause
-and Phase when creating the above plot. The above plot is created
-holding Phase = “en route” and Cause = “criminal”.</p>
-<p>Another way to create an effect plot is to hold Phase and Cause at
-their <em>mean values</em>. But how do you hold categorical variables at
-their mean levels? You simply take the proportions of each and plug into
-the model. The effects package does this for us. <span
-class="citation">(Fox and Weisberg 2018)</span></p>
-<p>First let’s see the plot it creates. Notice this plot seems a little
-more certain. We also get a “rug” at the bottom of the plot to remind us
-how much data we have. We see we have fewer observations after 2010.</p>
-<pre class="r"><code>library(effects)
-Effect(focal.predictors = &quot;Year&quot;, mod = m3) |&gt;
+<p>Recall that <code>ggpredict()</code> is <em>adjusting</em> for Cause and Phase when creating the above plot. The above plot is created holding Phase = “en route” and Cause = “criminal”.</p>
+<p>Another way to create an effect plot is to hold Phase and Cause at their <em>mean values</em>. But how do you hold categorical variables at their mean levels? You simply take the proportions of each and plug into the model. The effects package does this for us. <span class="citation">(Fox and Weisberg 2018)</span></p>
+<p>First let’s see the plot it creates. Notice this plot seems a little more certain. We also get a “rug” at the bottom of the plot to remind us how much data we have. We see we have fewer observations after 2010.</p>
+<pre class="r"><code>library(effects)</code></pre>
+<pre><code>## Warning: package &#39;effects&#39; was built under R version 4.1.2</code></pre>
+<pre class="r"><code>Effect(focal.predictors = &quot;Year&quot;, mod = m3) |&gt;
   plot()</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-27-1.png" width="672" /></p>
-<p>If we save the call to <code>Effect()</code> as an object, we can
-look at the “model.matrix” element to see what values Phase and Cause
-were held at.</p>
+<p>If we save the call to <code>Effect()</code> as an object, we can look at the “model.matrix” element to see what values Phase and Cause were held at.</p>
 <pre class="r"><code>e &lt;- Effect(focal.predictors = &quot;Year&quot;, mod = m3)
 e$model.matrix</code></pre>
 <pre><code>##   (Intercept) Phaselanding Phasestanding Phasetake-off Phaseunknown
@@ -769,47 +642,20 @@ e$model.matrix</code></pre>
 ## 
 ## attr(,&quot;contrasts&quot;)$Cause
 ## [1] &quot;contr.treatment&quot;</code></pre>
-<p>These values are simply the proportions of observations at each
-level. For example, compare the above values for Phase to the observed
-proportions of Phase in the data.</p>
+<p>These values are simply the proportions of observations at each level. For example, compare the above values for Phase to the observed proportions of Phase in the data.</p>
 <pre class="r"><code>table(AirCrash$Phase) |&gt; proportions()</code></pre>
 <pre><code>## 
 ##    en route     landing    standing    take-off     unknown 
 ## 0.357630979 0.478359909 0.009111617 0.148063781 0.006833713</code></pre>
-<p>We see that “landing”, “standing”, “take-off”, and “unknown” are held
-at their proportions. (“en route” is the reference level and not
-directly modeled.) While these values are not plausible in real life,
-they allow us to incorporate all their effects at proportional levels
-for the purpose of visualizing the effect of Year. Changing these values
-does not change the shape of the Year effect other than to shift it up
-or down the y-axis.</p>
-<p>The above plot was created with the lattice package <span
-class="citation">(Sarkar 2008)</span>. We can create the same plot in
-ggplot2 <span class="citation">(Wickham 2016)</span> using the
-<code>ggeffect()</code> function from the ggeffects package. In fact the
-<code>ggeffect()</code> function simply uses the <code>Effect()</code>
-function from the effects package.</p>
+<p>We see that “landing”, “standing”, “take-off”, and “unknown” are held at their proportions. (“en route” is the reference level and not directly modeled.) While these values are not plausible in real life, they allow us to incorporate all their effects at proportional levels for the purpose of visualizing the effect of Year. Changing these values does not change the shape of the Year effect other than to shift it up or down the y-axis.</p>
+<p>The above plot was created with the lattice package <span class="citation">(Sarkar 2008)</span>. We can create the same plot in ggplot2 <span class="citation">(Wickham 2016)</span> using the <code>ggeffect()</code> function from the ggeffects package. In fact the <code>ggeffect()</code> function simply uses the <code>Effect()</code> function from the effects package.</p>
 <pre class="r"><code>ggeffect(m3, terms = &quot;Year&quot;) |&gt; 
   plot()</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-30-1.png" width="672" /></p>
-<p>While the effect plots give us some indication of how expected
-fatalities differ between Phase and Cause, they don’t directly quantify
-how they differ. For this type of analysis we can use the emmeans
-package. <span class="citation">(Lenth 2022)</span> Below we estimate
-differences in expected fatalities between Phases using the
-<code>emmeans()</code> function. The syntax
-<code>pairwise ~ Phase</code> says to calculate all pairwise differences
-between the levels of Phase. The argument
-<code>regrid = "response"</code> says to calculate the differences on
-the original response scale, which is a count. Finally the
-<code>$contrasts</code> notation extracts just the contrasts. (Without
-<code>$contrasts</code> the result also includes estimated means at each
-level of Phase.) The largest significant difference is between “en
-route” and “standing”, which estimates about 75 more fatalities for
-plans “en route” versus plans standing on a runway. That seems to make
-sense.</p>
-<pre class="r"><code>library(emmeans)
-emmeans(m3, pairwise ~ Phase, regrid = &quot;response&quot;)$contrasts</code></pre>
+<p>While the effect plots give us some indication of how expected fatalities differ between Phase and Cause, they don’t directly quantify how they differ. For this type of analysis we can use the emmeans package. <span class="citation">(Lenth 2022)</span> Below we estimate differences in expected fatalities between Phases using the <code>emmeans()</code> function. The syntax <code>pairwise ~ Phase</code> says to calculate all pairwise differences between the levels of Phase. The argument <code>regrid = "response"</code> says to calculate the differences on the original response scale, which is a count. Finally the <code>$contrasts</code> notation extracts just the contrasts. (Without <code>$contrasts</code> the result also includes estimated means at each level of Phase.) The largest significant difference is between “en route” and “standing”, which estimates about 75 more fatalities for plans “en route” versus plans standing on a runway. That seems to make sense.</p>
+<pre class="r"><code>library(emmeans)</code></pre>
+<pre><code>## Warning: package &#39;emmeans&#39; was built under R version 4.1.2</code></pre>
+<pre class="r"><code>emmeans(m3, pairwise ~ Phase, regrid = &quot;response&quot;)$contrasts</code></pre>
 <pre><code>##  contrast              estimate    SE  df z.ratio p.value
 ##  en route - landing       24.39  8.63 Inf   2.826  0.0380
 ##  en route - standing      74.97 10.88 Inf   6.892  &lt;.0001
@@ -824,16 +670,11 @@ emmeans(m3, pairwise ~ Phase, regrid = &quot;response&quot;)$contrasts</code></p
 ## 
 ## Results are averaged over the levels of: Cause 
 ## P value adjustment: tukey method for comparing a family of 5 estimates</code></pre>
-<p>We can also pipe this result into <code>plot()</code> to see the
-difference in expected values visualized along with 95% confidence
-intervals.</p>
+<p>We can also pipe this result into <code>plot()</code> to see the difference in expected values visualized along with 95% confidence intervals.</p>
 <pre class="r"><code>emmeans(m3, pairwise ~ Phase, regrid = &quot;response&quot;)$contrasts |&gt;
   plot()</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-32-1.png" width="672" /></p>
-<p>To see the actual values of the 95% confidence intervals, we can pipe
-the result into the <code>confint()</code> function. The difference
-between “en route” and “standing” is plausibly anywhere between 45.3 and
-104.6.</p>
+<p>To see the actual values of the 95% confidence intervals, we can pipe the result into the <code>confint()</code> function. The difference between “en route” and “standing” is plausibly anywhere between 45.3 and 104.6.</p>
 <pre class="r"><code>emmeans(m3, pairwise ~ Phase, regrid = &quot;response&quot;)$contrasts |&gt;
   confint()</code></pre>
 <pre><code>##  contrast              estimate    SE  df asymp.LCL asymp.UCL
@@ -854,31 +695,15 @@ between “en route” and “standing” is plausibly anywhere between 45.3 and
 </div>
 <div id="rate-model" class="section level3">
 <h3>Rate model</h3>
-<p>The <code>esdcomp</code> data frame from the <code>faraway</code>
-package <span class="citation">(Faraway 2016)</span> contains data on
-complaints about emergency room doctors. Data was recorded on 44 doctors
-working in an emergency service at a hospital to study the factors
-affecting the number of complaints received. Build a model for the
-<em>rate</em> of complaints received. <span class="citation">(Faraway
-2006)</span> Use <code>visits</code> as an offset in the model.</p>
-<pre class="r"><code>library(faraway)
-data(&quot;esdcomp&quot;)</code></pre>
+<p>The <code>esdcomp</code> data frame from the <code>faraway</code> package <span class="citation">(Faraway 2016)</span> contains data on complaints about emergency room doctors. Data was recorded on 44 doctors working in an emergency service at a hospital to study the factors affecting the number of complaints received. Build a model for the <em>rate</em> of complaints received. <span class="citation">(Faraway 2006)</span> Use <code>visits</code> as an offset in the model.</p>
+<pre class="r"><code>library(faraway)</code></pre>
+<pre><code>## Warning: package &#39;faraway&#39; was built under R version 4.1.2</code></pre>
+<pre class="r"><code>data(&quot;esdcomp&quot;)</code></pre>
 </div>
 <div id="negative-binomial-model" class="section level3">
 <h3>Negative binomial model</h3>
-<p><em>Categorical Data Analysis 2nd ed</em> <span
-class="citation">(Agresti 2002)</span> presents data on nesting
-horseshoe crabs. Each record represents one female crab with a male crab
-resident in her nest. Of interest is the number of additional male crabs
-residing nearby, called “satellites” (<code>satell</code>). Potential
-variables that might explain the number of satellites include the color
-of the female crab (<code>color</code>), the spine condition
-(<code>spine</code>), <a
-href="https://www.fiddlercrab.info/morphology/Carapace.html">carapace</a>
-width in cm (<code>width</code>), and the weight of the crab in kg
-(<code>weight</code>).</p>
-<p>The color and spine variables are categorical with levels defined as
-follows:</p>
+<p><em>Categorical Data Analysis 2nd ed</em> <span class="citation">(Agresti 2002)</span> presents data on nesting horseshoe crabs. Each record represents one female crab with a male crab resident in her nest. Of interest is the number of additional male crabs residing nearby, called “satellites” (<code>satell</code>). Potential variables that might explain the number of satellites include the color of the female crab (<code>color</code>), the spine condition (<code>spine</code>), <a href="https://www.fiddlercrab.info/morphology/Carapace.html">carapace</a> width in cm (<code>width</code>), and the weight of the crab in kg (<code>weight</code>).</p>
+<p>The color and spine variables are categorical with levels defined as follows:</p>
 <pre class="r"><code>hsc &lt;- read.csv(&quot;data/crabs.csv&quot;)
 hsc$color &lt;- factor(hsc$color, 
                       labels = c(&quot;light medium&quot;, 
@@ -889,56 +714,42 @@ hsc$spine &lt;- factor(hsc$spine,
                       labels = c(&quot;both good&quot;,
                                  &quot;one worn or broken&quot;,
                                  &quot;both worn or broken&quot;))</code></pre>
-<p>Fit a negative binomial regression model to the data using width and
-color as predictors. (Agresti 2002, problem 13.16)</p>
-<p>To begin let’s explore the data. Our variable of interest,
-<code>satell</code>, ranges from 0 to 15 with a fair amount of
-zeroes.</p>
+<p>Fit a negative binomial regression model to the data using width and color as predictors. (Agresti 2002, problem 13.16)</p>
+<p>To begin let’s explore the data. Our variable of interest, <code>satell</code>, ranges from 0 to 15 with a fair amount of zeroes.</p>
 <pre class="r"><code>summary(hsc$satell)</code></pre>
 <pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
 ##   0.000   0.000   2.000   2.919   5.000  15.000</code></pre>
 <p>In fact over a third of the crabs had 0 satellites.</p>
 <pre class="r"><code>mean(hsc$satell == 0)</code></pre>
 <pre><code>## [1] 0.3583815</code></pre>
-<p>Instead of a histogram, we generate a barplot of counts. In addition
-to the spike at 0 we see an interesting dip at 2.</p>
+<p>Instead of a histogram, we generate a barplot of counts. In addition to the spike at 0 we see an interesting dip at 2.</p>
 <pre class="r"><code>table(hsc$satell)|&gt; barplot()</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-38-1.png" width="672" /></p>
 <p>Most crabs are medium color.</p>
 <pre class="r"><code>summary(hsc$color)</code></pre>
 <pre><code>## light medium       medium  dark medium         dark 
 ##           12           95           44           22</code></pre>
-<p>The median number of satellites increases as coloring of the crab
-gets lighter.</p>
+<p>The median number of satellites increases as coloring of the crab gets lighter.</p>
 <pre class="r"><code>library(ggplot2)
 ggplot(hsc) +
   aes(x = satell, y = color) + 
   geom_boxplot(outlier.shape = NA) +
   geom_jitter(width = 0, height = 0.1, alpha = 1/2) </code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-40-1.png" width="672" /></p>
-<p>It also appears number of satellites has a weak positive association
-with width of the female crab.</p>
+<p>It also appears number of satellites has a weak positive association with width of the female crab.</p>
 <pre class="r"><code>ggplot(hsc) +
   aes(x = width, y = satell) + 
   geom_point() +
   geom_smooth(se = FALSE)</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-41-1.png" width="672" /></p>
-<p>However it appears the positive relationship between width and number
-of satellites may change depending on color of the crab.</p>
+<p>However it appears the positive relationship between width and number of satellites may change depending on color of the crab.</p>
 <pre class="r"><code>ggplot(hsc) +
   aes(x = width, y = satell) + 
   geom_point() +
   geom_smooth(se = FALSE) +
   facet_wrap(~ color)</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-42-1.png" width="672" /></p>
-<p>To fit the negative binomial model we’ll use the
-<code>glm.nb()</code> function from the MASS package. <span
-class="citation">(Venables and Ripley 2002)</span> We model satell as a
-function of width, color and their interaction. The syntax
-<code>width * color</code> is shorthand for
-<code>width + color + width:color</code>. Before we inspect the model
-summary we use the <code>Anova()</code> function from the car package to
-assess the interaction.</p>
+<p>To fit the negative binomial model we’ll use the <code>glm.nb()</code> function from the MASS package. <span class="citation">(Venables and Ripley 2002)</span> We model satell as a function of width, color and their interaction. The syntax <code>width * color</code> is shorthand for <code>width + color + width:color</code>. Before we inspect the model summary we use the <code>Anova()</code> function from the car package to assess the interaction.</p>
 <pre class="r"><code>library(MASS)
 library(car)
 m &lt;- glm.nb(satell ~ width * color, data = hsc)
@@ -955,20 +766,8 @@ Anova(m, test = &quot;F&quot;)</code></pre>
 ## Residuals   160.483 165                      
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<p>The low F value and high p-value for the <code>width:color</code>
-term indicates the interaction adds little value to the model. The null
-hypothesis of the test in this case is that the model without the
-interaction and the model with interaction fit equally well. We fail to
-reject that hypothesis given the evidence.</p>
-<p>We therefore proceed to fitting a simpler model without the
-interaction. There is no requirement we do this, but a model without an
-interaction can be easier to interpret. Again we look at the Analysis of
-Deviance Table and associated tests using the <code>Anova()</code>
-function. The F value is very low for the color term. The null
-hypothesis is that a model with width and color fits as well as a model
-with with just width. There appears to be no evidence to reject this
-hypothesis. However we’ll retain this term in the model going
-forward.</p>
+<p>The low F value and high p-value for the <code>width:color</code> term indicates the interaction adds little value to the model. The null hypothesis of the test in this case is that the model without the interaction and the model with interaction fit equally well. We fail to reject that hypothesis given the evidence.</p>
+<p>We therefore proceed to fitting a simpler model without the interaction. There is no requirement we do this, but a model without an interaction can be easier to interpret. Again we look at the Analysis of Deviance Table and associated tests using the <code>Anova()</code> function. The F value is very low for the color term. The null hypothesis is that a model with width and color fits as well as a model with with just width. There appears to be no evidence to reject this hypothesis. However we’ll retain this term in the model going forward.</p>
 <pre class="r"><code>m2 &lt;- glm.nb(satell ~ width + color, data = hsc)
 Anova(m2, test = &quot;F&quot;)</code></pre>
 <pre><code>## Analysis of Deviance Table (Type II tests)
@@ -982,19 +781,12 @@ Anova(m2, test = &quot;F&quot;)</code></pre>
 ## Residuals 152.785 168                      
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<p>Before we interpret the model let’s assess the fit. A good model
-should generate data that’s similar to the data used to fit the model.
-Below we use the <code>densityPlot()</code> function from the car
-package to plot a smooth histogram of the observed counts. That’s the
-solid dark line. We see the spike of zeroes and the little bump at 4.
-Next we use the <code>simulate()</code> function to generate 50 sets of
-data from our model. The result is a data frame we named “sim”. Then we
-use a for loop with the <code>lines()</code> function to plot smooth
-histograms of the 50 simulated data sets.</p>
+<p>Before we interpret the model let’s assess the fit. A good model should generate data that’s similar to the data used to fit the model. Below we use the <code>densityPlot()</code> function from the car package to plot a smooth histogram of the observed counts. That’s the solid dark line. We see the spike of zeroes and the little bump at 4. Next we use the <code>simulate()</code> function to generate 50 sets of data from our model. The result is a data frame we named “sim”. Then we use a for loop with the <code>lines()</code> function to plot smooth histograms of the 50 simulated data sets.</p>
 <pre class="r"><code>densityPlot(hsc$satell, from = 0, to = 15, normalize=TRUE)
 sim &lt;- simulate(m, nsim = 50)
 for(i in 1:50)lines(density(sim[[i]], from=0), col = &quot;grey90&quot;)</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-45-1.png" width="672" /></p>
+<<<<<<< HEAD
 <p>Notice we’re underpredicting 0 counts and in the range of 3 - 6.
 We’re also overpredicting in the area of 1 and 2.</p>
 <p>Another type of fit assessment for count models can be performed with
@@ -1015,13 +807,14 @@ satellites in the 0 - 6 range, but not too bad for the higher counts.
 The</p>
 <pre class="r"><code># install.packages(&quot;countreg&quot;, repos=&quot;http://R-Forge.R-project.org&quot;)
 library(countreg)
+=======
+<p>Notice we’re underpredicting 0 counts and in the range of 3 - 6. We’re also overpredicting in the area of 1 and 2.</p>
+<p>Another type of fit assessment for count models can be performed with a rootogram. The tops of the bars are the <em>expected frequencies</em> of the counts given the model. The counts are plotted on the square-root scale to help visualize smaller frequencies. The red line shows the fitted frequencies as a smooth curve. The x-axis is a horizontal reference line. Bars that hang below the line show underpredicting, bars that hang above show overpredicting. We see our model is ill-fitting for satellites in the 0 - 6 range, but not too bad for the higher counts.</p>
+<pre class="r"><code>library(countreg)
+>>>>>>> 8d7b498b417d9519200a086b296111e4f8b4f659
 rootogram(m2)</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-46-1.png" width="672" /></p>
-<p>Using the <code>Confint()</code> function (from the car package) with
-<code>exponentiate = TRUE</code> returns the multiplicative effect of
-the coefficients. For example it appears that for every 1 cm increase in
-carapace width results in about a 20% increase in counts (95% CI: [8,
-31]).</p>
+<p>Using the <code>Confint()</code> function (from the car package) with <code>exponentiate = TRUE</code> returns the multiplicative effect of the coefficients. For example it appears that for every 1 cm increase in carapace width results in about a 20% increase in counts (95% CI: [8, 31]).</p>
 <pre class="r"><code>Confint(m2, exponentiate = TRUE)</code></pre>
 <pre><code>## 
 ## Exponentiated Coefficients and Confidence Bounds</code></pre>
@@ -1031,18 +824,11 @@ carapace width results in about a 20% increase in counts (95% CI: [8,
 ## colormedium      0.75886462 0.362037718 1.4724292
 ## colordark medium 0.59432532 0.270255682 1.2280651
 ## colordark        0.58506859 0.245133460 1.3434182</code></pre>
-<p>We can visualize this effect using the ggeffects package <span
-class="citation">(Lüdecke 2018)</span>. Below we use the
-<code>ggeffect()</code> function to make predictions of satel for
-various values of width, holding color at the proportional values. We
-see our estimate becomes very uncertain past 28 cm since we have few
-horseshoe crabs that wide.</p>
+<p>We can visualize this effect using the ggeffects package <span class="citation">(Lüdecke 2018)</span>. Below we use the <code>ggeffect()</code> function to make predictions of satel for various values of width, holding color at the proportional values. We see our estimate becomes very uncertain past 28 cm since we have few horseshoe crabs that wide.</p>
 <pre class="r"><code>library(ggeffects)
 ggeffect(m2, terms = &quot;width&quot;) |&gt; plot()</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-48-1.png" width="672" /></p>
-<p>A similar plot can be made for color that suggests a light medium
-color may lead to more satellites, but we’re very uncertain about that
-given how few crabs we have of that color (only 12 out of 173).</p>
+<p>A similar plot can be made for color that suggests a light medium color may lead to more satellites, but we’re very uncertain about that given how few crabs we have of that color (only 12 out of 173).</p>
 <pre class="r"><code>ggeffect(m2, terms = &quot;color&quot;) |&gt; plot()</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-49-1.png" width="672" /></p>
 <p>We continue this analysis in the <strong>Zero-Inflated model</strong>
@@ -1050,23 +836,24 @@ example.</p>
 </div>
 <div id="zero-inflated-model" class="section level3">
 <h3>Zero-Inflated model</h3>
+<<<<<<< HEAD
 <p>The horseshoe crab data, analyzed in the previous example (Negative
 Binomial model), appeared to have a surplus of zeroes. One approach to
 modeling data of this nature is to entertain a <em>mixture model</em>.
 This is a model that uses a mix of two models to approximate the data
 generating process. A <strong>zero-inflated model</strong> is a mixture
 of two models:</p>
+=======
+<p>The horseshoe crab data, analyzed in the previous example (Negative Binomial model), appeared to have a surplus of zeroes. One approach to modeling data of this nature is to entertain a <em>mixture model</em>. This is a model that uses a mix of two models to approximate the data generating process. A zero-inflated model is a mixture of two models:</p>
+>>>>>>> 8d7b498b417d9519200a086b296111e4f8b4f659
 <ol style="list-style-type: decimal">
 <li>a binary logistic regression model for zeroes.</li>
 <li>a count model for zeroes and positive values.</li>
 </ol>
-<p>This model basically says there are two types of female horseshoe
-crabs:</p>
+<p>This model basically says there are two types of female horseshoe crabs:</p>
 <ol style="list-style-type: decimal">
-<li>some that will never have satellites (for whatever reason). Their
-counts will <em>always</em> be 0.</li>
-<li>some that can have satellites but may not. Their count
-<em>could</em> be 0.</li>
+<li>some that will never have satellites (for whatever reason). Their counts will <em>always</em> be 0.</li>
+<li>some that can have satellites but may not. Their count <em>could</em> be 0.</li>
 </ol>
 <p>Let’s read in the data and investigate the distribution of “satell”,
 our dependent variable. This is the number of additional male crabs
@@ -1136,6 +923,7 @@ associated with higher probabilities of 0 satellites.</p>
   ggeffect(&quot;width&quot;) |&gt;
   plot()</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-54-1.png" width="672" /></p>
+<<<<<<< HEAD
 <p>Now we fit a series of zero-inflated models using the
 <code>zeroinfl()</code> function from the pscl package <span
 class="citation">(Zeileis, Kleiber, and Jackman 2008)</span>. The model
@@ -1158,6 +946,12 @@ count model.)</li>
 </ul>
 <pre class="r"><code>library(pscl)
 zm &lt;- zeroinfl(satell ~ width + color | 1, 
+=======
+<pre class="r"><code>library(pscl)</code></pre>
+<pre><code>## Warning: package &#39;pscl&#39; was built under R version 4.1.2</code></pre>
+<pre class="r"><code>library(splines)
+zm &lt;- zeroinfl(satell ~ ns(width, 3) + color | 1, 
+>>>>>>> 8d7b498b417d9519200a086b296111e4f8b4f659
                data = hsc, dist = &quot;negbin&quot;)
 zm1 &lt;- zeroinfl(satell ~ width + color | width, 
                 data = hsc, dist = &quot;negbin&quot;)
@@ -1224,66 +1018,40 @@ count model and the zero-inflation binary logistic regression model.</p>
 Agresti, Alan. 2002. <em>Categorical Data Analysis</em>. Wiley.
 </div>
 <div id="ref-faraway_book" class="csl-entry">
-Faraway, Julian. 2006. <em>Extending the Linear Model with
-<span>R</span></em>. CRC press. <a
-href="https://julianfaraway.github.io/faraway/ELM/">https://julianfaraway.github.io/faraway/ELM/</a>.
+Faraway, Julian. 2006. <em>Extending the Linear Model with <span>R</span></em>. CRC press. <a href="https://julianfaraway.github.io/faraway/ELM/">https://julianfaraway.github.io/faraway/ELM/</a>.
 </div>
 <div id="ref-faraway" class="csl-entry">
-———. 2016. <em>Faraway: Functions and Datasets for Books by Julian
-Faraway</em>. <a
-href="https://CRAN.R-project.org/package=faraway">https://CRAN.R-project.org/package=faraway</a>.
+———. 2016. <em>Faraway: Functions and Datasets for Books by Julian Faraway</em>. <a href="https://CRAN.R-project.org/package=faraway">https://CRAN.R-project.org/package=faraway</a>.
 </div>
 <div id="ref-effects" class="csl-entry">
-Fox, John, and Sanford Weisberg. 2018. <span>“Visualizing Fit and Lack
-of Fit in Complex Regression Models with Predictor Effect Plots and
-Partial Residuals.”</span> <em>Journal of Statistical Software</em> 87
-(9): 1–27. <a
-href="https://doi.org/10.18637/jss.v087.i09">https://doi.org/10.18637/jss.v087.i09</a>.
+Fox, John, and Sanford Weisberg. 2018. <span>“Visualizing Fit and Lack of Fit in Complex Regression Models with Predictor Effect Plots and Partial Residuals.”</span> <em>Journal of Statistical Software</em> 87 (9): 1–27. <a href="https://doi.org/10.18637/jss.v087.i09">https://doi.org/10.18637/jss.v087.i09</a>.
 </div>
 <div id="ref-car" class="csl-entry">
-———. 2019. <em>An <span>R</span> Companion to Applied Regression</em>.
-Third. Thousand Oaks <span>CA</span>: Sage. <a
-href="https://socialsciences.mcmaster.ca/jfox/Books/Companion/">https://socialsciences.mcmaster.ca/jfox/Books/Companion/</a>.
+———. 2019. <em>An <span>R</span> Companion to Applied Regression</em>. Third. Thousand Oaks <span>CA</span>: Sage. <a href="https://socialsciences.mcmaster.ca/jfox/Books/Companion/">https://socialsciences.mcmaster.ca/jfox/Books/Companion/</a>.
 </div>
 <div id="ref-vcdextra" class="csl-entry">
-Friendly, Michael. 2022. <em>vcdExtra: ’Vcd’ Extensions and
-Additions</em>. <a
-href="https://CRAN.R-project.org/package=vcdExtra">https://CRAN.R-project.org/package=vcdExtra</a>.
+Friendly, Michael. 2022. <em>vcdExtra: ’Vcd’ Extensions and Additions</em>. <a href="https://CRAN.R-project.org/package=vcdExtra">https://CRAN.R-project.org/package=vcdExtra</a>.
 </div>
 <div id="ref-friendly2016" class="csl-entry">
-Friendly, Michael, and David Meyer. 2016. <em>Discrete Data Analysis
-with <span>R</span></em>. Boca Raton: <span>CRC</span> Press.
+Friendly, Michael, and David Meyer. 2016. <em>Discrete Data Analysis with <span>R</span></em>. Boca Raton: <span>CRC</span> Press.
 </div>
 <div id="ref-rootograms" class="csl-entry">
-Kleiber, C, and A Zeileis. 2016. <span>“Visualizing Count Data
-Regressions Using Rootograms,”</span> 296–303. <a
-href="https://doi.org/10.1080/00031305.2016.1173590">https://doi.org/10.1080/00031305.2016.1173590</a>.
+Kleiber, C, and A Zeileis. 2016. <span>“Visualizing Count Data Regressions Using Rootograms,”</span> 296–303. <a href="https://doi.org/10.1080/00031305.2016.1173590">https://doi.org/10.1080/00031305.2016.1173590</a>.
 </div>
 <div id="ref-emmeans" class="csl-entry">
-Lenth, Russell V. 2022. <em>Emmeans: Estimated Marginal Means, Aka
-Least-Squares Means</em>. <a
-href="https://CRAN.R-project.org/package=emmeans">https://CRAN.R-project.org/package=emmeans</a>.
+Lenth, Russell V. 2022. <em>Emmeans: Estimated Marginal Means, Aka Least-Squares Means</em>. <a href="https://CRAN.R-project.org/package=emmeans">https://CRAN.R-project.org/package=emmeans</a>.
 </div>
 <div id="ref-ggeffects" class="csl-entry">
-Lüdecke, Daniel. 2018. <span>“Ggeffects: Tidy Data Frames of Marginal
-Effects from Regression Models.”</span> <em>Journal of Open Source
-Software</em> 3 (26): 772. <a
-href="https://doi.org/10.21105/joss.00772">https://doi.org/10.21105/joss.00772</a>.
+Lüdecke, Daniel. 2018. <span>“Ggeffects: Tidy Data Frames of Marginal Effects from Regression Models.”</span> <em>Journal of Open Source Software</em> 3 (26): 772. <a href="https://doi.org/10.21105/joss.00772">https://doi.org/10.21105/joss.00772</a>.
 </div>
 <div id="ref-lattice" class="csl-entry">
-Sarkar, Deepayan. 2008. <em>Lattice: Multivariate Data Visualization
-with r</em>. New York: Springer. <a
-href="http://lmdvr.r-forge.r-project.org">http://lmdvr.r-forge.r-project.org</a>.
+Sarkar, Deepayan. 2008. <em>Lattice: Multivariate Data Visualization with r</em>. New York: Springer. <a href="http://lmdvr.r-forge.r-project.org">http://lmdvr.r-forge.r-project.org</a>.
 </div>
 <div id="ref-MASS" class="csl-entry">
-Venables, W. N., and B. D. Ripley. 2002. <em>Modern Applied Statistics
-with s</em>. Fourth. New York: Springer. <a
-href="https://www.stats.ox.ac.uk/pub/MASS4/">https://www.stats.ox.ac.uk/pub/MASS4/</a>.
+Venables, W. N., and B. D. Ripley. 2002. <em>Modern Applied Statistics with s</em>. Fourth. New York: Springer. <a href="https://www.stats.ox.ac.uk/pub/MASS4/">https://www.stats.ox.ac.uk/pub/MASS4/</a>.
 </div>
 <div id="ref-ggplot2" class="csl-entry">
-Wickham, Hadley. 2016. <em>Ggplot2: Elegant Graphics for Data
-Analysis</em>. Springer-Verlag New York. <a
-href="https://ggplot2.tidyverse.org">https://ggplot2.tidyverse.org</a>.
+Wickham, Hadley. 2016. <em>Ggplot2: Elegant Graphics for Data Analysis</em>. Springer-Verlag New York. <a href="https://ggplot2.tidyverse.org">https://ggplot2.tidyverse.org</a>.
 </div>
 <div id="ref-pscl" class="csl-entry">
 Zeileis, Achim, Christian Kleiber, and Simon Jackman. 2008.
