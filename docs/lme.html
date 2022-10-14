@@ -13,7 +13,7 @@
 
 <title>Mixed-Effect Models</title>
 
-<script src="site_libs/header-attrs-2.16/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.13/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
@@ -166,15 +166,11 @@ $(document).ready(function () {
     href = "index.html";
   var menuAnchor = $('a[href="' + href + '"]');
 
-  // mark the anchor link active (and if it's in a dropdown, also mark that active)
-  var dropdown = menuAnchor.closest('li.dropdown');
-  if (window.bootstrap) { // Bootstrap 4+
-    menuAnchor.addClass('active');
-    dropdown.find('> .dropdown-toggle').addClass('active');
-  } else { // Bootstrap 3
-    menuAnchor.parent().addClass('active');
-    dropdown.addClass('active');
-  }
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
 
   // Navbar adjustments
   var navHeight = $(".navbar").first().height() + 15;
@@ -393,12 +389,7 @@ div.tocify {
 
 <div id="multilevel-modeling" class="section level3">
 <h3>multilevel modeling</h3>
-<p>The <code>eggprod</code> data in the faraway package contains data on
-egg production. <span class="citation">(Faraway 2016)</span> Six pullets
-(young hens) were placed into each of 12 pens. Four blocks were formed
-from groups of 3 pens based on location. Three treatments were applied.
-The number of eggs produced was recorded. Start by visualizing the
-distribution of eggs produced split by blocks and treatment.</p>
+<p>The <code>eggprod</code> data in the faraway package contains data on egg production. <span class="citation">(Faraway 2016)</span> Six pullets (young hens) were placed into each of 12 pens. Four blocks were formed from groups of 3 pens based on location. Three treatments were applied. The number of eggs produced was recorded. Start by visualizing the distribution of eggs produced split by blocks and treatment.</p>
 <pre class="r"><code>library(faraway)
 data(&quot;eggprod&quot;)
 
@@ -415,17 +406,11 @@ ggplot(eggprod, aes(x=block, y=eggs, color = block)) + # Plotting eggs~treat, co
   coord_flip() + # Flipping x and y coordinates to mimic Base R plotting
   theme_classic() # Using classic theme</code></pre>
 <p><img src="lme_files/figure-html/unnamed-chunk-1-2.png" width="672" /></p>
-<p>This shows visually that treatment O may have produced fewer eggs
-than treatment F or E whose distributions are more similar and closer to
-one another. The distributions of eggs produced by each block seem to
-overlap and are very similar to one another.</p>
-<p>Now, we model the number of eggs produced with <code>treat</code> as
-a fixed effect and <code>block</code> as a random effect. <span
-class="citation">(Faraway 2006)</span> Does <code>treat</code> appear to
-affect the number of eggs, and if so, which treatment seems
-superior?</p>
-<pre class="r"><code>library(lme4)
-m &lt;- lmer(eggs ~ treat + (1|block), data = eggprod)
+<p>This shows visually that treatment O may have produced fewer eggs than treatment F or E whose distributions are more similar and closer to one another. The distributions of eggs produced by each block seem to overlap and are very similar to one another.</p>
+<p>Now, we model the number of eggs produced with <code>treat</code> as a fixed effect and <code>block</code> as a random effect. <span class="citation">(Faraway 2006)</span> Does <code>treat</code> appear to affect the number of eggs, and if so, which treatment seems superior?</p>
+<pre class="r"><code>library(lme4)</code></pre>
+<pre><code>## Warning: package &#39;lme4&#39; was built under R version 4.1.2</code></pre>
+<pre class="r"><code>m &lt;- lmer(eggs ~ treat + (1|block), data = eggprod)
 car::Anova(m)</code></pre>
 <pre><code>## Analysis of Deviance Table (Type II Wald chisquare tests)
 ## 
@@ -437,9 +422,7 @@ car::Anova(m)</code></pre>
 </div>
 <div id="longitudinal-modeling" class="section level3">
 <h3>longitudinal modeling</h3>
-<p>The <code>phosphate</code> data in the HSAUR3 package contains plasma
-inorganic phosphate levels from 33 subjects (20 controls, 13 obese).
-<span class="citation">(Hothorn and Everitt 2022)</span></p>
+<p>The <code>phosphate</code> data in the HSAUR3 package contains plasma inorganic phosphate levels from 33 subjects (20 controls, 13 obese). <span class="citation">(Hothorn and Everitt 2022)</span></p>
 <pre class="r"><code>library(HSAUR3)
 data(&quot;phosphate&quot;)
 head(phosphate)</code></pre>
@@ -450,13 +433,10 @@ head(phosphate)</code></pre>
 ## 4 control 3.6  3.0 2.2  2.8 2.9 3.9 3.8 4.0
 ## 5 control 4.1  3.8 2.1  3.0 3.6 3.4 3.6 3.7
 ## 6 control 3.8  2.2 2.0  2.6 3.8 3.6 3.0 3.5</code></pre>
-<p>Reshaping the data facilitates data visualization. The
-<code>pivot_longer()</code> function from the tidyr package makes quick
-work of this. <span class="citation">(Wickham and Girlich 2022)</span>
-We add a subject <code>id</code> to identify subjects after reshaping
-the data into a “long” format.</p>
-<pre class="r"><code>library(tidyr)
-phosphate$id &lt;- 1:nrow(phosphate)
+<p>Reshaping the data facilitates data visualization. The <code>pivot_longer()</code> function from the tidyr package makes quick work of this. <span class="citation">(Wickham and Girlich 2022)</span> We add a subject <code>id</code> to identify subjects after reshaping the data into a “long” format.</p>
+<pre class="r"><code>library(tidyr)</code></pre>
+<pre><code>## Warning: package &#39;tidyr&#39; was built under R version 4.1.2</code></pre>
+<pre class="r"><code>phosphate$id &lt;- 1:nrow(phosphate)
 phosphateL &lt;- pivot_longer(phosphate, cols = t0:t5, 
                            names_to = &quot;time&quot;, 
                            names_prefix = &quot;t&quot;,
@@ -476,39 +456,29 @@ head(phosphateL, n = 10)</code></pre>
 ##  8 control     1   5     4.4
 ##  9 control     2   0     3.7
 ## 10 control     2   0.5   2.6</code></pre>
-<p>There appears to be a great deal of variability between the
-subjects.</p>
+<p>There appears to be a great deal of variability between the subjects.</p>
 <pre class="r"><code>library(ggplot2)
 ggplot(phosphateL) +
   aes(x = time, y = level, group = id) +
   geom_line() +
   facet_wrap(~group)</code></pre>
 <p><img src="lme_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
-<p>What might be a sensible linear mixed effect model to quantify trend
-in time, effect of obesity, and variation between subjects?</p>
+<p>What might be a sensible linear mixed effect model to quantify trend in time, effect of obesity, and variation between subjects?</p>
 </div>
 <div id="references" class="section level3 unnumbered">
 <h3 class="unnumbered">References</h3>
 <div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-faraway_book" class="csl-entry">
-Faraway, Julian. 2006. <em>Extending the Linear Model with
-<span>R</span></em>. CRC press. <a
-href="https://julianfaraway.github.io/faraway/ELM/">https://julianfaraway.github.io/faraway/ELM/</a>.
+Faraway, Julian. 2006. <em>Extending the Linear Model with <span>R</span></em>. CRC press. <a href="https://julianfaraway.github.io/faraway/ELM/">https://julianfaraway.github.io/faraway/ELM/</a>.
 </div>
 <div id="ref-faraway" class="csl-entry">
-———. 2016. <em>Faraway: Functions and Datasets for Books by Julian
-Faraway</em>. <a
-href="https://CRAN.R-project.org/package=faraway">https://CRAN.R-project.org/package=faraway</a>.
+———. 2016. <em>Faraway: Functions and Datasets for Books by Julian Faraway</em>. <a href="https://CRAN.R-project.org/package=faraway">https://CRAN.R-project.org/package=faraway</a>.
 </div>
 <div id="ref-hsaur3" class="csl-entry">
-Hothorn, Torsten, and Brian S. Everitt. 2022. <em>Hsaur3: A Handbook of
-Statistical Analyses Using r (3rd Edition)</em>. <a
-href="https://CRAN.R-project.org/package=HSAUR3">https://CRAN.R-project.org/package=HSAUR3</a>.
+Hothorn, Torsten, and Brian S. Everitt. 2022. <em>Hsaur3: A Handbook of Statistical Analyses Using r (3rd Edition)</em>. <a href="https://CRAN.R-project.org/package=HSAUR3">https://CRAN.R-project.org/package=HSAUR3</a>.
 </div>
 <div id="ref-tidyr" class="csl-entry">
-Wickham, Hadley, and Maximilian Girlich. 2022. <em>Tidyr: Tidy Messy
-Data</em>. <a
-href="https://CRAN.R-project.org/package=tidyr">https://CRAN.R-project.org/package=tidyr</a>.
+Wickham, Hadley, and Maximilian Girlich. 2022. <em>Tidyr: Tidy Messy Data</em>. <a href="https://CRAN.R-project.org/package=tidyr">https://CRAN.R-project.org/package=tidyr</a>.
 </div>
 </div>
 </div>

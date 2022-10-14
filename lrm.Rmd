@@ -57,22 +57,38 @@ To start, let's take a quick look at the summary of the data using the `summary(
 summary(malaria)
 ```
 
+Looking at the summary, we can see that mal takes the values 0 and 1. The mean of mal is 0.27, which indicates that 27% of the data take the value 1, meaning 27% of children monitored showed symptoms of malaria. 
+
+We can see that age ranges from 3 to 15 and is slightly left-skewed. We can tell the skewness by comparing the median to the mean. Here, the median, 9.00, is slightly larger than the mean, 8.86. This indicates that more of the data is below the mean -- the distribution is pulled out to the left, meaning there are slightly more younger children in this dataset. 
+
+From the summary we can also see that ab is very skewed, but in the opposite direction as age. Ab represents the antibody levels of the subjects and ranges from 2.0 to 2066.0. The median of ab, 111.0, is much smaller than the mean, 311.5. This indicates that ab is right-skewed. If we look at the 3rd quantile, we can see that 75% of the data is below 373.8. The maximum value of 2066.0 is much much larger than the 3rd quantile value, which may hint that the 2066.0 could be an outlier. 
+
+Looking at a box plot of the ab can give us a good visualization of this skewness and spread of the data. Here we plot the distribution of ab by mal and log(ab) by mal.
+
 ```{r}
 boxplot(ab ~ mal, data = malaria)
 
 boxplot(log(ab) ~ mal, data = malaria)
-
-boxplot(age ~ mal, data = malaria)
 ```
 
-From these plots we can see that the median age 
+In the first box plot (ab by mal), because of the spread of the data, it appears very sqiushed and hard to interpret. We can see that children who did show symptoms of malaria (mal = 1) tend to have a lower antibody count while those who did not show symptoms (mal = 0) tend to have a higher antibody count. We can also see the right-skewness of the data. 
+
+The log transformed ab data is much clearer. We can see that same trend of lower antibody count for those who showed symptoms of malaria. With this plot we can get a feel for the values of the data: for those who showed no symptoms of malaria, we can see that 50% of the data falls between log(ab) = 4 and 6, whereas 50% of the data for those who did show symptoms of malaria falls between about log(ab) = 3 and 4. 
+
+We can also look at how age varies based on malaria symptoms: 
 
 ```{r}
 library(ggplot2)
 
-ggplot(malaria, aes(x = log(ab))) + geom_histogram()
-```
+malaria$group = ifelse(malaria$mal == 0, 'no symptoms', 'symptoms')
 
+ggplot(malaria, aes(x=age, fill = group)) + geom_histogram(binwidth=1, color="black",) + scale_fill_manual(values = c('no symptoms' = 'gray', 'symptoms' = 'cornflowerblue'))
+
+#+ geom_histogram(binwidth=1, color="black", fill="white")
+
+#boxplot(age ~ mal, data = malaria)
+```
+From the histogram, we can see that the ages of subjects are more or less uniformly spread from 3 to 15. From the box plot, we can see that subjects who showed symptoms of malaria tended to be of a younger age. 
 
 Now let's build our model. We will use the `glm()` function. `glm()` is used to fit a generalized linear model to the data. To specify logistic regression, in the argument we set the `family = binomial(link = "logit")`. 
 
@@ -91,6 +107,14 @@ We can also look at the model coefficients and confidence intervals.
 ```{r}
 lrm$coefficients
 confint(lrm)
+```
+
+If we look at the confidence intervals for the coefficients in our model, we can see reasonable ranges of values for the coefficients. The reasonable range of values for the age coefficient is -0.202 to 0.066. Note this range is small and includes 0, which implies that the effect of age on mal is small and we can't be sure if the effect is positive or negative. 
+
+The reasonable range of values for log(ab) is -1.099 to -0.324. This range is larger than that of age and is entirely negative. This indicates that antibody count has a stronger effect on mal than age and is a negative effect. In other words, lower antibody count is associated with higher risk of malaria. We can exponentiate this confidence interval to get odds ratios.  
+
+```{r}
+exp(confint(lrm)["log(ab)",])
 ```
 
 If we wanted to, we could have split the data into training and testing data:
