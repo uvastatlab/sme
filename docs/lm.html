@@ -726,7 +726,11 @@ segments(x0 = 0, y0 = 0, x1 = 43, y1 = 0, lty = 2)</code></pre>
 <pre class="r"><code>library(car)
 durbinWatsonTest(m)</code></pre>
 <pre><code>##  lag Autocorrelation D-W Statistic p-value
+<<<<<<< HEAD
+##    1     -0.05006007      2.079992    0.95
+=======
 ##    1     -0.05006007      2.079992   0.958
+>>>>>>> 8d7b498b417d9519200a086b296111e4f8b4f659
 ##  Alternative hypothesis: rho != 0</code></pre>
 <p>Based on our residual versus time plot and the result of the Durbin-Watson test, we decide to assume our residual errors are independent.</p>
 <p>Our Residuals versus Fitted plot shows a couple of observations (22 and 18) that the model massively under-predicts. Observation 18, for example, has a fitted value of over 4000, but its residual is about 1000, indicating the model under-predicted its order value by about 1000 units.</p>
