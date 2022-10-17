@@ -13,7 +13,7 @@
 
 <title>Linear Modeling</title>
 
-<script src="site_libs/header-attrs-2.16/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.17/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
@@ -203,8 +203,8 @@ $(document).ready(function () {
   border-radius: 4px;
 }
 
-.tabset-dropdown > .nav-tabs > li.active:before {
-  content: "";
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
   font-family: 'Glyphicons Halflings';
   display: inline-block;
   padding: 10px;
@@ -212,16 +212,9 @@ $(document).ready(function () {
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
-  content: "&#xe258;";
-  border: none;
-}
-
-.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
-  content: "";
+  content: "\e258";
   font-family: 'Glyphicons Halflings';
-  display: inline-block;
-  padding: 10px;
-  border-right: 1px solid #ddd;
+  border: none;
 }
 
 .tabset-dropdown > .nav-tabs > li.active {
@@ -708,6 +701,37 @@ summary(m3)</code></pre>
 ## Residual standard error: 17 on 99 degrees of freedom
 ## Multiple R-squared:  0.1438, Adjusted R-squared:  0.1265 
 ## F-statistic: 8.314 on 2 and 99 DF,  p-value: 0.0004596</code></pre>
+<p>One way we can assess the model is by examining diagnostic plots. We
+will view the fitted vs. residuals plot.</p>
+<pre class="r"><code>plot(m3, which=1)</code></pre>
+<p><img src="lm_files/figure-html/unnamed-chunk-24-1.png" width="672" />
+The fitted vs. residuals plot summarizes the spread of residuals. For a
+‘good’ model, we expect to see residuals centered around 0, with an even
+distribution above and below 0. The red line is a line fitted to the
+residuals, so we expect it to be horizontal at 0.</p>
+<p>Many of the values on the plot are within 20 units of 0. This is what
+we would expect based on the residual standard error. The distribution
+of residuals of a linear regression model should have a mean of 0. This
+distribution has a standard deviation called the residual standard
+error. The residual standard error is how much we can expect a
+prediction to deviate from its true value.</p>
+<p>From summarizing the data, we saw that about 50% of the data is in
+about a 20 unit range (1st quartile: 116 , 3rd quartile: 137.5). So if
+we can expect the model to predict bp with a 17 unit range, then the
+model’s error is similar to the range of the data. Thus, the model
+cannot accurately predict bp.</p>
+<p>Additionally, this model has an adjusted R-squared value of 0.1265.
+This roughly means the model explains 13% of the variability in bp. This
+is another indication that the model is not good.</p>
+<p>Another way to assess model fit is through a calibration plot, which
+plots predicted values against observed values. The values should
+cluster around the slope=1 line shown in red.</p>
+<pre class="r"><code>plot(bp.obese$bp, predict(m3))
+abline(a=0, b=1, col=&#39;red&#39;)</code></pre>
+<p><img src="lm_files/figure-html/unnamed-chunk-25-1.png" width="672" /></p>
+<p>These values do not cluster around the slope=1 line, another signal
+that this model does not perform well. It is likely that factors outisde
+of the predictors in the model also affect bp.</p>
 <p>Next, we will calculate confidence intervals for each of the
 coefficients in the model.</p>
 <pre class="r"><code>confint(m3)</code></pre>
@@ -768,7 +792,7 @@ contractors in previous month</li>
 </ol>
 <p>First we look at the distribution of orders.</p>
 <pre class="r"><code>hist(heating$orders)</code></pre>
-<p><img src="lm_files/figure-html/unnamed-chunk-27-1.png" width="672" /></p>
+<p><img src="lm_files/figure-html/unnamed-chunk-29-1.png" width="672" /></p>
 <p>We had negative orders one month and zero orders a couple of
 months</p>
 <pre class="r"><code>summary(heating$orders)</code></pre>
@@ -802,13 +826,13 @@ discount was not 0.</p>
 <p>Pairwise scatterplots again reveal that discount is mostly 0. But
 when greater than 0, it appears to be associated with higher orders.</p>
 <pre class="r"><code>pairs(heating[,1:7], lower.panel = NULL)</code></pre>
-<p><img src="lm_files/figure-html/unnamed-chunk-31-1.png" width="672" /></p>
+<p><img src="lm_files/figure-html/unnamed-chunk-33-1.png" width="672" /></p>
 <p>Since the data is in time order, we can plot <code>orders</code>
 against its index to investigate any trends in time. There appears to be
 an upward trend in the first 9 months. After that orders seem rather
 sporadic.</p>
 <pre class="r"><code>plot(heating$orders, type = &quot;b&quot;)</code></pre>
-<p><img src="lm_files/figure-html/unnamed-chunk-32-1.png" width="672" /></p>
+<p><img src="lm_files/figure-html/unnamed-chunk-34-1.png" width="672" /></p>
 <p>The <code>acf()</code> function allows us to formally check for
 autocorrelation (ie, self-correlation). At lag 0, we see
 <code>orders</code> is perfectly correlated with itself. That will
@@ -818,7 +842,7 @@ we would expect to see random autocorrelation values hover for pure
 noise (ie, data with no autocorrelation). Other than at lag 5, we so no
 evidence for autocorrelation. And even there it appears rather weak.</p>
 <pre class="r"><code>acf(heating$orders)</code></pre>
-<p><img src="lm_files/figure-html/unnamed-chunk-33-1.png" width="672" /></p>
+<p><img src="lm_files/figure-html/unnamed-chunk-35-1.png" width="672" /></p>
 <p>With only 43 observations and little knowledge of this industry, we
 decide to pursue a simple model with no interactions or non-linear
 effects. To help us decide which predictors to use, will use a bootstrap
@@ -893,7 +917,7 @@ index. We’re looking to see if residuals are consistently above or below
 phenomenon but nothing too severe.</p>
 <pre class="r"><code>plot(residuals(m), type = &quot;b&quot;)
 segments(x0 = 0, y0 = 0, x1 = 43, y1 = 0, lty = 2)</code></pre>
-<p><img src="lm_files/figure-html/unnamed-chunk-40-1.png" width="672" /></p>
+<p><img src="lm_files/figure-html/unnamed-chunk-42-1.png" width="672" /></p>
 <p>A test for autocorrelation is the Durbin-Watson Test. The car package
 <span class="citation">(Fox and Weisberg 2019)</span> provides a
 function for this test. The null hypothesis is the autocorrelation
@@ -904,11 +928,7 @@ against the null.</p>
 <pre class="r"><code>library(car)
 durbinWatsonTest(m)</code></pre>
 <pre><code>##  lag Autocorrelation D-W Statistic p-value
-<<<<<<< HEAD
-##    1     -0.05006007      2.079992   0.908
-=======
 ##    1     -0.05006007      2.079992    0.91
->>>>>>> 2326d99d671a3ea35ce89b22ba3adfe46894a6aa
 ##  Alternative hypothesis: rho != 0</code></pre>
 <p>Based on our residual versus time plot and the result of the
 Durbin-Watson test, we decide to assume our residual errors are
@@ -919,11 +939,11 @@ example, has a fitted value of over 4000, but its residual is about
 1000, indicating the model under-predicted its order value by about 1000
 units.</p>
 <pre class="r"><code>plot(m, which = 1)</code></pre>
-<p><img src="lm_files/figure-html/unnamed-chunk-42-1.png" width="672" /></p>
+<p><img src="lm_files/figure-html/unnamed-chunk-44-1.png" width="672" /></p>
 <p>The Residuals versus Leverage plot indicates that observation 18 may
 be exerting a strong influence on the model.</p>
 <pre class="r"><code>plot(m, which = 5)</code></pre>
-<p><img src="lm_files/figure-html/unnamed-chunk-43-1.png" width="672" /></p>
+<p><img src="lm_files/figure-html/unnamed-chunk-45-1.png" width="672" /></p>
 <p>The “18” label allows us to easily investigate this observation. It
 appears this is one of the rare times there was a discount. And at 5%,
 this is the largest observed discount.</p>
