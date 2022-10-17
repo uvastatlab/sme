@@ -484,7 +484,7 @@ glm(zero ~ width, data = hsc, family = binomial) |>
   plot()
 ```
 
-Now we fit a series of zero-inflated models using the `zeroinfl()` function from the pscl package [@pscl]. The model syntax is the same as the syntax used for `lm()` and `glm()`, except now we can specify two models separated by a `|`. 
+Now we fit a series of zero-inflated models using the `zeroinfl()` function from the pscl package [@pscl]. The model syntax is the same as the syntax used for `lm()` and `glm()`, except now we can specify _two models_ separated by a `|`. 
 
 - The first model specified to the left of the `|` is the _count model_. We specify the same count model we used in the negative binomial model section. The `dist = "negbin"` argument says we want to fit a negative binomial model. (The default is a poisson model.) 
 - The second model specified to the right of the `|` is the _binary logistic regression_ model for the zeroes. We try a series of increasingly complex models, starting with the intercept only and then width, color, and both width and color. (We could also not specify a model to the right of the `|`. In that case the same model is fit to the binomial logistic regression that is fit to the count model.)
@@ -501,7 +501,7 @@ zm3 <- zeroinfl(satell ~ width + color | width + color,
                 data = hsc, dist = "negbin")
 ```
 
-We compare the models' AIC values to help us decide which model seems to perform the best. Model zm1 appears to give us the most bang for the buck. It doesn't have the lowest AIC, but it's not much different from the model with 11 parameters. With only 173 observations it seems wise to prefer the model with only 8 parameters. 
+We compare the models' AIC values to help us decide which model seems to perform the best. Model zm1 appears to give us the most bang for the buck. It doesn't have the lowest AIC, but it's not much different from the model with 11 parameters (ie. df, or degrees of freedom). With only 173 observations it seems wise to prefer the model with only 8 parameters. 
 
 ```{r}
 AIC(zm, zm1, zm2, zm3)
@@ -513,21 +513,37 @@ The model summary shows results for two models: the negative binomial count mode
 summary(zm1)
 ```
 
+The only coefficient in the count model that looks reliably positive or negative is _theta_. This is the dispersion parameter in the negative binomial model. This tells us the conditional mean of the counts is _not equal_ to its variance. If it was, we might consider fitting a Poisson model where the mean and the variance are equal.
+
+It appears width has more to do with understanding the probability of a female crab having zero satellites than understanding the positive counts of satellites. Since a zero inflated model is a mixture of two models, we could try a different count model. Below we fit an intercept-only model for the count model and retain width as a predictor in the binomial logistic regression model. This simplified model with only 4 coefficients seems just as good as the model with 8 coefficients.
 
 ```{r}
-rootogram(zm1)
+zm4 <- zeroinfl(satell ~ 1 | width, 
+                data = hsc, dist = "negbin")
+AIC(zm1, zm4)
 ```
 
 
 ```{r}
-ggpredict(zm1, terms = "width [all]", type = "zero_inflated") |> 
-  plot()
+summary(zm4)
 ```
 
-This model improves on the negative binomial model.
+This updated model basically says that counts of satellites is a mixture of two models:
+
+1. a negative binomial model with `mu = exp(1.47294)` and `theta = 4.7305`
+2. a binomial logistic regression model where probability of zero satellites decreases with larger widths
+
+We can evaluate the fit of this updated model with a rootogram. The fit is not great, especially when it comes to modeling counts of ones and twos. But we have a much better understanding of zero counts. 
 
 ```{r}
-AIC(zm1, m2)
+rootogram(zm4)
+```
+
+This model also improves on the negative binomial model we fit in the previous section. It has two fewer coefficients and a substantially lower AIC.
+
+```{r}
+# m2 fit in the Negative binomial model section
+AIC(zm4, m2)
 ```
 
 

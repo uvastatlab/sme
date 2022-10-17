@@ -13,7 +13,7 @@
 
 <title>Linear Modeling</title>
 
-<script src="site_libs/header-attrs-2.13/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.16/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
@@ -166,11 +166,15 @@ $(document).ready(function () {
     href = "index.html";
   var menuAnchor = $('a[href="' + href + '"]');
 
-  // mark it active
-  menuAnchor.tab('show');
-
-  // if it's got a parent navbar menu mark it active as well
-  menuAnchor.closest('li.dropdown').addClass('active');
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
 
   // Navbar adjustments
   var navHeight = $(".navbar").first().height() + 15;
@@ -387,9 +391,13 @@ div.tocify {
 </div>
 
 
-<div id="linear-model-with-no-predictors-intercept-only" class="section level3">
+<div id="linear-model-with-no-predictors-intercept-only"
+class="section level3">
 <h3>Linear model with no predictors (intercept only)</h3>
-<p>A new reading program is being evaluated at an elementary school. A random sample of 20 students were tested to determine reading speed. Speed was measured in minutes. <span class="citation">(Ott and Longnecker 2004)</span></p>
+<p>A new reading program is being evaluated at an elementary school. A
+random sample of 20 students were tested to determine reading speed.
+Speed was measured in minutes. <span class="citation">(Ott and
+Longnecker 2004)</span></p>
 <pre class="r"><code>speed &lt;- c(5, 7, 15, 12, 8, 7, 10, 11, 9, 13, 10, 6, 11, 8, 10, 8, 7, 6, 11, 8, 20)</code></pre>
 <p>Visualize distribution of data:</p>
 <pre class="r"><code>hist(speed)</code></pre>
@@ -418,7 +426,10 @@ tout$conf.int</code></pre>
 confint(m)</code></pre>
 <pre><code>##                2.5 %   97.5 %
 ## (Intercept) 8.045653 11.19244</code></pre>
-<p>Does the sample appear to be from a Normal distribution? If so, the points in a QQ Plot should lie close to the diagonal line. See <a href="https://data.library.virginia.edu/understanding-q-q-plots/">this article</a> for information on QQ Plots. This plot looks ok.</p>
+<p>Does the sample appear to be from a Normal distribution? If so, the
+points in a QQ Plot should lie close to the diagonal line. See <a
+href="https://data.library.virginia.edu/understanding-q-q-plots/">this
+article</a> for information on QQ Plots. This plot looks ok.</p>
 <pre class="r"><code>qqnorm(speed)
 qqline(speed)</code></pre>
 <p><img src="lm_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
@@ -429,7 +440,13 @@ qqline(speed)</code></pre>
 <pre class="r"><code>speed[c(1, 3, 21)]</code></pre>
 <pre><code>## [1]  5 15 20</code></pre>
 <p>There was a fast reader and a couple of slower readers.</p>
-<p>If a Normal QQ Plot if your data looks suspect, try comparing it to other Normal QQ plots created with Normal data. Below we calculate the mean and standard deviation of our data, re-draw the original QQ Plot, and then generate 24 additional QQ plots from a Normal distribution with the same mean and standard deviation as our data. The QQ Plot of our observed data doesn’t seem too different from the QQ Plots of Normal data.</p>
+<p>If a Normal QQ Plot if your data looks suspect, try comparing it to
+other Normal QQ plots created with Normal data. Below we calculate the
+mean and standard deviation of our data, re-draw the original QQ Plot,
+and then generate 24 additional QQ plots from a Normal distribution with
+the same mean and standard deviation as our data. The QQ Plot of our
+observed data doesn’t seem too different from the QQ Plots of Normal
+data.</p>
 <pre class="r"><code>m &lt;- mean(speed)
 s &lt;- sd(speed)
 
@@ -444,12 +461,18 @@ for(i in 1:24){
 <p><img src="lm_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
 <pre class="r"><code>par(op)</code></pre>
 </div>
-<div id="linear-model-with-categorical-predictors" class="section level3">
+<div id="linear-model-with-categorical-predictors"
+class="section level3">
 <h3>Linear model with categorical predictors</h3>
-<p>The <code>schooldays</code> data frame from the HSAUR3 package has 154 rows and 5 columns. It contains data from a sociological study of Australian Aboriginal and white children. Model <code>absent</code> (number of days absent during school year) as a function of <code>race</code>, <code>gender</code>, <code>school</code> (school type), and <code>learner</code> (average or slow learner). <span class="citation">(Hothorn and Everitt 2022)</span></p>
-<pre class="r"><code>library(HSAUR3)</code></pre>
-<pre><code>## Warning: package &#39;HSAUR3&#39; was built under R version 4.1.2</code></pre>
-<pre class="r"><code>data(&quot;schooldays&quot;)</code></pre>
+<p>The <code>schooldays</code> data frame from the HSAUR3 package has
+154 rows and 5 columns. It contains data from a sociological study of
+Australian Aboriginal and white children. Model <code>absent</code>
+(number of days absent during school year) as a function of
+<code>race</code>, <code>gender</code>, <code>school</code> (school
+type), and <code>learner</code> (average or slow learner). <span
+class="citation">(Hothorn and Everitt 2022)</span></p>
+<pre class="r"><code>library(HSAUR3)
+data(&quot;schooldays&quot;)</code></pre>
 <p>First we summarize and explore the data.</p>
 <pre class="r"><code># plots to look at data
 library(ggplot2)
@@ -467,7 +490,8 @@ stripchart(absent ~ gender, data = schooldays,
 ggplot(schooldays, aes(x = gender, y = absent, color=learner)) +
   geom_jitter(position = position_jitter(0.2))</code></pre>
 <p><img src="lm_files/figure-html/unnamed-chunk-11-3.png" width="672" /></p>
-<p>Next we model <code>absent</code> as a function of all other predictors.</p>
+<p>Next we model <code>absent</code> as a function of all other
+predictors.</p>
 <pre class="r"><code>m &lt;- lm(absent ~ race + gender + school + learner, schooldays)
 summary(m)</code></pre>
 <pre><code>## 
@@ -493,24 +517,42 @@ summary(m)</code></pre>
 ## Residual standard error: 15.32 on 147 degrees of freedom
 ## Multiple R-squared:  0.1091, Adjusted R-squared:  0.07276 
 ## F-statistic: 3.001 on 6 and 147 DF,  p-value: 0.00853</code></pre>
-<p>In the first section we would like to see Residuals centered around 0, with the min/max and 1Q/3Q having roughly the same absolute value. This indicates a uniform scatter of residuals, which is what a linear model assumes.</p>
+<p>In the first section we would like to see Residuals centered around
+0, with the min/max and 1Q/3Q having roughly the same absolute value.
+This indicates a uniform scatter of residuals, which is what a linear
+model assumes.</p>
 <ul>
-<li>Positive residuals occur when observed response values are <em>greater than</em> predicted response values.</li>
-<li>Negative residuals occur when observed response values are <em>less than</em> predicted response values.</li>
+<li>Positive residuals occur when observed response values are
+<em>greater than</em> predicted response values.</li>
+<li>Negative residuals occur when observed response values are <em>less
+than</em> predicted response values.</li>
 </ul>
-<p>Residuals do not seem uniformly scatter based on these summary statistics.</p>
-<p>The Coefficients section shows the fitted model in the Estimate column. A mathematical expression of the model is as follows:</p>
-<p><span class="math display">\[\text{absent} = 17.03 + -7.83\text{ non-aboriginal} + 2.64\text{ male} + -1.78\text{ F1} + 5.35\text{ F2} + 3.29\text{ F3} + 0.74\text{ slow learner}\]</span></p>
-<p>For example, we might use our model to predict expected number of days absent for non-aboriginal females in an F1 school who are average learners.</p>
-<p><span class="math display">\[\text{absent} = 17.03 + -7.83(1) + 2.64(0) + -1.78(1) + 5.35(0) + 3.28(0) + 0.74(0)\]</span></p>
-<p>Notice we plug in 1 if our subject belongs to the category and 0 otherwise. We can carry out this prediction using the <code>predict()</code> function. The input values need to be entered in a data frame using the same variable names and category levels as our analysis data set.</p>
+<p>Residuals do not seem uniformly scatter based on these summary
+statistics.</p>
+<p>The Coefficients section shows the fitted model in the Estimate
+column. A mathematical expression of the model is as follows:</p>
+<p><span class="math display">\[\text{absent} = 17.03 + -7.83\text{
+non-aboriginal} + 2.64\text{ male} + -1.78\text{ F1} + 5.35\text{ F2} +
+3.29\text{ F3} + 0.74\text{ slow learner}\]</span></p>
+<p>For example, we might use our model to predict expected number of
+days absent for non-aboriginal females in an F1 school who are average
+learners.</p>
+<p><span class="math display">\[\text{absent} = 17.03 + -7.83(1) +
+2.64(0) + -1.78(1) + 5.35(0) + 3.28(0) + 0.74(0)\]</span></p>
+<p>Notice we plug in 1 if our subject belongs to the category and 0
+otherwise. We can carry out this prediction using the
+<code>predict()</code> function. The input values need to be entered in
+a data frame using the same variable names and category levels as our
+analysis data set.</p>
 <pre class="r"><code>predict(m, newdata = data.frame(race = &quot;non-aboriginal&quot;,
                                 gender = &quot;female&quot;,
                                 school = &quot;F1&quot;,
                                 learner = &quot;average&quot;))</code></pre>
 <pre><code>##        1 
 ## 7.423977</code></pre>
-<p>Our model predicts about 7 days absence. Adding <code>interval = "confidence"</code> to <code>predict()</code> reports a 95% confidence interval on this prediction.</p>
+<p>Our model predicts about 7 days absence. Adding
+<code>interval = "confidence"</code> to <code>predict()</code> reports a
+95% confidence interval on this prediction.</p>
 <pre class="r"><code>predict(m, newdata = data.frame(race = &quot;non-aboriginal&quot;,
                                 gender = &quot;female&quot;,
                                 school = &quot;F1&quot;,
@@ -519,32 +561,88 @@ summary(m)</code></pre>
 <pre><code>##        fit      lwr      upr
 ## 1 7.423977 1.144474 13.70348</code></pre>
 <p>The estimate is rather wide, ranging from 1 day to 14 days.</p>
-<p>The “Std. Error” column in the summary output quantifies uncertainty in the estimated coefficients. The “t value” column is the ratio of the estimated coefficient to the standard error. Ratios larger than 2 or 3 in absolute value give us confidence in the direction of the coefficient. Other than the intercept, the only coefficient that we’re confident about is the race coefficient. It appears <code>non-aboriginal</code> students have a lower rate of absence by about 7 days.</p>
-<p>The “Pr(&gt;|t|)” column reports p-values for hypothesis tests for each t value. The null hypothesis is the t value is 0. The reported p-value is the probability of seeing a t value that large or larger in magnitude if the null is true. In all seven hypothesis tests are reported. Two appear to be “significant” in the sense their p-values fall below traditional thresholds.</p>
-<p>The “Residual standard error” is the expected amount a predicted response value will differ from its observed value. The reported value of 15.32 tells us the model’s predicted value for days absent will be off by about 15 days.</p>
-<p>The Multiple and Adjusted R-squareds are 0.10 and 0.07. This summarizes the proportion of variability explained by the model. Of the variability in days absent, it looks like this model explains about 7% of the variance. The Adjusted R-squared is adjusted for the number of predictors and is the preferred statistic of the two. (Multiple R-squared always increases when variables are added to a model, even variables unrelated to the response.)</p>
-<p>The F-statistic tests the null hypothesis that all coefficients (other than the intercept) are 0. Small p-values provide evidence against this hypothesis.</p>
-<p>R provides some built-in diagnostic plots. A good one to inspect is the Residuals vs Fitted plot.</p>
+<p>The “Std. Error” column in the summary output quantifies uncertainty
+in the estimated coefficients. The “t value” column is the ratio of the
+estimated coefficient to the standard error. Ratios larger than 2 or 3
+in absolute value give us confidence in the direction of the
+coefficient. Other than the intercept, the only coefficient that we’re
+confident about is the race coefficient. It appears
+<code>non-aboriginal</code> students have a lower rate of absence by
+about 7 days.</p>
+<p>The “Pr(&gt;|t|)” column reports p-values for hypothesis tests for
+each t value. The null hypothesis is the t value is 0. The reported
+p-value is the probability of seeing a t value that large or larger in
+magnitude if the null is true. In all seven hypothesis tests are
+reported. Two appear to be “significant” in the sense their p-values
+fall below traditional thresholds.</p>
+<p>The “Residual standard error” is the expected amount a predicted
+response value will differ from its observed value. The reported value
+of 15.32 tells us the model’s predicted value for days absent will be
+off by about 15 days.</p>
+<p>The Multiple and Adjusted R-squareds are 0.10 and 0.07. This
+summarizes the proportion of variability explained by the model. Of the
+variability in days absent, it looks like this model explains about 7%
+of the variance. The Adjusted R-squared is adjusted for the number of
+predictors and is the preferred statistic of the two. (Multiple
+R-squared always increases when variables are added to a model, even
+variables unrelated to the response.)</p>
+<p>The F-statistic tests the null hypothesis that all coefficients
+(other than the intercept) are 0. Small p-values provide evidence
+against this hypothesis.</p>
+<p>R provides some built-in diagnostic plots. A good one to inspect is
+the Residuals vs Fitted plot.</p>
 <pre class="r"><code>plot(m, which = 1)</code></pre>
 <p><img src="lm_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
-<p>Residuals above 0 are instances where the observed values are larger than the predicted values. It seems our model is under-predicting absences to a greater degree than over-predicting absences. The labeled points of 77, 111, and 61 are the rows of the data set with the largest residuals. These data points may be worth investigating. For example, point 111 is a child that we predict would be absent about 15 days (on the x-axis), but the residual of about 50 (on the y-axis) tells us this student was absent about 65 days.</p>
-<p>A QQ Plot can help us assess the Normality assumption of the residuals.</p>
+<p>Residuals above 0 are instances where the observed values are larger
+than the predicted values. It seems our model is under-predicting
+absences to a greater degree than over-predicting absences. The labeled
+points of 77, 111, and 61 are the rows of the data set with the largest
+residuals. These data points may be worth investigating. For example,
+point 111 is a child that we predict would be absent about 15 days (on
+the x-axis), but the residual of about 50 (on the y-axis) tells us this
+student was absent about 65 days.</p>
+<p>A QQ Plot can help us assess the Normality assumption of the
+residuals.</p>
 <pre class="r"><code>plot(m, which = 2)</code></pre>
 <p><img src="lm_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
-<p>We would like the points to fall along the diagonal line. This plot doesn’t look great. Since our model doesn’t seem to be very good based on the previous plot, it’s probably not worth worrying too much about the QQ Plot.</p>
-<p>Another version of the Residuals vs Fitted plot is the Scale-Location plot.</p>
+<p>We would like the points to fall along the diagonal line. This plot
+doesn’t look great. Since our model doesn’t seem to be very good based
+on the previous plot, it’s probably not worth worrying too much about
+the QQ Plot.</p>
+<p>Another version of the Residuals vs Fitted plot is the Scale-Location
+plot.</p>
 <pre class="r"><code>plot(m, which = 3)</code></pre>
 <p><img src="lm_files/figure-html/unnamed-chunk-17-1.png" width="672" /></p>
-<p>In this plot the residuals are standardized and strictly positive. We would like the smooth red line to trend straight. The fact it’s trending up provides some evidence that our residuals are getting larger as our fitted values get larger. This could mean a violation of the constant variance assumption.</p>
-<p>One final plot to inspect is the Residuals vs Leverage plot. This can help us see if any data points are influencing the model.</p>
+<p>In this plot the residuals are standardized and strictly positive. We
+would like the smooth red line to trend straight. The fact it’s trending
+up provides some evidence that our residuals are getting larger as our
+fitted values get larger. This could mean a violation of the constant
+variance assumption.</p>
+<p>One final plot to inspect is the Residuals vs Leverage plot. This can
+help us see if any data points are influencing the model.</p>
 <pre class="r"><code>plot(m, which = 5)</code></pre>
 <p><img src="lm_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
-<p>The x-axis is Leverage, also called hat-values. Higher values of leverage mean a higher potential to influence a model. The y-axis shows standardized residuals. Also plotted is Cook’s distance contour lines if any points exceed a particular threshold. Like leverage, Cook’s distance also quantifies the influence of a data point. In this plot it doesn’t appear any points are unduly influencing the model.</p>
-<p>Conclusion: it looks like the number of days absent cannot be properly modeled or understood with these categorical predictors.</p>
+<p>The x-axis is Leverage, also called hat-values. Higher values of
+leverage mean a higher potential to influence a model. The y-axis shows
+standardized residuals. Also plotted is Cook’s distance contour lines if
+any points exceed a particular threshold. Like leverage, Cook’s distance
+also quantifies the influence of a data point. In this plot it doesn’t
+appear any points are unduly influencing the model.</p>
+<p>Conclusion: it looks like the number of days absent cannot be
+properly modeled or understood with these categorical predictors.</p>
 </div>
-<div id="linear-model-with-categorical-and-numeric-predictors" class="section level3">
+<div id="linear-model-with-categorical-and-numeric-predictors"
+class="section level3">
 <h3>Linear model with categorical and numeric predictors</h3>
-<p>The <code>bp.obese</code> data frame from the ISwR package has 102 rows and 3 columns. It contains data from a random sample of Mexican-American adults in a small California town. Analyze <a href="https://www.mayoclinic.org/diseases-conditions/high-blood-pressure/in-depth/blood-pressure/art-20050982">systolic blood pressure</a> in mm Hg (<code>bp</code>) as a function of obesity (<code>obese</code>) and sex (<code>sex</code>), where male = 0 and female = 1. Here <code>obese</code> is a ratio of actual weight to ideal weight from New York Metropolitan Life Tables. <span class="citation">(Dalgaard 2020)</span></p>
+<p>The <code>bp.obese</code> data frame from the ISwR package has 102
+rows and 3 columns. It contains data from a random sample of
+Mexican-American adults in a small California town. Analyze <a
+href="https://www.mayoclinic.org/diseases-conditions/high-blood-pressure/in-depth/blood-pressure/art-20050982">systolic
+blood pressure</a> in mm Hg (<code>bp</code>) as a function of obesity
+(<code>obese</code>) and sex (<code>sex</code>), where male = 0 and
+female = 1. Here <code>obese</code> is a ratio of actual weight to ideal
+weight from New York Metropolitan Life Tables. <span
+class="citation">(Dalgaard 2020)</span></p>
 <pre class="r"><code>library(ISwR)
 data(&quot;bp.obese&quot;)</code></pre>
 <p>First, we will look at summary statistics of the data.</p>
@@ -556,8 +654,13 @@ data(&quot;bp.obese&quot;)</code></pre>
 ##  Mean   :0.5686   Mean   :1.313   Mean   :127.0  
 ##  3rd Qu.:1.0000   3rd Qu.:1.430   3rd Qu.:137.5  
 ##  Max.   :1.0000   Max.   :2.390   Max.   :208.0</code></pre>
-<p>Sex is encoded with 0s (male) and 1s (female). Sex’s mean of 0.5686 tells us that about half of the people are female. Obese is a ratio representing participants weight. 1 indicates actual weight equals ideal weight. &gt;1 indicates actual weight is greater than ideal weight. And &lt;1 the opposite.</p>
-<p>Next, we will visualize the distribution of blood pressure, for all subjects and by sex.</p>
+<p>Sex is encoded with 0s (male) and 1s (female). Sex’s mean of 0.5686
+tells us that about half of the people are female. Obese is a ratio
+representing participants weight. 1 indicates actual weight equals ideal
+weight. &gt;1 indicates actual weight is greater than ideal weight. And
+&lt;1 the opposite.</p>
+<p>Next, we will visualize the distribution of blood pressure, for all
+subjects and by sex.</p>
 <pre class="r"><code>library(ggplot2)
 
 # ggplot(bp.obese, aes(x = bp)) +
@@ -569,12 +672,19 @@ ggplot() +
   scale_fill_manual(values = c(&#39;blue&#39;, &#39;red&#39;),
                     labels=c(&#39;male&#39;,&#39;female&#39;))</code></pre>
 <p><img src="lm_files/figure-html/unnamed-chunk-21-1.png" width="672" /></p>
-<p>The distribution of bp appears to skew right, and does not differ much between male and female.</p>
-<p>Next, we will plot the relationship between the variables bp and obese.</p>
+<p>The distribution of bp appears to skew right, and does not differ
+much between male and female.</p>
+<p>Next, we will plot the relationship between the variables bp and
+obese.</p>
 <pre class="r"><code>ggplot(bp.obese, aes(x = obese, y = bp)) +
   geom_point()</code></pre>
 <p><img src="lm_files/figure-html/unnamed-chunk-22-1.png" width="672" /></p>
-<p>Most participants have above ideal weight and below 150 bp. The relationship between obese and bp, in general, appears to be positive and somewhat linear. But obese does not entirely explain bp. For example, the 3 participants with obese greater than 2 have bps at about or below 150. Then, the 2 participants with bp greater than 180 have obese less that 1.75.</p>
+<p>Most participants have above ideal weight and below 150 bp. The
+relationship between obese and bp, in general, appears to be positive
+and somewhat linear. But obese does not entirely explain bp. For
+example, the 3 participants with obese greater than 2 have bps at about
+or below 150. Then, the 2 participants with bp greater than 180 have
+obese less that 1.75.</p>
 <p>Below we model bp as a function of the variables obese and sex.</p>
 <pre class="r"><code>bp.obese$sex &lt;- as.factor(bp.obese$sex)
 m3 &lt;- lm(bp ~ obese + sex, bp.obese)
@@ -598,23 +708,43 @@ summary(m3)</code></pre>
 ## Residual standard error: 17 on 99 degrees of freedom
 ## Multiple R-squared:  0.1438, Adjusted R-squared:  0.1265 
 ## F-statistic: 8.314 on 2 and 99 DF,  p-value: 0.0004596</code></pre>
-<p>Next, we will calculate confidence intervals for each of the coefficients in the model.</p>
+<p>Next, we will calculate confidence intervals for each of the
+coefficients in the model.</p>
 <pre class="r"><code>confint(m3)</code></pre>
 <pre><code>##                 2.5 %      97.5 %
 ## (Intercept)  75.55321 111.0205442
 ## obese        14.80766  43.2687683
 ## sex1        -15.10225  -0.3580819</code></pre>
-<p>For the obese variable, the 95% confidence interval goes from 14.8 to 43.3. According to the confidence interval, generally a 1 unit increase in obese will increase bp by about 14 to 43 units. If a participant’s obese measure increased from 1 to 2, then they started at their “ideal” weight and increased to twice their ideal weight.</p>
-<p>We can use an example to better understand the relevance of the obese variable. A participant weighs 200 pounds and their ideal weight is 150 pounds. This makes their obese measure about 1.3. Then the participant gains 20 pounds, making their obese measure about 1.5. What happens if the obese measure increases by 0.2? To determine how much bp increases for every 0.1 unit increase in obese, we can divide the confidence interval by 10.</p>
+<p>For the obese variable, the 95% confidence interval goes from 14.8 to
+43.3. According to the confidence interval, generally a 1 unit increase
+in obese will increase bp by about 14 to 43 units. If a participant’s
+obese measure increased from 1 to 2, then they started at their “ideal”
+weight and increased to twice their ideal weight.</p>
+<p>We can use an example to better understand the relevance of the obese
+variable. A participant weighs 200 pounds and their ideal weight is 150
+pounds. This makes their obese measure about 1.3. Then the participant
+gains 20 pounds, making their obese measure about 1.5. What happens if
+the obese measure increases by 0.2? To determine how much bp increases
+for every 0.1 unit increase in obese, we can divide the confidence
+interval by 10.</p>
 <pre class="r"><code>confint(m3)[&#39;obese&#39;,]/10</code></pre>
 <pre><code>##    2.5 %   97.5 % 
 ## 1.480766 4.326877</code></pre>
-<p>So generally, for every 0.1 unit increase in obese, bp increases by 1.5 to 4.3 units. If a participant increases in obese by 0.2, the model predicts about a 2.0 to 8.6 unit increase in bp.</p>
-<p>For the sex variable, a 1 unit difference means switching from one sex to another. According to the model, switching sex from male to female generally decreases bp.</p>
+<p>So generally, for every 0.1 unit increase in obese, bp increases by
+1.5 to 4.3 units. If a participant increases in obese by 0.2, the model
+predicts about a 2.0 to 8.6 unit increase in bp.</p>
+<p>For the sex variable, a 1 unit difference means switching from one
+sex to another. According to the model, switching sex from male to
+female generally decreases bp.</p>
 </div>
 <div id="linear-model-with-time-ordered-data" class="section level3">
 <h3>Linear model with time ordered data</h3>
-<p>The heating equipment data set from <em>Applied Linear Statistical Models (5th Ed)</em> <span class="citation">(Kutner 2005)</span> contains data on heating equipment orders over a span of four years. The data are listed in time order. Develop a reasonable predictor model for <code>orders</code>. Determine whether or not autocorrelation is present. If so, revise model as needed.</p>
+<p>The heating equipment data set from <em>Applied Linear Statistical
+Models (5th Ed)</em> <span class="citation">(Kutner 2005)</span>
+contains data on heating equipment orders over a span of four years. The
+data are listed in time order. Develop a reasonable predictor model for
+<code>orders</code>. Determine whether or not autocorrelation is
+present. If so, revise model as needed.</p>
 <pre class="r"><code>heating &lt;- readRDS(&quot;data/heating.rds&quot;)
 names(heating)</code></pre>
 <pre><code>## [1] &quot;orders&quot;       &quot;int_rate&quot;     &quot;new_homes&quot;    &quot;discount&quot;     &quot;inventories&quot; 
@@ -622,25 +752,32 @@ names(heating)</code></pre>
 <p>The variables are as follows:</p>
 <ol style="list-style-type: decimal">
 <li><code>orders</code>: number orders during month</li>
-<li><code>int_rate</code>: prime interest rate in effect during month</li>
-<li><code>new_homes</code>: number of new homes built and for sale during month</li>
-<li><code>discount</code>: percent discount offered to distributors during month</li>
+<li><code>int_rate</code>: prime interest rate in effect during
+month</li>
+<li><code>new_homes</code>: number of new homes built and for sale
+during month</li>
+<li><code>discount</code>: percent discount offered to distributors
+during month</li>
 <li><code>inventories</code>: distributor inventories during month</li>
-<li><code>sell_through</code>: number of units sold by distributor to contractors in previous month</li>
-<li><code>temp_dev</code>: difference in avg temperature for month and 30-year avg for that month</li>
+<li><code>sell_through</code>: number of units sold by distributor to
+contractors in previous month</li>
+<li><code>temp_dev</code>: difference in avg temperature for month and
+30-year avg for that month</li>
 <li><code>year</code>: year (1999, 2000, 2001, 2002)</li>
 <li><code>month</code>: month (1 - 12)</li>
 </ol>
 <p>First we look at the distribution of orders.</p>
 <pre class="r"><code>hist(heating$orders)</code></pre>
 <p><img src="lm_files/figure-html/unnamed-chunk-27-1.png" width="672" /></p>
-<p>We had negative orders one month and zero orders a couple of months</p>
+<p>We had negative orders one month and zero orders a couple of
+months</p>
 <pre class="r"><code>summary(heating$orders)</code></pre>
 <pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
 ##    -5.0   262.5   754.0   937.4  1167.0  5105.0</code></pre>
 <pre class="r"><code>head(sort(heating$orders))</code></pre>
 <pre><code>## [1] -5  0  0  8 12 34</code></pre>
-<p>Let’s review summaries of potential predictors. Discounts are almost always 0.</p>
+<p>Let’s review summaries of potential predictors. Discounts are almost
+always 0.</p>
 <pre class="r"><code>summary(heating[,2:7])</code></pre>
 <pre><code>##     int_rate         new_homes        discount       inventories  
 ##  Min.   :0.04750   Min.   :59.00   Min.   :0.0000   Min.   :1151  
@@ -656,27 +793,51 @@ names(heating)</code></pre>
 ##  Mean   : 926.1   Mean   :1.190  
 ##  3rd Qu.:1002.5   3rd Qu.:2.130  
 ##  Max.   :2388.0   Max.   :3.420</code></pre>
-<p>Tabling up discounts shows there were only 5 occasions when a discount was not 0.</p>
+<p>Tabling up discounts shows there were only 5 occasions when a
+discount was not 0.</p>
 <pre class="r"><code>table(heating$discount)</code></pre>
 <pre><code>## 
 ##  0  1  2  3  5 
 ## 38  1  1  1  2</code></pre>
-<p>Pairwise scatterplots again reveal that discount is mostly 0. But when greater than 0, it appears to be associated with higher orders.</p>
+<p>Pairwise scatterplots again reveal that discount is mostly 0. But
+when greater than 0, it appears to be associated with higher orders.</p>
 <pre class="r"><code>pairs(heating[,1:7], lower.panel = NULL)</code></pre>
 <p><img src="lm_files/figure-html/unnamed-chunk-31-1.png" width="672" /></p>
-<p>Since the data is in time order, we can plot <code>orders</code> against its index to investigate any trends in time. There appears to be an upward trend in the first 9 months. After that orders seem rather sporadic.</p>
+<p>Since the data is in time order, we can plot <code>orders</code>
+against its index to investigate any trends in time. There appears to be
+an upward trend in the first 9 months. After that orders seem rather
+sporadic.</p>
 <pre class="r"><code>plot(heating$orders, type = &quot;b&quot;)</code></pre>
 <p><img src="lm_files/figure-html/unnamed-chunk-32-1.png" width="672" /></p>
-<p>The <code>acf()</code> function allows us to formally check for autocorrelation (ie, self-correlation). At lag 0, we see <code>orders</code> is perfectly correlated with itself. That will always be the case for any variable. Of interest is autocorrelation at lag 1 and beyond. The area between the horizontal dashed lines is where we would expect to see random autocorrelation values hover for pure noise (ie, data with no autocorrelation). Other than at lag 5, we so no evidence for autocorrelation. And even there it appears rather weak.</p>
+<p>The <code>acf()</code> function allows us to formally check for
+autocorrelation (ie, self-correlation). At lag 0, we see
+<code>orders</code> is perfectly correlated with itself. That will
+always be the case for any variable. Of interest is autocorrelation at
+lag 1 and beyond. The area between the horizontal dashed lines is where
+we would expect to see random autocorrelation values hover for pure
+noise (ie, data with no autocorrelation). Other than at lag 5, we so no
+evidence for autocorrelation. And even there it appears rather weak.</p>
 <pre class="r"><code>acf(heating$orders)</code></pre>
 <p><img src="lm_files/figure-html/unnamed-chunk-33-1.png" width="672" /></p>
-<p>With only 43 observations and little knowledge of this industry, we decide to pursue a simple model with no interactions or non-linear effects. To help us decide which predictors to use, will use a bootstrap procedure to investigate the variability of model selection under the <code>stepAIC()</code> function from the MASS package <span class="citation">(Venables and Ripley 2002)</span>, which performs stepwise model selection by AIC. The <code>bootStepAIC()</code> function from the package of the same name allows us to easily implement this procedure. <span class="citation">(Rizopoulos 2022)</span></p>
-<p>First we fit a “full” model with all predictors we would like to entertain, with the exception of year and month.</p>
+<p>With only 43 observations and little knowledge of this industry, we
+decide to pursue a simple model with no interactions or non-linear
+effects. To help us decide which predictors to use, will use a bootstrap
+procedure to investigate the variability of model selection under the
+<code>stepAIC()</code> function from the MASS package <span
+class="citation">(Venables and Ripley 2002)</span>, which performs
+stepwise model selection by AIC. The <code>bootStepAIC()</code> function
+from the package of the same name allows us to easily implement this
+procedure. <span class="citation">(Rizopoulos 2022)</span></p>
+<p>First we fit a “full” model with all predictors we would like to
+entertain, with the exception of year and month.</p>
 <pre class="r"><code>m &lt;- lm(orders ~ . - year - month, data = heating)</code></pre>
-<p>Then we bootstrap the <code>stepAIC()</code> function 999 times and investigate which variables appear to be selected most often.</p>
+<p>Then we bootstrap the <code>stepAIC()</code> function 999 times and
+investigate which variables appear to be selected most often.</p>
 <pre class="r"><code>library(bootStepAIC)
 b.out &lt;- boot.stepAIC(m, heating, B = 999)</code></pre>
-<p>The Covariates element of the BootStep object shows three predictors being selected most often: <code>sell_through</code>, <code>discount</code>, and <code>inventories</code></p>
+<p>The Covariates element of the BootStep object shows three predictors
+being selected most often: <code>sell_through</code>,
+<code>discount</code>, and <code>inventories</code></p>
 <pre class="r"><code>b.out$Covariates</code></pre>
 <pre><code>##                   (%)
 ## sell_through 96.19620
@@ -685,7 +846,11 @@ b.out &lt;- boot.stepAIC(m, heating, B = 999)</code></pre>
 ## int_rate     42.34234
 ## new_homes    28.22823
 ## temp_dev     21.12112</code></pre>
-<p>The Sign element of the BootStep object shows that <code>sell_through</code> had a positive coefficient 100% of the time, while <code>discount</code> had a positive coefficient about 99.9% of the time. The sign of the coefficient for <code>inventories</code> was negative about 99.5% of the time.</p>
+<p>The Sign element of the BootStep object shows that
+<code>sell_through</code> had a positive coefficient 100% of the time,
+while <code>discount</code> had a positive coefficient about 99.9% of
+the time. The sign of the coefficient for <code>inventories</code> was
+negative about 99.5% of the time.</p>
 <pre class="r"><code>b.out$Sign</code></pre>
 <pre><code>##                    + (%)      - (%)
 ## sell_through 100.0000000  0.0000000
@@ -694,7 +859,8 @@ b.out &lt;- boot.stepAIC(m, heating, B = 999)</code></pre>
 ## new_homes     92.5531915  7.4468085
 ## temp_dev      20.3791469 79.6208531
 ## inventories    0.4756243 99.5243757</code></pre>
-<p>Let’s proceed with these three predictors in a simple additive model.</p>
+<p>Let’s proceed with these three predictors in a simple additive
+model.</p>
 <pre class="r"><code>m &lt;- lm(orders ~ discount + inventories + sell_through, data = heating)
 summary(m)</code></pre>
 <pre><code>## 
@@ -718,34 +884,55 @@ summary(m)</code></pre>
 ## Residual standard error: 519.9 on 39 degrees of freedom
 ## Multiple R-squared:  0.7599, Adjusted R-squared:  0.7414 
 ## F-statistic: 41.14 on 3 and 39 DF,  p-value: 3.694e-12</code></pre>
-<p>Before we get too invested in the model output, we investigate the residuals for autocorrelation since our data is in time order. One (subjective) way to do that is to plot residuals over time. Since our data is already in time order, we can just plot residuals versus its index. We’re looking to see if residuals are consistently above or below 0 for extended times. It appears we may have some instances of this phenomenon but nothing too severe.</p>
+<p>Before we get too invested in the model output, we investigate the
+residuals for autocorrelation since our data is in time order. One
+(subjective) way to do that is to plot residuals over time. Since our
+data is already in time order, we can just plot residuals versus its
+index. We’re looking to see if residuals are consistently above or below
+0 for extended times. It appears we may have some instances of this
+phenomenon but nothing too severe.</p>
 <pre class="r"><code>plot(residuals(m), type = &quot;b&quot;)
 segments(x0 = 0, y0 = 0, x1 = 43, y1 = 0, lty = 2)</code></pre>
 <p><img src="lm_files/figure-html/unnamed-chunk-40-1.png" width="672" /></p>
-<p>A test for autocorrelation is the Durbin-Watson Test. The car package <span class="citation">(Fox and Weisberg 2019)</span> provides a function for this test. The null hypothesis is the autocorrelation parameter, <span class="math inline">\(\rho\)</span>, is 0. Rejecting this test with a small p-value may provide evidence of serious autocorrelation. The test result below fails to provide good evidence against the null.</p>
+<p>A test for autocorrelation is the Durbin-Watson Test. The car package
+<span class="citation">(Fox and Weisberg 2019)</span> provides a
+function for this test. The null hypothesis is the autocorrelation
+parameter, <span class="math inline">\(\rho\)</span>, is 0. Rejecting
+this test with a small p-value may provide evidence of serious
+autocorrelation. The test result below fails to provide good evidence
+against the null.</p>
 <pre class="r"><code>library(car)
 durbinWatsonTest(m)</code></pre>
 <pre><code>##  lag Autocorrelation D-W Statistic p-value
-<<<<<<< HEAD
-##    1     -0.05006007      2.079992    0.95
-=======
-##    1     -0.05006007      2.079992   0.958
->>>>>>> 8d7b498b417d9519200a086b296111e4f8b4f659
+##    1     -0.05006007      2.079992   0.908
 ##  Alternative hypothesis: rho != 0</code></pre>
-<p>Based on our residual versus time plot and the result of the Durbin-Watson test, we decide to assume our residual errors are independent.</p>
-<p>Our Residuals versus Fitted plot shows a couple of observations (22 and 18) that the model massively under-predicts. Observation 18, for example, has a fitted value of over 4000, but its residual is about 1000, indicating the model under-predicted its order value by about 1000 units.</p>
+<p>Based on our residual versus time plot and the result of the
+Durbin-Watson test, we decide to assume our residual errors are
+independent.</p>
+<p>Our Residuals versus Fitted plot shows a couple of observations (22
+and 18) that the model massively under-predicts. Observation 18, for
+example, has a fitted value of over 4000, but its residual is about
+1000, indicating the model under-predicted its order value by about 1000
+units.</p>
 <pre class="r"><code>plot(m, which = 1)</code></pre>
 <p><img src="lm_files/figure-html/unnamed-chunk-42-1.png" width="672" /></p>
-<p>The Residuals versus Leverage plot indicates that observation 18 may be exerting a strong influence on the model.</p>
+<p>The Residuals versus Leverage plot indicates that observation 18 may
+be exerting a strong influence on the model.</p>
 <pre class="r"><code>plot(m, which = 5)</code></pre>
 <p><img src="lm_files/figure-html/unnamed-chunk-43-1.png" width="672" /></p>
-<p>The “18” label allows us to easily investigate this observation. It appears this is one of the rare times there was a discount. And at 5%, this is the largest observed discount.</p>
+<p>The “18” label allows us to easily investigate this observation. It
+appears this is one of the rare times there was a discount. And at 5%,
+this is the largest observed discount.</p>
 <pre class="r"><code>heating[18, c(&quot;orders&quot;, &quot;discount&quot;, &quot;inventories&quot;, &quot;sell_through&quot;)]</code></pre>
 <pre><code>##    orders discount inventories sell_through
 ## 18   5105        5        2089         1078</code></pre>
-<p>We can assess how our model changes by re-fitting without observation 18.</p>
+<p>We can assess how our model changes by re-fitting without observation
+18.</p>
 <pre class="r"><code>m2 &lt;- update(m, subset = -18)</code></pre>
-<p>The <code>compareCoefs()</code> function from the car package makes it easy to compare model coefficients side-by-side. It doesn’t appear to change the substance of the results and we elect to keep the observation moving forward.</p>
+<p>The <code>compareCoefs()</code> function from the car package makes
+it easy to compare model coefficients side-by-side. It doesn’t appear to
+change the substance of the results and we elect to keep the observation
+moving forward.</p>
 <pre class="r"><code>compareCoefs(m, m2)</code></pre>
 <pre><code>## Calls:
 ## 1: lm(formula = orders ~ discount + inventories + sell_through, data = 
@@ -766,46 +953,71 @@ durbinWatsonTest(m)</code></pre>
 ## sell_through   0.743   0.816
 ## SE             0.224   0.211
 ## </code></pre>
-<p>Computing confidence intervals on the coefficients can help with interpretation. It appears every additional one percentage point discount could boost orders by about 500 units, perhaps as much as 750 or higher. Of course with only 5 instances of discounts being used, this is far from a sure thing, especially for forecasting future orders.</p>
-<p>The <code>inventories</code> coefficient is very small. One reason for that is because it’s on the scale of single units. Multiplying by 100 yields a CI of [-21, -1]. This suggests every additional 100 units in stock may slightly decrease orders. Same with the <code>sell_through</code> coefficient. If we multiple by 100 we get a CI of [29, 119]. Every 100 number units sold the previous month suggests an increase of a few dozen orders.</p>
+<p>Computing confidence intervals on the coefficients can help with
+interpretation. It appears every additional one percentage point
+discount could boost orders by about 500 units, perhaps as much as 750
+or higher. Of course with only 5 instances of discounts being used, this
+is far from a sure thing, especially for forecasting future orders.</p>
+<p>The <code>inventories</code> coefficient is very small. One reason
+for that is because it’s on the scale of single units. Multiplying by
+100 yields a CI of [-21, -1]. This suggests every additional 100 units
+in stock may slightly decrease orders. Same with the
+<code>sell_through</code> coefficient. If we multiple by 100 we get a CI
+of [29, 119]. Every 100 number units sold the previous month suggests an
+increase of a few dozen orders.</p>
 <pre class="r"><code>confint(m)</code></pre>
 <pre><code>##                     2.5 %       97.5 %
 ## (Intercept)  -123.3218428 867.11212629
 ## discount      498.8709468 787.35521450
 ## inventories    -0.2188203  -0.01808456
 ## sell_through    0.2903863   1.19480804</code></pre>
-<p>We can use our model to make a prediction. What’s the expected mean number of orders with <code>inventories</code> at 2500 and <code>sell_through</code> at 900, assuming a 1% discount?</p>
+<p>We can use our model to make a prediction. What’s the expected mean
+number of orders with <code>inventories</code> at 2500 and
+<code>sell_through</code> at 900, assuming a 1% discount?</p>
 <pre class="r"><code>predict(m, newdata = data.frame(inventories = 2500,
                                 sell_through = 900,
                                 discount = 1), 
         interval = &quot;confidence&quot;)</code></pre>
 <pre><code>##        fit      lwr      upr
 ## 1 1387.215 1194.674 1579.755</code></pre>
-<p>Based on the confidence interval, a conservative estimate would be about 1200 orders.</p>
+<p>Based on the confidence interval, a conservative estimate would be
+about 1200 orders.</p>
 </div>
 <div id="references" class="section level3 unnumbered">
 <h3 class="unnumbered">References</h3>
 <div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-ISwR" class="csl-entry">
-Dalgaard, Peter. 2020. <em>ISwR: Introductory Statistics with <span>R</span></em>. <a href="https://CRAN.R-project.org/package=ISwR">https://CRAN.R-project.org/package=ISwR</a>.
+Dalgaard, Peter. 2020. <em>ISwR: Introductory Statistics with
+<span>R</span></em>. <a
+href="https://CRAN.R-project.org/package=ISwR">https://CRAN.R-project.org/package=ISwR</a>.
 </div>
 <div id="ref-car" class="csl-entry">
-Fox, John, and Sanford Weisberg. 2019. <em>An <span>R</span> Companion to Applied Regression</em>. Third. Thousand Oaks <span>CA</span>: Sage. <a href="https://socialsciences.mcmaster.ca/jfox/Books/Companion/">https://socialsciences.mcmaster.ca/jfox/Books/Companion/</a>.
+Fox, John, and Sanford Weisberg. 2019. <em>An <span>R</span> Companion
+to Applied Regression</em>. Third. Thousand Oaks <span>CA</span>: Sage.
+<a
+href="https://socialsciences.mcmaster.ca/jfox/Books/Companion/">https://socialsciences.mcmaster.ca/jfox/Books/Companion/</a>.
 </div>
 <div id="ref-hsaur3" class="csl-entry">
-Hothorn, Torsten, and Brian S. Everitt. 2022. <em>Hsaur3: A Handbook of Statistical Analyses Using r (3rd Edition)</em>. <a href="https://CRAN.R-project.org/package=HSAUR3">https://CRAN.R-project.org/package=HSAUR3</a>.
+Hothorn, Torsten, and Brian S. Everitt. 2022. <em>Hsaur3: A Handbook of
+Statistical Analyses Using r (3rd Edition)</em>. <a
+href="https://CRAN.R-project.org/package=HSAUR3">https://CRAN.R-project.org/package=HSAUR3</a>.
 </div>
 <div id="ref-alsm" class="csl-entry">
-Kutner, et al. 2005. <em>Applied Linear Statistical Models, 5th Ed.</em> McGraw Hill.
+Kutner, et al. 2005. <em>Applied Linear Statistical Models, 5th Ed.</em>
+McGraw Hill.
 </div>
 <div id="ref-ott2004" class="csl-entry">
-Ott, R. Lyman, and Michael T. Longnecker. 2004. <em>A First Course in Statistical Methods</em>. California: Brooks/Cole.
+Ott, R. Lyman, and Michael T. Longnecker. 2004. <em>A First Course in
+Statistical Methods</em>. California: Brooks/Cole.
 </div>
 <div id="ref-bootStepAIC" class="csl-entry">
-Rizopoulos, Dimitris. 2022. <em>bootStepAIC: Bootstrap stepAIC</em>. <a href="https://CRAN.R-project.org/package=bootStepAIC">https://CRAN.R-project.org/package=bootStepAIC</a>.
+Rizopoulos, Dimitris. 2022. <em>bootStepAIC: Bootstrap stepAIC</em>. <a
+href="https://CRAN.R-project.org/package=bootStepAIC">https://CRAN.R-project.org/package=bootStepAIC</a>.
 </div>
 <div id="ref-MASS" class="csl-entry">
-Venables, W. N., and B. D. Ripley. 2002. <em>Modern Applied Statistics with s</em>. Fourth. New York: Springer. <a href="https://www.stats.ox.ac.uk/pub/MASS4/">https://www.stats.ox.ac.uk/pub/MASS4/</a>.
+Venables, W. N., and B. D. Ripley. 2002. <em>Modern Applied Statistics
+with s</em>. Fourth. New York: Springer. <a
+href="https://www.stats.ox.ac.uk/pub/MASS4/">https://www.stats.ox.ac.uk/pub/MASS4/</a>.
 </div>
 </div>
 </div>
