@@ -995,6 +995,7 @@ histograms of the 50 simulated data sets.</p>
 sim &lt;- simulate(m, nsim = 50)
 for(i in 1:50)lines(density(sim[[i]], from=0), col = &quot;grey90&quot;)</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-45-1.png" width="672" /></p>
+<<<<<<< HEAD
 <p>Notice we’re underpredicting 0 counts and in the range of 3 - 6.
 We’re also overpredicting in the area of 1 and 2.</p>
 <p>Another type of fit assessment for count models can be performed with
@@ -1013,6 +1014,11 @@ line. Bars that hang below the line show underpredicting, bars that hang
 above show overpredicting. We see our model is ill-fitting for
 satellites in the 0 - 6 range, but not too bad for the higher counts.
 The</p>
+=======
+<p>Notice we’re underpredicting 0 counts and in the range of 3 - 6. We’re also overpredicting in the area of 1 and 2.</p>
+<p>Another type of fit assessment for count models can be performed with a rootogram, which we can create using the <code>rootogram()</code> function from the countreg package <span class="citation">(Kleiber and Zeileis 2016)</span>. (Note: The countreg package is not on CRAN at the time of this writing (Oct 2022), but can be installed with the following code: <code>install.packages("countreg", repos="http://R-Forge.R-project.org")</code>)</p>
+<p>The tops of the bars are the <em>expected frequencies</em> of the counts given the model. The counts are plotted on the square-root scale to help visualize smaller frequencies. The red line shows the fitted frequencies as a smooth curve. The bars represent the difference between observed and predicted counts. The x-axis is a horizontal reference line. Bars that hang below the line show underpredicting, bars that hang above show overpredicting. We see our model is ill-fitting for satellites in the 0 - 6 range, but not too bad for the higher counts. The</p>
+>>>>>>> 2326d99d671a3ea35ce89b22ba3adfe46894a6aa
 <pre class="r"><code># install.packages(&quot;countreg&quot;, repos=&quot;http://R-Forge.R-project.org&quot;)
 library(countreg)
 rootogram(m2)</code></pre>
@@ -1045,17 +1051,20 @@ color may lead to more satellites, but we’re very uncertain about that
 given how few crabs we have of that color (only 12 out of 173).</p>
 <pre class="r"><code>ggeffect(m2, terms = &quot;color&quot;) |&gt; plot()</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-49-1.png" width="672" /></p>
-<p>We continue this analysis in the <strong>Zero-Inflated model</strong>
-example.</p>
+<p>We continue this analysis in the <strong>Zero-Inflated model</strong> example.</p>
 </div>
 <div id="zero-inflated-model" class="section level3">
 <h3>Zero-Inflated model</h3>
+<<<<<<< HEAD
 <p>The horseshoe crab data, analyzed in the previous example (Negative
 Binomial model), appeared to have a surplus of zeroes. One approach to
 modeling data of this nature is to entertain a <em>mixture model</em>.
 This is a model that uses a mix of two models to approximate the data
 generating process. A <strong>zero-inflated model</strong> is a mixture
 of two models:</p>
+=======
+<p>The horseshoe crab data, analyzed in the previous example (Negative Binomial model), appeared to have a surplus of zeroes. One approach to modeling data of this nature is to entertain a <em>mixture model</em>. This is a model that uses a mix of two models to approximate the data generating process. A <strong>zero-inflated model</strong> is a mixture of two models:</p>
+>>>>>>> 2326d99d671a3ea35ce89b22ba3adfe46894a6aa
 <ol style="list-style-type: decimal">
 <li>a binary logistic regression model for zeroes.</li>
 <li>a count model for zeroes and positive values.</li>
@@ -1068,43 +1077,23 @@ counts will <em>always</em> be 0.</li>
 <li>some that can have satellites but may not. Their count
 <em>could</em> be 0.</li>
 </ol>
-<p>Let’s read in the data and investigate the distribution of “satell”,
-our dependent variable. This is the number of additional male crabs
-residing nearby a nesting female horseshoe crab.</p>
+<p>Let’s read in the data and investigate the distribution of “satell”, our dependent variable. This is the number of additional male crabs residing nearby a nesting female horseshoe crab.</p>
 <pre class="r"><code>hsc &lt;- read.csv(&quot;data/crabs.csv&quot;)
 hsc$color &lt;- factor(hsc$color, 
                       labels = c(&quot;light medium&quot;, 
                                  &quot;medium&quot;, 
                                  &quot;dark medium&quot;, 
                                  &quot;dark&quot;))</code></pre>
-<p>Below we create a table of the “satell” variable and pipe into the
-<code>plot()</code> function with <code>type = "h"</code> to visualize
-how many of each count we have in our data. Notice the big spike at
-0.</p>
+<p>Below we create a table of the “satell” variable and pipe into the <code>plot()</code> function with <code>type = "h"</code> to visualize how many of each count we have in our data. Notice the big spike at 0.</p>
 <pre class="r"><code>table(hsc$satell) |&gt; 
   plot(type = &quot;h&quot;)</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-51-1.png" width="672" /></p>
-<p>Might the abundance of zeroes be related to the color of the female?
-To investigate we create a TRUE/FALSE vector of whether a count is 0 or
-not and then convert to 1/0. This new variable is called “zero” and
-takes a 1 if the count is zero, and 0 otherwise. We then count the
-“zero” variable by “color” and pipe into a the <code>mosaicplot()</code>
-function with <code>shade = TRUE</code>. This displays residuals from a
-chi-square test of association. The blue shaded box for the dark color
-indicates we have more ones in that category than we would expect if
-there was no association between the “zero” and “color” variables.
-Recall that zero = 1 means we have more zero counts than we might
-expect. So the surplus of zeroes may be related to color of shell.</p>
+<p>Might the abundance of zeroes be related to the color of the female? To investigate we create a TRUE/FALSE vector of whether a count is 0 or not and then convert to 1/0. This new variable is called “zero” and takes a 1 if the count is zero, and 0 otherwise. We then count the “zero” variable by “color” and pipe into a the <code>mosaicplot()</code> function with <code>shade = TRUE</code>. This displays residuals from a chi-square test of association. The blue shaded box for the dark color indicates we have more ones in that category than we would expect if there was no association between the “zero” and “color” variables. Recall that zero = 1 means we have more zero counts than we might expect. So the surplus of zeroes may be related to color of shell.</p>
 <pre class="r"><code>hsc$zero &lt;- as.numeric(hsc$satell == 0)
 table(hsc$color, hsc$zero) |&gt; 
   mosaicplot(shade = TRUE)</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-52-1.png" width="672" /></p>
-<p>Does the width of the shell help explain some of the zero inflation?
-We can explore this by modeling zero as a function of width using a
-binary logistic regression model. It certainly seems that width is
-associated with the zero variable based on the summary output. The width
-coefficient is relatively large and negative. This suggests females with
-wider shells are less likely to have 0 satellites.</p>
+<p>Does the width of the shell help explain some of the zero inflation? We can explore this by modeling zero as a function of width using a binary logistic regression model. It certainly seems that width is associated with the zero variable based on the summary output. The width coefficient is relatively large and negative. This suggests females with wider shells are less likely to have 0 satellites.</p>
 <pre class="r"><code>glm(zero ~ width, data = hsc, family = binomial) |&gt;
   summary()</code></pre>
 <pre><code>## 
@@ -1129,35 +1118,33 @@ wider shells are less likely to have 0 satellites.</p>
 ## AIC: 198.45
 ## 
 ## Number of Fisher Scoring iterations: 4</code></pre>
-<p>We can visualize this model using the <code>ggeffect()</code>
-function from the ggeffects package. Smaller widths appear to be
-associated with higher probabilities of 0 satellites.</p>
+<p>We can visualize this model using the <code>ggeffect()</code> function from the ggeffects package. Smaller widths appear to be associated with higher probabilities of 0 satellites.</p>
 <pre class="r"><code>glm(zero ~ width, data = hsc, family = binomial) |&gt;
   ggeffect(&quot;width&quot;) |&gt;
   plot()</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-54-1.png" width="672" /></p>
+<<<<<<< HEAD
 <p>Now we fit a series of zero-inflated models using the
 <code>zeroinfl()</code> function from the pscl package <span
 class="citation">(Zeileis, Kleiber, and Jackman 2008)</span>. The model
 syntax is the same as the syntax used for <code>lm()</code> and
 <code>glm()</code>, except now we can specify <em>two models</em>
 separated by a <code>|</code>.</p>
+=======
+<p>Now we fit a series of zero-inflated models using the <code>zeroinfl()</code> function from the pscl package <span class="citation">(Zeileis, Kleiber, and Jackman 2008)</span>. The model syntax is the same as the syntax used for <code>lm()</code> and <code>glm()</code>, except now we can specify two models separated by a <code>|</code>.</p>
+>>>>>>> 2326d99d671a3ea35ce89b22ba3adfe46894a6aa
 <ul>
-<li>The first model specified to the left of the <code>|</code> is the
-<em>count model</em>. We specify the same count model we used in the
-negative binomial model section. The <code>dist = "negbin"</code>
-argument says we want to fit a negative binomial model. (The default is
-a poisson model.)</li>
-<li>The second model specified to the right of the <code>|</code> is the
-<em>binary logistic regression</em> model for the zeroes. We try a
-series of increasingly complex models, starting with the intercept only
-and then width, color, and both width and color. (We could also not
-specify a model to the right of the <code>|</code>. In that case the
-same model is fit to the binomial logistic regression that is fit to the
-count model.)</li>
+<li>The first model specified to the left of the <code>|</code> is the <em>count model</em>. We specify the same count model we used in the negative binomial model section. The <code>dist = "negbin"</code> argument says we want to fit a negative binomial model. (The default is a poisson model.)</li>
+<li>The second model specified to the right of the <code>|</code> is the <em>binary logistic regression</em> model for the zeroes. We try a series of increasingly complex models, starting with the intercept only and then width, color, and both width and color. (We could also not specify a model to the right of the <code>|</code>. In that case the same model is fit to the binomial logistic regression that is fit to the count model.)</li>
 </ul>
+<<<<<<< HEAD
 <pre class="r"><code>library(pscl)
 zm &lt;- zeroinfl(satell ~ width + color | 1, 
+=======
+<pre class="r"><code>library(pscl)</code></pre>
+<pre><code>## Warning: package &#39;pscl&#39; was built under R version 4.1.2</code></pre>
+<pre class="r"><code>zm &lt;- zeroinfl(satell ~ width + color | 1, 
+>>>>>>> 2326d99d671a3ea35ce89b22ba3adfe46894a6aa
                data = hsc, dist = &quot;negbin&quot;)
 zm1 &lt;- zeroinfl(satell ~ width + color | width, 
                 data = hsc, dist = &quot;negbin&quot;)
@@ -1165,20 +1152,23 @@ zm2 &lt;- zeroinfl(satell ~ width + color | color,
                 data = hsc, dist = &quot;negbin&quot;)
 zm3 &lt;- zeroinfl(satell ~ width + color | width + color, 
                 data = hsc, dist = &quot;negbin&quot;)</code></pre>
+<<<<<<< HEAD
 <p>We compare the models’ AIC values to help us decide which model seems
 to perform the best. Model zm1 appears to give us the most bang for the
 buck. It doesn’t have the lowest AIC, but it’s not much different from
 the model with 11 parameters (ie. df, or degrees of freedom). With only
 173 observations it seems wise to prefer the model with only 8
 parameters.</p>
+=======
+<p>We compare the models’ AIC values to help us decide which model seems to perform the best. Model zm1 appears to give us the most bang for the buck. It doesn’t have the lowest AIC, but it’s not much different from the model with 11 parameters. With only 173 observations it seems wise to prefer the model with only 8 parameters.</p>
+>>>>>>> 2326d99d671a3ea35ce89b22ba3adfe46894a6aa
 <pre class="r"><code>AIC(zm, zm1, zm2, zm3)</code></pre>
 <pre><code>##     df      AIC
 ## zm   7 743.8041
 ## zm1  8 717.6382
 ## zm2 10 735.1719
 ## zm3 11 715.6936</code></pre>
-<p>The model summary shows results for two models: the negative binomial
-count model and the zero-inflation binary logistic regression model.</p>
+<p>The model summary shows results for two models: the negative binomial count model and the zero-inflation binary logistic regression model.</p>
 <pre class="r"><code>summary(zm1)</code></pre>
 <pre><code>## 
 ## Call:
@@ -1342,10 +1332,7 @@ Analysis</em>. Springer-Verlag New York. <a
 href="https://ggplot2.tidyverse.org">https://ggplot2.tidyverse.org</a>.
 </div>
 <div id="ref-pscl" class="csl-entry">
-Zeileis, Achim, Christian Kleiber, and Simon Jackman. 2008.
-<span>“Regression Models for Count Data in <span>R</span>.”</span>
-<em>Journal of Statistical Software</em> 27 (8). <a
-href="http://www.jstatsoft.org/v27/i08/">http://www.jstatsoft.org/v27/i08/</a>.
+Zeileis, Achim, Christian Kleiber, and Simon Jackman. 2008. <span>“Regression Models for Count Data in <span>R</span>.”</span> <em>Journal of Statistical Software</em> 27 (8). <a href="http://www.jstatsoft.org/v27/i08/">http://www.jstatsoft.org/v27/i08/</a>.
 </div>
 </div>
 </div>
