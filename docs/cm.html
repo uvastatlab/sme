@@ -856,6 +856,259 @@ affecting the number of complaints received. Build a model for the
 2006)</span> Use <code>visits</code> as an offset in the model.</p>
 <pre class="r"><code>library(faraway)
 data(&quot;esdcomp&quot;)</code></pre>
+<p>In addition to the number of complaints and number of patient visits,
+the data contains information on</p>
+<ul>
+<li>residency: is the doctor in residency training N or Y</li>
+<li>gender: gender of doctor F or M</li>
+<li>revenue: dollars per hour earned by the doctor</li>
+<li>hours: total number of hours worked</li>
+</ul>
+<pre class="r"><code>str(esdcomp)</code></pre>
+<pre><code>## &#39;data.frame&#39;:    44 obs. of  6 variables:
+##  $ visits    : int  2014 3091 879 1780 3646 2690 1864 2782 3071 1502 ...
+##  $ complaints: int  2 3 1 1 11 1 2 6 9 3 ...
+##  $ residency : Factor w/ 2 levels &quot;N&quot;,&quot;Y&quot;: 2 1 2 1 1 1 2 1 1 2 ...
+##  $ gender    : Factor w/ 2 levels &quot;F&quot;,&quot;M&quot;: 1 2 2 2 2 2 2 2 1 2 ...
+##  $ revenue   : num  263 335 206 226 289 ...
+##  $ hours     : num  1287 1588 705 1006 1667 ...</code></pre>
+<p>Hours worked and patient visits are highly correlated, so we’ll just
+work with visits in our analysis.</p>
+<pre class="r"><code>corr &lt;- cor(esdcomp$visits, esdcomp$hours)
+plot(esdcomp$visits, esdcomp$hours, 
+     main = paste(&quot;correlation:&quot;, round(corr, 3)))</code></pre>
+<p><img src="cm_files/figure-html/unnamed-chunk-36-1.png" width="672" /></p>
+<p>The number of complaints range from 0 to 11, with over half the
+complaints less than or equal to 2.</p>
+<pre class="r"><code>summary(esdcomp$complaints)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##   0.000   1.000   2.000   3.341   5.000  11.000</code></pre>
+<p>A barplot of counts of complaints shows only one doctor has 0
+complaints and that most doctors have one or two complaints.</p>
+<pre class="r"><code>plot(table(esdcomp$complaints), type = &quot;h&quot;)</code></pre>
+<p><img src="cm_files/figure-html/unnamed-chunk-38-1.png" width="672" /></p>
+<p>If we look at visits and complaints doctors with 3 complaints we see
+a wide variety of visits. For example, the first doctor listed had 3
+complaints in 3091 visits, while the second doctor listed has 3
+complaints in 1502 visits. While the number of complaints is the same
+for both doctors, the <em>rate of complaints</em> is different.</p>
+<pre class="r"><code>subset(esdcomp, complaints == 3, select = visits:complaints)</code></pre>
+<pre><code>##    visits complaints
+## 2    3091          3
+## 10   1502          3
+## 23   3003          3
+## 36   1451          3
+## 37   3328          3</code></pre>
+<p>Below we add rate of complaints to the data and look again at doctors
+with 3 complaints. The first doctor has about 1 complaint per 1000
+visits while the second doctor has about 2 complaints per 1000
+visits.</p>
+<pre class="r"><code>esdcomp$rate &lt;- esdcomp$complaints/esdcomp$visits
+subset(esdcomp, complaints == 3, select = c(visits:complaints, rate))</code></pre>
+<pre><code>##    visits complaints         rate
+## 2    3091          3 0.0009705597
+## 10   1502          3 0.0019973369
+## 23   3003          3 0.0009990010
+## 36   1451          3 0.0020675396
+## 37   3328          3 0.0009014423</code></pre>
+<p>There appears to be some variability in the rates. Not a lot but
+perhaps enough to be of interest to hospital administration.</p>
+<pre class="r"><code>hist(esdcomp$rate)</code></pre>
+<p><img src="cm_files/figure-html/unnamed-chunk-41-1.png" width="672" /></p>
+<p>Does the rate of complaints have anything to do with residency,
+revenue, or gender? A rate model can help us answer this question. With
+only 44 observations we don’t have enough data to entertain complex
+models with interactions and non-linear effects, so we fit a simple
+additive model. Before we fit the model we center revenue so we can
+interpret the Intercept coefficient.</p>
+<p>Notice that visits is added as an <em>offset</em>. For more
+information on offsets, see <a
+href="https://data.library.virginia.edu/getting-started-with-rate-models/">Getting
+Started with Rate Models</a>.</p>
+<pre class="r"><code>esdcomp$revenueC &lt;- scale(esdcomp$revenue, center = TRUE, scale = FALSE)[,1]
+rate_mod &lt;- glm(complaints ~ residency + revenueC + gender + 
+                  offset(log(visits)), 
+                data = esdcomp,
+                family = poisson)
+summary(rate_mod)</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = complaints ~ residency + revenueC + gender + offset(log(visits)), 
+##     family = poisson, data = esdcomp)
+## 
+## Deviance Residuals: 
+##     Min       1Q   Median       3Q      Max  
+## -2.3356  -0.9403  -0.4460   0.8726   2.0306  
+## 
+## Coefficients:
+##              Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept) -6.542634   0.208779 -31.338   &lt;2e-16 ***
+## residencyY  -0.350610   0.191077  -1.835   0.0665 .  
+## revenueC     0.002362   0.002798   0.844   0.3986    
+## genderM      0.128995   0.214323   0.602   0.5473    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for poisson family taken to be 1)
+## 
+##     Null deviance: 63.435  on 43  degrees of freedom
+## Residual deviance: 58.698  on 40  degrees of freedom
+## AIC: 189.48
+## 
+## Number of Fisher Scoring iterations: 5</code></pre>
+<p>Both revenue and gender have high p-values, so we’re unsure if the
+coefficients for those predictors are positive or negative. The p-value
+for residency is pretty low, about 0.07, so we have decent evidence that
+it’s negative. In this case it appears that being a resident may
+slightly reduce the rate of complaints.</p>
+<p>Confidence intervals provide insight into the direction and magnitude
+of point estimates. In addition, for rate models, exponentiating the
+coefficient returns the estimated multiplicative effect. Below we see
+that being a doctor in residency training could reduce the rate of
+complaints by as much as 1 - 0.48 - 0.52, or 52%. However we can’t rule
+out that it could also increase the rate of complaints by 1.02, or 2%.
+The Intercept is the expected rate of complaints for a female doctor,
+not in residency training, earning an average revenue. This comes out to
+about 1 complaint per 1000 visits.</p>
+<pre class="r"><code>car::Confint(rate_mod, exponentiate = TRUE)</code></pre>
+<pre><code>## 
+## Exponentiated Coefficients and Confidence Bounds</code></pre>
+<pre><code>##                Estimate        2.5 %      97.5 %
+## (Intercept) 0.001440689 0.0009389426 0.002132307
+## residencyY  0.704258118 0.4819236944 1.020449674
+## revenueC    1.002364774 0.9968532607 1.007848920
+## genderM     1.137683995 0.7559801492 1.756475968</code></pre>
+<p>Is this a good model? A rootogram can help us investigate. We use the
+<code>rootogram()</code> function from the countreg package <span
+class="citation">(Kleiber and Zeileis 2016)</span>. The plot is not
+pretty. Our model is over-predicting 0, 3, and 5 counts;
+under-predicting 1 and 2 counts; and not doing very well in the higher
+counts.</p>
+<pre class="r"><code>library(countreg)
+rootogram(rate_mod, max = 11)</code></pre>
+<p><img src="cm_files/figure-html/unnamed-chunk-44-1.png" width="672" /></p>
+<p>The <code>drop1()</code> function tests single term deletions.
+Dropping the gender variable decreases the AIC by about 2 units.</p>
+<pre class="r"><code>drop1(rate_mod, test = &quot;Chisq&quot;)</code></pre>
+<pre><code>## Single term deletions
+## 
+## Model:
+## complaints ~ residency + revenueC + gender + offset(log(visits))
+##           Df Deviance    AIC    LRT Pr(&gt;Chi)  
+## &lt;none&gt;         58.698 189.48                  
+## residency  1   62.128 190.91 3.4303  0.06401 .
+## revenueC   1   59.407 188.19 0.7093  0.39969  
+## gender     1   59.067 187.85 0.3689  0.54361  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p>We proceed to fit a new model without gender using the
+<code>update()</code> function. The syntax <code>. ~ . - gender</code>
+means fit the same model as before except drop gender. This results in a
+slightly bigger coefficient for residency.</p>
+<pre class="r"><code>rate_mod2 &lt;- update(rate_mod, . ~ . - gender)
+summary(rate_mod2)</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = complaints ~ residency + revenueC + offset(log(visits)), 
+##     family = poisson, data = esdcomp)
+## 
+## Deviance Residuals: 
+##     Min       1Q   Median       3Q      Max  
+## -2.3118  -0.9309  -0.4820   0.9173   2.0869  
+## 
+## Coefficients:
+##              Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept) -6.434509   0.103389 -62.236   &lt;2e-16 ***
+## residencyY  -0.378583   0.185434  -2.042   0.0412 *  
+## revenueC     0.002905   0.002661   1.092   0.2749    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for poisson family taken to be 1)
+## 
+##     Null deviance: 63.435  on 43  degrees of freedom
+## Residual deviance: 59.067  on 41  degrees of freedom
+## AIC: 187.85
+## 
+## Number of Fisher Scoring iterations: 5</code></pre>
+<p>The rootogram for this model is largely unchanged from the first
+model.</p>
+<p>Using this new model we may want to estimate how the rate of
+complaints differ between doctors in residency training and doctors not
+in training. We can make estimates using the <code>predict()</code>
+function. We set the new data to have two rows, one for doctors in
+training and one for doctors not in training. We set revenueC to 0 (the
+mean) and visits to 1000. We set <code>type = "response"</code> to get
+counts per 1000.</p>
+<pre class="r"><code>p &lt;- predict(rate_mod2, newdata = data.frame(residency = c(&quot;N&quot;, &quot;Y&quot;),
+                                             revenueC = 0,
+                                             visits = 1000),
+             type = &quot;response&quot;)
+p</code></pre>
+<pre><code>##        1        2 
+## 1.605196 1.099288</code></pre>
+<p>To get the rate of complaints we need to divide by 1000:</p>
+<pre class="r"><code>names(p) &lt;- c(&quot;Not in Training&quot;, &quot;Training&quot;)
+p/1000</code></pre>
+<pre><code>## Not in Training        Training 
+##     0.001605196     0.001099288</code></pre>
+<p>The rate seems slightly higher for doctors not in training. If we
+take the ratio of the rates we get about 1.46. This estimates that the
+rate of complaints for doctors not in training is about 46% higher than
+the rate of complaints for doctors in training.</p>
+<pre class="r"><code>p_rate &lt;- p/1000
+p_rate[1]/p_rate[2]</code></pre>
+<pre><code>## Not in Training 
+##        1.460214</code></pre>
+<p>How certain are we about this estimate of 46%? We can use the emmeans
+package to help us assess this question <span class="citation">(Lenth
+2022)</span>. Below we load the package and then use the
+<code>emmeans()</code> function on our model object. The
+<code>trt.vs.ctrl ~ residency</code> simply says to compare the rates
+between the levels of residency (as if one was a treatment group and the
+other was a control group). We set <code>type = "response"</code> and
+<code>offset = log(1000)</code> to get counts per 1000. The revenue is
+automatically held at its mean in the calculation. Finally we set
+<code>reverse = TRUE</code> get the ratio of N/Y (instead of Y/N) and
+pipe in the <code>confint()</code> function.</p>
+<p>We see our predictions replicated in the “emmeans” section and a 95%
+confidence interval on the ratio of rates in the “contrasts” section.
+The CI of [1.02, 2.1] says the rate of complaints for doctors not in
+training could be anywhere from 2% to 2 times higher than the rate of
+complaints for doctors in training.</p>
+<pre class="r"><code>library(emmeans)
+emmeans(rate_mod2, trt.vs.ctrl ~ residency, 
+        type = &quot;response&quot;, offset = log(1000), 
+        reverse = TRUE) |&gt;
+  confint()</code></pre>
+<pre><code>## $emmeans
+##  residency rate    SE  df asymp.LCL asymp.UCL
+##  N         1.61 0.166 Inf      1.31      1.97
+##  Y         1.10 0.164 Inf      0.82      1.47
+## 
+## Confidence level used: 0.95 
+## Intervals are back-transformed from the log scale 
+## 
+## $contrasts
+##  contrast ratio    SE  df asymp.LCL asymp.UCL
+##  N / Y     1.46 0.271 Inf      1.02       2.1
+## 
+## Confidence level used: 0.95 
+## Intervals are back-transformed from the log scale</code></pre>
+<p>If this was a <em>sample of 44 doctors</em>, the 95% confidence
+interval might lead us to conclude that patient complaints are slightly
+lower for doctors in residency training. If this was <em>all the
+data</em> for doctors at a hospital, we might use the confidence
+interval to estimate that future complaints are likely to be slightly
+lower for doctors in residency training.</p>
+<p>It’s important to consider the raw counts before getting too excited
+about these estimates. A 46% increase sounds dramatic, but remember our
+counts per 1000 were 1.61 and 1.01, respectively. Both are very small
+numbers. A doctor getting only 1 complaint out of 1000 visits is
+probably not that much different than a doctor who got 2 complaints out
+of 1000 visits. In fact, hospital administrators would likely be quite
+satisfied with doctors only receiving 2 complaints every 1000 patient
+visits!</p>
 </div>
 <div id="negative-binomial-model" class="section level3">
 <h3>Negative binomial model</h3>
@@ -896,7 +1149,7 @@ zeroes.</p>
 <p>Instead of a histogram, we generate a barplot of counts. In addition
 to the spike at 0 we see an interesting dip at 2.</p>
 <pre class="r"><code>table(hsc$satell)|&gt; barplot()</code></pre>
-<p><img src="cm_files/figure-html/unnamed-chunk-38-1.png" width="672" /></p>
+<p><img src="cm_files/figure-html/unnamed-chunk-54-1.png" width="672" /></p>
 <p>Most crabs are medium color.</p>
 <pre class="r"><code>summary(hsc$color)</code></pre>
 <pre><code>## light medium       medium  dark medium         dark 
@@ -908,14 +1161,14 @@ ggplot(hsc) +
   aes(x = satell, y = color) + 
   geom_boxplot(outlier.shape = NA) +
   geom_jitter(width = 0, height = 0.1, alpha = 1/2) </code></pre>
-<p><img src="cm_files/figure-html/unnamed-chunk-40-1.png" width="672" /></p>
+<p><img src="cm_files/figure-html/unnamed-chunk-56-1.png" width="672" /></p>
 <p>It also appears number of satellites has a weak positive association
 with width of the female crab.</p>
 <pre class="r"><code>ggplot(hsc) +
   aes(x = width, y = satell) + 
   geom_point() +
   geom_smooth(se = FALSE)</code></pre>
-<p><img src="cm_files/figure-html/unnamed-chunk-41-1.png" width="672" /></p>
+<p><img src="cm_files/figure-html/unnamed-chunk-57-1.png" width="672" /></p>
 <p>However it appears the positive relationship between width and number
 of satellites may change depending on color of the crab.</p>
 <pre class="r"><code>ggplot(hsc) +
@@ -923,7 +1176,7 @@ of satellites may change depending on color of the crab.</p>
   geom_point() +
   geom_smooth(se = FALSE) +
   facet_wrap(~ color)</code></pre>
-<p><img src="cm_files/figure-html/unnamed-chunk-42-1.png" width="672" /></p>
+<p><img src="cm_files/figure-html/unnamed-chunk-58-1.png" width="672" /></p>
 <p>To fit the negative binomial model we’ll use the
 <code>glm.nb()</code> function from the MASS package. <span
 class="citation">(Venables and Ripley 2002)</span> We model satell as a
@@ -987,7 +1240,7 @@ histograms of the 50 simulated data sets.</p>
 <pre class="r"><code>densityPlot(hsc$satell, from = 0, to = 15, normalize=TRUE)
 sim &lt;- simulate(m, nsim = 50)
 for(i in 1:50)lines(density(sim[[i]], from=0), col = &quot;grey90&quot;)</code></pre>
-<p><img src="cm_files/figure-html/unnamed-chunk-45-1.png" width="672" /></p>
+<p><img src="cm_files/figure-html/unnamed-chunk-61-1.png" width="672" /></p>
 <p>Notice we’re underpredicting 0 counts and in the range of 3 - 6.
 We’re also overpredicting in the area of 1 and 2.</p>
 <p>Another type of fit assessment for count models can be performed with
@@ -1009,7 +1262,7 @@ The</p>
 <pre class="r"><code># install.packages(&quot;countreg&quot;, repos=&quot;http://R-Forge.R-project.org&quot;)
 library(countreg)
 rootogram(m2)</code></pre>
-<p><img src="cm_files/figure-html/unnamed-chunk-46-1.png" width="672" /></p>
+<p><img src="cm_files/figure-html/unnamed-chunk-62-1.png" width="672" /></p>
 <p>Using the <code>Confint()</code> function (from the car package) with
 <code>exponentiate = TRUE</code> returns the multiplicative effect of
 the coefficients. For example it appears that for every 1 cm increase in
@@ -1032,12 +1285,12 @@ see our estimate becomes very uncertain past 28 cm since we have few
 horseshoe crabs that wide.</p>
 <pre class="r"><code>library(ggeffects)
 ggeffect(m2, terms = &quot;width&quot;) |&gt; plot()</code></pre>
-<p><img src="cm_files/figure-html/unnamed-chunk-48-1.png" width="672" /></p>
+<p><img src="cm_files/figure-html/unnamed-chunk-64-1.png" width="672" /></p>
 <p>A similar plot can be made for color that suggests a light medium
 color may lead to more satellites, but we’re very uncertain about that
 given how few crabs we have of that color (only 12 out of 173).</p>
 <pre class="r"><code>ggeffect(m2, terms = &quot;color&quot;) |&gt; plot()</code></pre>
-<p><img src="cm_files/figure-html/unnamed-chunk-49-1.png" width="672" /></p>
+<p><img src="cm_files/figure-html/unnamed-chunk-65-1.png" width="672" /></p>
 <p>We continue this analysis in the <strong>Zero-Inflated model</strong>
 example.</p>
 </div>
@@ -1076,7 +1329,7 @@ how many of each count we have in our data. Notice the big spike at
 0.</p>
 <pre class="r"><code>table(hsc$satell) |&gt; 
   plot(type = &quot;h&quot;)</code></pre>
-<p><img src="cm_files/figure-html/unnamed-chunk-51-1.png" width="672" /></p>
+<p><img src="cm_files/figure-html/unnamed-chunk-67-1.png" width="672" /></p>
 <p>Might the abundance of zeroes be related to the color of the female?
 To investigate we create a TRUE/FALSE vector of whether a count is 0 or
 not and then convert to 1/0. This new variable is called “zero” and
@@ -1091,7 +1344,7 @@ expect. So the surplus of zeroes may be related to color of shell.</p>
 <pre class="r"><code>hsc$zero &lt;- as.numeric(hsc$satell == 0)
 table(hsc$color, hsc$zero) |&gt; 
   mosaicplot(shade = TRUE)</code></pre>
-<p><img src="cm_files/figure-html/unnamed-chunk-52-1.png" width="672" /></p>
+<p><img src="cm_files/figure-html/unnamed-chunk-68-1.png" width="672" /></p>
 <p>Does the width of the shell help explain some of the zero inflation?
 We can explore this by modeling zero as a function of width using a
 binary logistic regression model. It certainly seems that width is
@@ -1128,7 +1381,7 @@ associated with higher probabilities of 0 satellites.</p>
 <pre class="r"><code>glm(zero ~ width, data = hsc, family = binomial) |&gt;
   ggeffect(&quot;width&quot;) |&gt;
   plot()</code></pre>
-<p><img src="cm_files/figure-html/unnamed-chunk-54-1.png" width="672" /></p>
+<p><img src="cm_files/figure-html/unnamed-chunk-70-1.png" width="672" /></p>
 <p>Now we fit a series of zero-inflated models using the
 <code>zeroinfl()</code> function from the pscl package <span
 class="citation">(Zeileis, Kleiber, and Jackman 2008)</span>. The model
@@ -1256,7 +1509,7 @@ satellites decreases with larger widths</li>
 fit is not great, especially when it comes to modeling counts of ones
 and twos. But we have a much better understanding of zero counts.</p>
 <pre class="r"><code>rootogram(zm4)</code></pre>
-<p><img src="cm_files/figure-html/unnamed-chunk-60-1.png" width="672" /></p>
+<p><img src="cm_files/figure-html/unnamed-chunk-76-1.png" width="672" /></p>
 <p>This model also improves on the negative binomial model we fit in the
 previous section. It has two fewer coefficients and a substantially
 lower AIC.</p>
