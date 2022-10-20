@@ -412,7 +412,7 @@ p_rate <- p/1000
 p_rate[1]/p_rate[2]
 ```
 
-How certain are we about this estimate of 46%? We can use the emmeans package to help us assess this question [@emmeans]. Below we load the package and then use the `emmeans()` function on our model object. The `trt.vs.ctrl ~ residency` simply says to compare the rates between the levels of residency (as if one was a treatment group and the other was a control group). We set `type = "response"` and `offset = log(1000)` to get counts per 1000. The revenue is automatically held at its mean in the calculation. Finally we set `reverse = TRUE` get the ratio of N/Y (instead of Y/N) and pipe in the `confint()` function. 
+How certain are we about this estimate of 46%? We can use the emmeans package to help us assess this question [@emmeans]. Below we load the package and then use the `emmeans()` function on our model object. The `trt.vs.ctrl ~ residency` simply says to compare the rates between the levels of residency (as if one was a treatment group and the other was a control group). We set `type = "response"` and `offset = log(1000)` to get counts per 1000. The revenue is automatically held at its mean in the calculation. Finally we set `reverse = TRUE` get the ratio of N/Y (instead of Y/N) and pipe into the `confint()` function. 
 
 We see our predictions replicated in the "emmeans" section and a 95% confidence interval on the ratio of rates in the "contrasts" section. The CI of [1.02, 2.1] says the rate of complaints for doctors not in training could be anywhere from 2% to 2 times higher than the rate of complaints for doctors in training.
 

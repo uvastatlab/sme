@@ -263,11 +263,12 @@ One way we can assess the model is by examining diagnostic plots. We will view t
 ```{r}
 plot(m3, which=1)
 ```
-The fitted vs. residuals plot summarizes the spread of residuals. For a 'good' model, we expect to see residuals centered around 0, with an even distribution above and below 0. The red line is a line fitted to the residuals, so we expect it to be horizontal at 0.
 
-Many of the values on the plot are within 20 units of 0. This is what we would expect based on the residual standard error. The distribution of residuals of a linear regression model should have a mean of 0. This distribution has a standard deviation called the residual standard error. The residual standard error is how much we can expect a prediction to deviate from its true value.
+The fitted vs. residuals plot summarizes the spread of residuals. For a 'good' model, we expect to see residuals centered around 0, with an even distribution above and below 0. The red trend line helps us detect any patterns in the residuals. We hope to see it approximately horizontal around 0.
 
-From summarizing the data, we saw that about 50% of the data is in about a 20 unit range (1st quartile: 116 , 3rd quartile: 137.5). So if we can expect the model to predict bp with a 17 unit range, then the model's error is similar to the range of the data. Thus, the model cannot accurately predict bp.
+Many (but not all) of the values on the plot are within 20 units of 0. This is what we would expect based on the residual standard error, which is 17. Linear modeling assumes the distribution of residuals has a mean of 0 and a constant standard deviation. This standard deviation is estimated as the residual standard error. The residual standard error is how much we can expect a prediction to deviate from its true value.
+
+The residual versus fitted plot also reveals several subjects with residuals well above 20. This means our model is severely underfitting their blood pressure values. For example subject 15 has a fitted value of about 130, but a residual of 60. This means their observed blood pressure was 190, but our model predicts 130. There are many subjects experiencing this underfitting which indicates our model probably isn't very good.
 
 Additionally, this model has an adjusted R-squared value of 0.1265. This roughly means the model explains 13% of the variability in bp. This is another indication that the model is not good.
 
@@ -278,7 +279,7 @@ plot(bp.obese$bp, predict(m3))
 abline(a=0, b=1, col='red')
 ```
 
-These values do not cluster around the slope=1 line, another signal that this model does not perform well. It is likely that factors outisde of the predictors in the model also affect bp. 
+These values do not cluster around the slope=1 line, another signal that this model does not perform well. It is likely that factors outside of the predictors in the model also affect bp. 
 
 Next, we will calculate confidence intervals for each of the coefficients in the model.
 

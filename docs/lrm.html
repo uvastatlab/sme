@@ -500,7 +500,10 @@ show symptoms of malaria falls between about log(ab) = 3 and 4.</p>
 
 malaria$group = ifelse(malaria$mal == 0, &#39;no symptoms&#39;, &#39;symptoms&#39;)
 
-ggplot(malaria, aes(x=age, fill = group)) + geom_histogram(binwidth=1, color=&quot;black&quot;,) + scale_fill_manual(values = c(&#39;no symptoms&#39; = &#39;gray&#39;, &#39;symptoms&#39; = &#39;cornflowerblue&#39;))</code></pre>
+ggplot(malaria, aes(x=age, fill = group)) + 
+  geom_histogram(binwidth=1, color=&quot;black&quot;,) + 
+  scale_fill_manual(values = c(&#39;no symptoms&#39; = &#39;gray&#39;, 
+                               &#39;symptoms&#39; = &#39;cornflowerblue&#39;))</code></pre>
 <p><img src="lrm_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
 <p>From the histogram, we can see that the ages of subjects are more or
 less uniformly spread from 3 to 15. From the box plot, we can see that
@@ -554,19 +557,17 @@ Note this range is small and includes 0, which implies that the effect
 of age on mal is small and we can’t be sure if the effect is positive or
 negative.</p>
 <p>The reasonable range of values for log(ab) is -1.099 to -0.324. This
-range is larger than that of age and is entirely negative. This
-indicates that antibody count has a stronger effect on mal than age and
-is a negative effect. In other words, lower antibody count is associated
-with higher risk of malaria. We can exponentiate this confidence
-interval to get odds ratios (ratios of probability of showing symptoms
-to not showing symptoms of malaria).</p>
+range is entirely negative and suggests that lower antibody count is
+associated with higher risk of malaria. We can exponentiate this
+confidence interval to get an odds ratio (the ratio of the odds of
+showing symptoms to the odds of not showing symptoms of malaria).</p>
 <pre class="r"><code>exp(confint(lrm)[&quot;log(ab)&quot;,])</code></pre>
 <pre><code>##     2.5 %    97.5 % 
 ## 0.3333609 0.7232952</code></pre>
-<p>Here we can see that the odds ratios are both less than 1, which
-indicates that as the log(ab) increases, the risk of malaria decreases.
-For every one-unit increase of log(ab), the risk of malaria decreases by
-anywhere from 33% to 72%.</p>
+<p>Here we can see that the odds ratio is less than 1, which indicates
+that as log(ab) increases, the odds of malaria decreases. For every
+one-unit increase of log(ab), the odds of malaria decreases by anywhere
+from 28% to 67%. (Note: 1 - 0.33 = 0.67 and 1 - 0.72 = 0.28.)</p>
 <p>If we wanted to, we could have split the data into training and
 testing data:</p>
 <pre class="r"><code>set.seed(1)  # make reproducible
