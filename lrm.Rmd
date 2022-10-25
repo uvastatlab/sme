@@ -102,6 +102,38 @@ Now we look at a summary of the model:
 summary(lrm)
 ```
 
+Next we assess model fit:
+
+```{r}
+anova(lrm, test = "Chisq")
+```
+
+This shows that the model including age is a slightly better fit than the null model (intercept only). The model including both age and log(ab) is a better fit ($\chi^2(1,100) = 15.63, p < .001$) than the model only containing age. In general, a predictor that contributes to a model will reduce deviance by more than 1 or 2 units.
+
+We can also assess fit of the model by comparing it to the *saturated model*, or a model with perfect fit.
+
+```{r}
+vcdExtra::LRstats(m)
+```
+
+The null of the test is the model is no different from the saturated model. A low p-value rejects the null. Here the p-value is pretty high, so we might have some confidence in using this model to predict the probability of malaria risk.
+
+Before interpreting the model, we can assess model error by looking at a plot of residuals vs. "Hat-values". Residuals = observed response - predicted probability. Hat-values measure leverage.
+
+```{r}
+car::influencePlot(lrm)
+```  
+
+The size of points corresponds to Cook's Distance.  Points to the right of the dotted vertical line have high Hat-Values and could be influencing the fit of the model. Hat-Values measure how far away a subjects predictor values are from the center of the predictor space. Cook's D measures influence. Big values (ie, big Bubbles) could be influencing the estimated coefficients.
+
+By default the 4 most extreme points are labeled. We can investigate those as follows:
+
+```{r}
+malaria[c(13,19,35, 78),]
+```
+
+These points have very high and very low levels of ab. The two highest are unusual because most subjects with mal = 1 have low ab values.
+
 We can also look at the model coefficients and confidence intervals. 
 
 ```{r}
