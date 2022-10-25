@@ -40,7 +40,6 @@ Now, we  model the number of eggs produced with `treat` as a fixed effect and `b
 
 ```{r}
 library(lme4)
-library(lmerTest)
 m <- lmer(eggs ~ treat + (1|block), data = eggprod)
 summary(m)
 
@@ -50,32 +49,39 @@ icc(m)
 VarCorr(m)
 ```
 
+The likeness of egg production in the same block is .25. The variation around the intercept is 11.40 across blocks. The intercept fixed effect is the grand mean of eggs across the entire sample when treat = "E". The treatF and treatO fixed effects can be interpreted as the difference in means (e.g., treatE - treatF). Therefore, treatF produces 6.25 less mean egg production and treatO produces 42.50 less mean egg production.
+
+This is further substantiated by looking at the means by treatment. Observed means of eggs by treat:
+
 ```{r}
 tapply(eggprod$eggs, eggprod$treat, mean)
+```
 
+Pairwise comparisons, adjusted p-values and confidence intervals:
+
+```{r}
 library(emmeans)
 emmeans(m, pairwise ~ treat)
 emmeans(m, pairwise ~ treat) |> confint()
+```
 
+An effect plot:
+
+```{r}
 library(ggeffects)
 ggpredict(m, terms = ~ treat) |> plot(add.data = TRUE)
 ```
 
-The likeness of egg production in the same block is .25. The variation around the intercept is 11.40 across blocks.
-
-Intercept fixed effect: the grand mean of eggs across the entire sample when treat = "E"
-treatF fixed effect: Going from treatment E to treatment F produces a 6.25 decrease in mean egg production
-treatO fixed effect: Going from treatment E to treatment O produces a 42.50 decrease in mean egg production
+We can now assess model fit and significance of predictors.
 
 ```{r}
 car::Anova(m)
 
 library(lmerTest)
-m <- lmer(eggs ~ treat + (1|block), data = eggprod)
 summary(m)
 ```
 
-Running a $\chi^2$ test on the model, we see that treatment is a significant predictor. By loading the `lmerTest` package, we can see in the summary that specifically, treatment O is significant less than treatment E.
+Running a $\chi^2$ test on the model, we see that the model including treat is a better fit ($\chi^2(2,12) = 10.887, p < .01$) than the null model (intercept only). By loading the `lmerTest` package, we can see in the summary that specifically, treatment O is significant less than treatment E.
 
 ```{r}
 # normality of residuals; looks good
@@ -85,8 +91,6 @@ plot(m)
 # constant variance within treatment levels; TreatF has a lot more variability
 plot(m, treat ~ resid(.))
 ```
-
-
 
 ### longitudinal modeling
 
