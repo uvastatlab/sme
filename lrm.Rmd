@@ -166,8 +166,6 @@ We can then test our model on the training data and see how well it performs.
 prediction <- predict(lrm, newdata = malaria.test, type="response")
 ```
 
-
-
 ### Logistic regression with numeric predictors (2)
 
 The `pima` data frame from the faraway package contains data on 768 adult female Pima Indians living near Phoenix [@faraway]. This data was collected by [The National Institute of Diabetes and Digestive and Kidney Diseases](https://www.niddk.nih.gov/). The purpose of the study was to investigate factors related to diabetes. The variable `test` indicates whether the patient showed signs of diabetes (coded 0 if negative, 1 if positive). Model `test` as a function of all other predictors.
