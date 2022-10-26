@@ -529,7 +529,7 @@ summary(m)</code></pre>
 ##        (Intr) treatF
 ## treatF -0.612       
 ## treatO -0.612  0.500</code></pre>
-<p>Running a <span class="math inline">\(\chi^2\)</span> test on the model, we see that the model including treat is a better fit (<span class="math inline">\(\chi^2(2,12) = 10.887, p &lt; .01\)</span>) than the null model (intercept only). By loading the <code>lmerTest</code> package, we can see in the summary that specifically, treatment O is significant less than treatment E.</p>
+<p>Running a <span class="math inline">\(\chi^2\)</span> test on the model, we see that the model including treat is a better fit (<span class="math inline">\(\chi^2(2,N = 12) = 10.887, p &lt; .01\)</span>) than the null model (intercept only). By loading the <code>lmerTest</code> package, we can see in the summary that specifically, treatment O is significant less than treatment E.</p>
 <pre class="r"><code># normality of residuals; looks good
 lattice::qqmath(m)</code></pre>
 <p><img src="lme_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>

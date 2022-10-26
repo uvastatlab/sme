@@ -81,7 +81,7 @@ library(lmerTest)
 summary(m)
 ```
 
-Running a $\chi^2$ test on the model, we see that the model including treat is a better fit ($\chi^2(2,12) = 10.887, p < .01$) than the null model (intercept only). By loading the `lmerTest` package, we can see in the summary that specifically, treatment O is significant less than treatment E.
+Running a $\chi^2$ test on the model, we see that the model including treat is a better fit ($\chi^2(2,N = 12) = 10.887, p < .01$) than the null model (intercept only). By loading the `lmerTest` package, we can see in the summary that specifically, treatment O is significant less than treatment E.
 
 ```{r}
 # normality of residuals; looks good

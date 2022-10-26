@@ -507,7 +507,7 @@ ggplot(malaria, aes(x=age, fill = group)) +
 ## log(ab)  1  15.2628        97     98.017 9.354e-05 ***
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<p>This shows that the model including age is a slightly better fit than the null model (intercept only). The model including both age and log(ab) is a better fit (<span class="math inline">\(\chi^2(1,100) = 15.63, p &lt; .001\)</span>) than the model only containing age. In general, a predictor that contributes to a model will reduce deviance by more than 1 or 2 units.</p>
+<p>This shows that the model including age is a slightly better fit than the null model (intercept only). The model including both age and log(ab) is a better fit (<span class="math inline">\(\chi^2(1,N = 100) = 15.63, p &lt; .001\)</span>) than the model only containing age. In general, a predictor that contributes to a model will reduce deviance by more than 1 or 2 units.</p>
 <p>We can also assess fit of the model by comparing it to the <em>saturated model</em>, or a model with perfect fit.</p>
 <pre class="r"><code>vcdExtra::LRstats(m)</code></pre>
 <pre><code>## Likelihood summary table:
