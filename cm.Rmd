@@ -294,6 +294,140 @@ library(faraway)
 data("esdcomp")
 ```
 
+In addition to the number of complaints and number of patient visits, the data contains information on 
+
+- residency: is the doctor in residency training N or Y
+- gender: gender of doctor F or M
+- revenue: dollars per hour earned by the doctor
+- hours: total number of hours worked
+
+```{r}
+str(esdcomp)
+```
+
+Hours worked and patient visits are highly correlated, so we'll just work with visits in our analysis.
+
+```{r}
+corr <- cor(esdcomp$visits, esdcomp$hours)
+plot(esdcomp$visits, esdcomp$hours, 
+     main = paste("correlation:", round(corr, 3)))
+
+```
+
+The number of complaints range from 0 to 11, with over half the complaints less than or equal to 2.
+
+```{r}
+summary(esdcomp$complaints)
+```
+
+A barplot of counts of complaints shows only one doctor has 0 complaints and that most doctors have one or two complaints.
+
+```{r}
+plot(table(esdcomp$complaints), type = "h")
+```
+
+If we look at visits and complaints doctors with 3 complaints we see a wide variety of visits. For example, the first doctor listed had 3 complaints in 3091 visits, while the second doctor listed has 3 complaints in 1502 visits. While the number of complaints is the same for both doctors, the _rate of complaints_ is different. 
+
+```{r}
+subset(esdcomp, complaints == 3, select = visits:complaints)
+```
+
+Below we add rate of complaints to the data and look again at doctors with 3 complaints. The first doctor has about 1 complaint per 1000 visits while the second doctor has about 2 complaints per 1000 visits. 
+
+```{r}
+esdcomp$rate <- esdcomp$complaints/esdcomp$visits
+subset(esdcomp, complaints == 3, select = c(visits:complaints, rate))
+```
+
+There appears to be some variability in the rates. Not a lot but perhaps enough to be of interest to hospital administration.
+
+```{r}
+hist(esdcomp$rate)
+```
+
+Does the rate of complaints have anything to do with residency, revenue, or gender? A rate model can help us answer this question. With only 44 observations we don't have enough data to entertain complex models with interactions and non-linear effects, so we fit a simple additive model. Before we fit the model we center revenue so we can interpret the Intercept coefficient.
+
+Notice that visits is added as an _offset_. For more information on offsets, see [Getting Started with Rate Models](https://data.library.virginia.edu/getting-started-with-rate-models/).
+
+```{r}
+esdcomp$revenueC <- scale(esdcomp$revenue, center = TRUE, scale = FALSE)[,1]
+rate_mod <- glm(complaints ~ residency + revenueC + gender + 
+                  offset(log(visits)), 
+                data = esdcomp,
+                family = poisson)
+summary(rate_mod)
+```
+
+Both revenue and gender have high p-values, so we're unsure if the coefficients for those predictors are positive or negative. The p-value for residency is pretty low, about 0.07, so we have decent evidence that it's negative. In this case it appears that being a resident may slightly reduce the rate of complaints.
+
+Confidence intervals provide insight into the direction and magnitude of point estimates. In addition, for rate models, exponentiating the coefficient returns the estimated multiplicative effect. Below we see that being a doctor in residency training could reduce the rate of complaints by as much as 1 - 0.48 - 0.52, or 52%. However we can't rule out that it could also increase the rate of complaints by 1.02, or 2%. The Intercept is the expected rate of complaints for a female doctor, not in residency training, earning an average revenue. This comes out to about 1 complaint per 1000 visits.
+
+```{r}
+car::Confint(rate_mod, exponentiate = TRUE)
+```
+
+Is this a good model? A rootogram can help us investigate. We use the `rootogram()` function from the countreg package [@rootograms]. The plot is not pretty. Our model is over-predicting 0, 3, and 5 counts; under-predicting 1 and 2 counts; and not doing very well in the higher counts.
+
+```{r}
+library(countreg)
+rootogram(rate_mod, max = 11)
+```
+
+The `drop1()` function tests single term deletions. Dropping the gender variable decreases the AIC by about 2 units.
+
+```{r}
+drop1(rate_mod, test = "Chisq")
+```
+
+We proceed to fit a new model without gender using the `update()` function. The syntax `. ~ . - gender` means fit the same model as before except drop gender. This results in a slightly bigger coefficient for residency.  
+
+```{r}
+rate_mod2 <- update(rate_mod, . ~ . - gender)
+summary(rate_mod2)
+```
+
+The rootogram for this model is largely unchanged from the first model. 
+
+Using this new model we may want to estimate how the rate of complaints differ between doctors in residency training and doctors not in training. We can make estimates using the `predict()` function. We set the new data to have two rows, one for doctors in training and one for doctors not in training. We set revenueC to 0 (the mean) and visits to 1000. We set `type = "response"` to get counts per 1000.
+
+```{r}
+p <- predict(rate_mod2, newdata = data.frame(residency = c("N", "Y"),
+                                             revenueC = 0,
+                                             visits = 1000),
+             type = "response")
+p
+```
+
+To get the rate of complaints we need to divide by 1000:
+
+```{r}
+names(p) <- c("Not in Training", "Training")
+p/1000
+```
+
+The rate seems slightly higher for doctors not in training. If we take the ratio of the rates we get about 1.46. This estimates that the rate of complaints for doctors not in training is about 46% higher than the rate of complaints for doctors in training.
+
+```{r}
+p_rate <- p/1000
+p_rate[1]/p_rate[2]
+```
+
+How certain are we about this estimate of 46%? We can use the emmeans package to help us assess this question [@emmeans]. Below we load the package and then use the `emmeans()` function on our model object. The `trt.vs.ctrl ~ residency` simply says to compare the rates between the levels of residency (as if one was a treatment group and the other was a control group). We set `type = "response"` and `offset = log(1000)` to get counts per 1000. The revenue is automatically held at its mean in the calculation. Finally we set `reverse = TRUE` get the ratio of N/Y (instead of Y/N) and pipe into the `confint()` function. 
+
+We see our predictions replicated in the "emmeans" section and a 95% confidence interval on the ratio of rates in the "contrasts" section. The CI of [1.02, 2.1] says the rate of complaints for doctors not in training could be anywhere from 2% to 2 times higher than the rate of complaints for doctors in training.
+
+```{r}
+library(emmeans)
+emmeans(rate_mod2, trt.vs.ctrl ~ residency, 
+        type = "response", offset = log(1000), 
+        reverse = TRUE) |>
+  confint()
+```
+
+If this was a _sample of 44 doctors_, the 95% confidence interval might lead us to conclude that patient complaints are slightly lower for doctors in residency training. If this was _all the data_ for doctors at a hospital, we might use the confidence interval to estimate that future complaints are likely to be slightly lower for doctors in residency training.
+
+It's important to consider the raw counts before getting too excited about these estimates. A 46% increase sounds dramatic, but remember our counts per 1000 were 1.61 and 1.01, respectively. Both are very small numbers. A doctor getting only 1 complaint out of 1000 visits is probably not that much different than a doctor who got 2 complaints out of 1000 visits. In fact, hospital administrators would likely be quite satisfied with doctors only receiving 2 complaints every 1000 patient visits!
+
 
 ### Negative binomial model
 
@@ -484,7 +618,7 @@ glm(zero ~ width, data = hsc, family = binomial) |>
   plot()
 ```
 
-Now we fit a series of zero-inflated models using the `zeroinfl()` function from the pscl package [@pscl]. The model syntax is the same as the syntax used for `lm()` and `glm()`, except now we can specify two models separated by a `|`. 
+Now we fit a series of zero-inflated models using the `zeroinfl()` function from the pscl package [@pscl]. The model syntax is the same as the syntax used for `lm()` and `glm()`, except now we can specify _two models_ separated by a `|`. 
 
 - The first model specified to the left of the `|` is the _count model_. We specify the same count model we used in the negative binomial model section. The `dist = "negbin"` argument says we want to fit a negative binomial model. (The default is a poisson model.) 
 - The second model specified to the right of the `|` is the _binary logistic regression_ model for the zeroes. We try a series of increasingly complex models, starting with the intercept only and then width, color, and both width and color. (We could also not specify a model to the right of the `|`. In that case the same model is fit to the binomial logistic regression that is fit to the count model.)
@@ -501,7 +635,7 @@ zm3 <- zeroinfl(satell ~ width + color | width + color,
                 data = hsc, dist = "negbin")
 ```
 
-We compare the models' AIC values to help us decide which model seems to perform the best. Model zm1 appears to give us the most bang for the buck. It doesn't have the lowest AIC, but it's not much different from the model with 11 parameters. With only 173 observations it seems wise to prefer the model with only 8 parameters. 
+We compare the models' AIC values to help us decide which model seems to perform the best. Model zm1 appears to give us the most bang for the buck. It doesn't have the lowest AIC, but it's not much different from the model with 11 parameters (ie. df, or degrees of freedom). With only 173 observations it seems wise to prefer the model with only 8 parameters. 
 
 ```{r}
 AIC(zm, zm1, zm2, zm3)
@@ -513,21 +647,37 @@ The model summary shows results for two models: the negative binomial count mode
 summary(zm1)
 ```
 
+The only coefficient in the count model that looks reliably positive or negative is _theta_. This is the dispersion parameter in the negative binomial model. This tells us the conditional mean of the counts is _not equal_ to its variance. If it was, we might consider fitting a Poisson model where the mean and the variance are equal.
+
+It appears width has more to do with understanding the probability of a female crab having zero satellites than understanding the positive counts of satellites. Since a zero inflated model is a mixture of two models, we could try a different count model. Below we fit an intercept-only model for the count model and retain width as a predictor in the binomial logistic regression model. This simplified model with only 4 coefficients seems just as good as the model with 8 coefficients.
 
 ```{r}
-rootogram(zm1)
+zm4 <- zeroinfl(satell ~ 1 | width, 
+                data = hsc, dist = "negbin")
+AIC(zm1, zm4)
 ```
 
 
 ```{r}
-ggpredict(zm1, terms = "width [all]", type = "zero_inflated") |> 
-  plot()
+summary(zm4)
 ```
 
-This model improves on the negative binomial model.
+This updated model basically says that counts of satellites is a mixture of two models:
+
+1. a negative binomial model with `mu = exp(1.47294)` and `theta = 4.7305`
+2. a binomial logistic regression model where probability of zero satellites decreases with larger widths
+
+We can evaluate the fit of this updated model with a rootogram. The fit is not great, especially when it comes to modeling counts of ones and twos. But we have a much better understanding of zero counts. 
 
 ```{r}
-AIC(zm1, m2)
+rootogram(zm4)
+```
+
+This model also improves on the negative binomial model we fit in the previous section. It has two fewer coefficients and a substantially lower AIC.
+
+```{r}
+# m2 fit in the Negative binomial model section
+AIC(zm4, m2)
 ```
 
 

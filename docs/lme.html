@@ -13,7 +13,7 @@
 
 <title>Mixed-Effect Models</title>
 
-<script src="site_libs/header-attrs-2.13/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.17/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
@@ -166,11 +166,15 @@ $(document).ready(function () {
     href = "index.html";
   var menuAnchor = $('a[href="' + href + '"]');
 
-  // mark it active
-  menuAnchor.tab('show');
-
-  // if it's got a parent navbar menu mark it active as well
-  menuAnchor.closest('li.dropdown').addClass('active');
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
 
   // Navbar adjustments
   var navHeight = $(".navbar").first().height() + 15;
@@ -199,8 +203,8 @@ $(document).ready(function () {
   border-radius: 4px;
 }
 
-.tabset-dropdown > .nav-tabs > li.active:before {
-  content: "";
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
   font-family: 'Glyphicons Halflings';
   display: inline-block;
   padding: 10px;
@@ -208,16 +212,9 @@ $(document).ready(function () {
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
-  content: "&#xe258;";
-  border: none;
-}
-
-.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
-  content: "";
+  content: "\e258";
   font-family: 'Glyphicons Halflings';
-  display: inline-block;
-  padding: 10px;
-  border-right: 1px solid #ddd;
+  border: none;
 }
 
 .tabset-dropdown > .nav-tabs > li.active {
@@ -408,10 +405,95 @@ ggplot(eggprod, aes(x=block, y=eggs, color = block)) + # Plotting eggs~treat, co
 <p><img src="lme_files/figure-html/unnamed-chunk-1-2.png" width="672" /></p>
 <p>This shows visually that treatment O may have produced fewer eggs than treatment F or E whose distributions are more similar and closer to one another. The distributions of eggs produced by each block seem to overlap and are very similar to one another.</p>
 <p>Now, we model the number of eggs produced with <code>treat</code> as a fixed effect and <code>block</code> as a random effect. <span class="citation">(Faraway 2006)</span> Does <code>treat</code> appear to affect the number of eggs, and if so, which treatment seems superior?</p>
-<pre class="r"><code>library(lme4)</code></pre>
-<pre><code>## Warning: package &#39;lme4&#39; was built under R version 4.1.2</code></pre>
-<pre class="r"><code>m &lt;- lmer(eggs ~ treat + (1|block), data = eggprod)
-car::Anova(m)</code></pre>
+<pre class="r"><code>library(lme4)
+m &lt;- lmer(eggs ~ treat + (1|block), data = eggprod)
+summary(m)</code></pre>
+<pre><code>## Linear mixed model fit by REML [&#39;lmerMod&#39;]
+## Formula: eggs ~ treat + (1 | block)
+##    Data: eggprod
+## 
+## REML criterion at convergence: 85.4
+## 
+## Scaled residuals: 
+##      Min       1Q   Median       3Q      Max 
+## -1.71233 -0.47453 -0.02845  0.64196  1.42942 
+## 
+## Random effects:
+##  Groups   Name        Variance Std.Dev.
+##  block    (Intercept) 129.9    11.40   
+##  Residual             386.9    19.67   
+## Number of obs: 12, groups:  block, 4
+## 
+## Fixed effects:
+##             Estimate Std. Error t value
+## (Intercept)   349.00      11.37  30.702
+## treatF         -6.25      13.91  -0.449
+## treatO        -42.50      13.91  -3.056
+## 
+## Correlation of Fixed Effects:
+##        (Intr) treatF
+## treatF -0.612       
+## treatO -0.612  0.500</code></pre>
+<pre class="r"><code>library(performance)
+icc(m)</code></pre>
+<pre><code>## # Intraclass Correlation Coefficient
+## 
+##     Adjusted ICC: 0.251
+##   Unadjusted ICC: 0.144</code></pre>
+<pre class="r"><code>VarCorr(m)</code></pre>
+<pre><code>##  Groups   Name        Std.Dev.
+##  block    (Intercept) 11.399  
+##  Residual             19.670</code></pre>
+<p>The likeness of egg production in the same block is .25. The variation around the intercept is 11.40 across blocks. The intercept fixed effect is the grand mean of eggs across the entire sample when treat = “E.” The treatF and treatO fixed effects can be interpreted as the difference in means (e.g., treatE - treatF). Therefore, treatF produces 6.25 less mean egg production and treatO produces 42.50 less mean egg production.</p>
+<p>This is further substantiated by looking at the means by treatment. Observed means of eggs by treat:</p>
+<pre class="r"><code>tapply(eggprod$eggs, eggprod$treat, mean)</code></pre>
+<pre><code>##      E      F      O 
+## 349.00 342.75 306.50</code></pre>
+<p>Pairwise comparisons, adjusted p-values and confidence intervals:</p>
+<pre class="r"><code>library(emmeans)
+emmeans(m, pairwise ~ treat)</code></pre>
+<pre><code>## $emmeans
+##  treat emmean   SE   df lower.CL upper.CL
+##  E        349 11.4 7.99      323      375
+##  F        343 11.4 7.99      317      369
+##  O        306 11.4 7.99      280      333
+## 
+## Degrees-of-freedom method: kenward-roger 
+## Confidence level used: 0.95 
+## 
+## $contrasts
+##  contrast estimate   SE df t.ratio p.value
+##  E - F        6.25 13.9  6   0.449  0.8965
+##  E - O       42.50 13.9  6   3.056  0.0508
+##  F - O       36.25 13.9  6   2.606  0.0892
+## 
+## Degrees-of-freedom method: kenward-roger 
+## P value adjustment: tukey method for comparing a family of 3 estimates</code></pre>
+<pre class="r"><code>emmeans(m, pairwise ~ treat) |&gt; confint()</code></pre>
+<pre><code>## $emmeans
+##  treat emmean   SE   df lower.CL upper.CL
+##  E        349 11.4 7.99      323      375
+##  F        343 11.4 7.99      317      369
+##  O        306 11.4 7.99      280      333
+## 
+## Degrees-of-freedom method: kenward-roger 
+## Confidence level used: 0.95 
+## 
+## $contrasts
+##  contrast estimate   SE df lower.CL upper.CL
+##  E - F        6.25 13.9  6  -36.426     48.9
+##  E - O       42.50 13.9  6   -0.176     85.2
+##  F - O       36.25 13.9  6   -6.426     78.9
+## 
+## Degrees-of-freedom method: kenward-roger 
+## Confidence level used: 0.95 
+## Conf-level adjustment: tukey method for comparing a family of 3 estimates</code></pre>
+<p>An effect plot:</p>
+<pre class="r"><code>library(ggeffects)
+ggpredict(m, terms = ~ treat) |&gt; plot(add.data = TRUE)</code></pre>
+<p><img src="lme_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>We can now assess model fit and significance of predictors.</p>
+<pre class="r"><code>car::Anova(m)</code></pre>
 <pre><code>## Analysis of Deviance Table (Type II Wald chisquare tests)
 ## 
 ## Response: eggs
@@ -419,6 +501,44 @@ car::Anova(m)</code></pre>
 ## treat 10.887  2   0.004324 **
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>library(lmerTest)
+summary(m)</code></pre>
+<pre><code>## Linear mixed model fit by REML [&#39;lmerMod&#39;]
+## Formula: eggs ~ treat + (1 | block)
+##    Data: eggprod
+## 
+## REML criterion at convergence: 85.4
+## 
+## Scaled residuals: 
+##      Min       1Q   Median       3Q      Max 
+## -1.71233 -0.47453 -0.02845  0.64196  1.42942 
+## 
+## Random effects:
+##  Groups   Name        Variance Std.Dev.
+##  block    (Intercept) 129.9    11.40   
+##  Residual             386.9    19.67   
+## Number of obs: 12, groups:  block, 4
+## 
+## Fixed effects:
+##             Estimate Std. Error t value
+## (Intercept)   349.00      11.37  30.702
+## treatF         -6.25      13.91  -0.449
+## treatO        -42.50      13.91  -3.056
+## 
+## Correlation of Fixed Effects:
+##        (Intr) treatF
+## treatF -0.612       
+## treatO -0.612  0.500</code></pre>
+<p>Running a <span class="math inline">\(\chi^2\)</span> test on the model, we see that the model including treat is a better fit (<span class="math inline">\(\chi^2(2,N = 12) = 10.887, p &lt; .01\)</span>) than the null model (intercept only). By loading the <code>lmerTest</code> package, we can see in the summary that specifically, treatment O is significant less than treatment E.</p>
+<pre class="r"><code># normality of residuals; looks good
+lattice::qqmath(m)</code></pre>
+<p><img src="lme_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<pre class="r"><code># constant variance; one pretty big residual (model predicts about 335 but the observed value is closer to 300)
+plot(m)</code></pre>
+<p><img src="lme_files/figure-html/unnamed-chunk-7-2.png" width="672" /></p>
+<pre class="r"><code># constant variance within treatment levels; TreatF has a lot more variability
+plot(m, treat ~ resid(.))</code></pre>
+<p><img src="lme_files/figure-html/unnamed-chunk-7-3.png" width="672" /></p>
 </div>
 <div id="longitudinal-modeling" class="section level3">
 <h3>longitudinal modeling</h3>
@@ -434,9 +554,8 @@ head(phosphate)</code></pre>
 ## 5 control 4.1  3.8 2.1  3.0 3.6 3.4 3.6 3.7
 ## 6 control 3.8  2.2 2.0  2.6 3.8 3.6 3.0 3.5</code></pre>
 <p>Reshaping the data facilitates data visualization. The <code>pivot_longer()</code> function from the tidyr package makes quick work of this. <span class="citation">(Wickham and Girlich 2022)</span> We add a subject <code>id</code> to identify subjects after reshaping the data into a “long” format.</p>
-<pre class="r"><code>library(tidyr)</code></pre>
-<pre><code>## Warning: package &#39;tidyr&#39; was built under R version 4.1.2</code></pre>
-<pre class="r"><code>phosphate$id &lt;- 1:nrow(phosphate)
+<pre class="r"><code>library(tidyr)
+phosphate$id &lt;- 1:nrow(phosphate)
 phosphateL &lt;- pivot_longer(phosphate, cols = t0:t5, 
                            names_to = &quot;time&quot;, 
                            names_prefix = &quot;t&quot;,
@@ -462,7 +581,7 @@ ggplot(phosphateL) +
   aes(x = time, y = level, group = id) +
   geom_line() +
   facet_wrap(~group)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
 <p>What might be a sensible linear mixed effect model to quantify trend in time, effect of obesity, and variation between subjects?</p>
 </div>
 <div id="references" class="section level3 unnumbered">

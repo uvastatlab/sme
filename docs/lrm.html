@@ -13,7 +13,7 @@
 
 <title>Logistic Regression Models</title>
 
-<script src="site_libs/header-attrs-2.13/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.17/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
@@ -166,11 +166,15 @@ $(document).ready(function () {
     href = "index.html";
   var menuAnchor = $('a[href="' + href + '"]');
 
-  // mark it active
-  menuAnchor.tab('show');
-
-  // if it's got a parent navbar menu mark it active as well
-  menuAnchor.closest('li.dropdown').addClass('active');
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
 
   // Navbar adjustments
   var navHeight = $(".navbar").first().height() + 15;
@@ -199,8 +203,8 @@ $(document).ready(function () {
   border-radius: 4px;
 }
 
-.tabset-dropdown > .nav-tabs > li.active:before {
-  content: "";
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
   font-family: 'Glyphicons Halflings';
   display: inline-block;
   padding: 10px;
@@ -208,16 +212,9 @@ $(document).ready(function () {
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
-  content: "&#xe258;";
-  border: none;
-}
-
-.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
-  content: "";
+  content: "\e258";
   font-family: 'Glyphicons Halflings';
-  display: inline-block;
-  padding: 10px;
-  border-right: 1px solid #ddd;
+  border: none;
 }
 
 .tabset-dropdown > .nav-tabs > li.active {
@@ -414,9 +411,8 @@ plogis(confint(m))</code></pre>
 <pre><code>##     2.5 %    97.5 % 
 ## 0.2980745 0.4874909</code></pre>
 <p>There are many confidence intervals that can be calculated for proportions. The binom package calculates 11 of them. <span class="citation">(Dorai-Raj 2022)</span></p>
-<pre class="r"><code>library(binom)</code></pre>
-<pre><code>## Warning: package &#39;binom&#39; was built under R version 4.1.2</code></pre>
-<pre class="r"><code>binom.confint(x = 39, n = 100)</code></pre>
+<pre class="r"><code>library(binom)
+binom.confint(x = 39, n = 100)</code></pre>
 <pre><code>##           method  x   n      mean     lower     upper
 ## 1  agresti-coull 39 100 0.3900000 0.3000839 0.4880547
 ## 2     asymptotic 39 100 0.3900000 0.2944028 0.4855972
@@ -460,7 +456,10 @@ data(&quot;malaria&quot;)</code></pre>
 
 malaria$group = ifelse(malaria$mal == 0, &#39;no symptoms&#39;, &#39;symptoms&#39;)
 
-ggplot(malaria, aes(x=age, fill = group)) + geom_histogram(binwidth=1, color=&quot;black&quot;,) + scale_fill_manual(values = c(&#39;no symptoms&#39; = &#39;gray&#39;, &#39;symptoms&#39; = &#39;cornflowerblue&#39;))</code></pre>
+ggplot(malaria, aes(x=age, fill = group)) + 
+  geom_histogram(binwidth=1, color=&quot;black&quot;,) + 
+  scale_fill_manual(values = c(&#39;no symptoms&#39; = &#39;gray&#39;, 
+                               &#39;symptoms&#39; = &#39;cornflowerblue&#39;))</code></pre>
 <p><img src="lrm_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
 <p>From the histogram, we can see that the ages of subjects are more or less uniformly spread from 3 to 15. From the box plot, we can see that subjects who showed symptoms of malaria tended to be of a younger age.</p>
 <p>Now let’s build our model. We will use the <code>glm()</code> function. <code>glm()</code> is used to fit a generalized linear model to the data. To specify logistic regression, in the argument we set the <code>family = binomial(link = "logit")</code>.</p>
@@ -491,6 +490,49 @@ ggplot(malaria, aes(x=age, fill = group)) + geom_histogram(binwidth=1, color=&qu
 ## AIC: 104.02
 ## 
 ## Number of Fisher Scoring iterations: 5</code></pre>
+<p>Next we assess model fit:</p>
+<pre class="r"><code>anova(lrm, test = &quot;Chisq&quot;)</code></pre>
+<pre><code>## Analysis of Deviance Table
+## 
+## Model: binomial, link: logit
+## 
+## Response: mal
+## 
+## Terms added sequentially (first to last)
+## 
+## 
+##         Df Deviance Resid. Df Resid. Dev  Pr(&gt;Chi)    
+## NULL                       99    116.652              
+## age      1   3.3718        98    113.280   0.06632 .  
+## log(ab)  1  15.2628        97     98.017 9.354e-05 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p>This shows that the model including age is a slightly better fit than the null model (intercept only). The model including both age and log(ab) is a better fit (<span class="math inline">\(\chi^2(1,N = 100) = 15.63, p &lt; .001\)</span>) than the model only containing age. In general, a predictor that contributes to a model will reduce deviance by more than 1 or 2 units.</p>
+<p>We can also assess fit of the model by comparing it to the <em>saturated model</em>, or a model with perfect fit.</p>
+<pre class="r"><code>vcdExtra::LRstats(m)</code></pre>
+<pre><code>## Likelihood summary table:
+##      AIC    BIC   LR Chisq Df Pr(&gt;Chisq)    
+## m 7.0125 5.0125 5.3291e-15  0  &lt; 2.2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p>The null of the test is the model is no different from the saturated model. A low p-value rejects the null. Here the p-value is pretty high, so we might have some confidence in using this model to predict the probability of malaria risk.</p>
+<p>Before interpreting the model, we can assess model error by looking at a plot of residuals vs. “Hat-values.” Residuals = observed response - predicted probability. Hat-values measure leverage.</p>
+<pre class="r"><code>car::influencePlot(lrm)</code></pre>
+<p><img src="lrm_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<pre><code>##      StudRes        Hat      CookD
+## 13  2.674594 0.01824130 0.16944607
+## 19 -1.151539 0.08404905 0.02888989
+## 35 -1.951080 0.07877297 0.14008864
+## 78  2.264687 0.03103829 0.11085074</code></pre>
+<p>The size of points corresponds to Cook’s Distance. Points to the right of the dotted vertical line have high Hat-Values and could be influencing the fit of the model. Hat-Values measure how far away a subjects predictor values are from the center of the predictor space. Cook’s D measures influence. Big values (ie, big Bubbles) could be influencing the estimated coefficients.</p>
+<p>By default the 4 most extreme points are labeled. We can investigate those as follows:</p>
+<pre class="r"><code>malaria[c(13,19,35, 78),]</code></pre>
+<pre><code>##    subject age   ab mal       group
+## 13      13  14 1407   1    symptoms
+## 19      19  14   14   0 no symptoms
+## 35      35   9    2   0 no symptoms
+## 78      78   5  791   1    symptoms</code></pre>
+<p>These points have very high and very low levels of ab. The two highest are unusual because most subjects with mal = 1 have low ab values.</p>
 <p>We can also look at the model coefficients and confidence intervals.</p>
 <pre class="r"><code>lrm$coefficients</code></pre>
 <pre><code>## (Intercept)         age     log(ab) 
@@ -501,11 +543,11 @@ ggplot(malaria, aes(x=age, fill = group)) + geom_histogram(binwidth=1, color=&qu
 ## age         -0.2024576  0.0655621
 ## log(ab)     -1.0985294 -0.3239378</code></pre>
 <p>If we look at the confidence intervals for the coefficients in our model, we can see reasonable ranges of values for the coefficients. The reasonable range of values for the age coefficient is -0.202 to 0.066. Note this range is small and includes 0, which implies that the effect of age on mal is small and we can’t be sure if the effect is positive or negative.</p>
-<p>The reasonable range of values for log(ab) is -1.099 to -0.324. This range is larger than that of age and is entirely negative. This indicates that antibody count has a stronger effect on mal than age and is a negative effect. In other words, lower antibody count is associated with higher risk of malaria. We can exponentiate this confidence interval to get odds ratios (ratios of probability of showing symptoms to not showing symptoms of malaria).</p>
+<p>The reasonable range of values for log(ab) is -1.099 to -0.324. This range is entirely negative and suggests that lower antibody count is associated with higher risk of malaria. We can exponentiate this confidence interval to get an odds ratio (the ratio of the odds of showing symptoms to the odds of not showing symptoms of malaria).</p>
 <pre class="r"><code>exp(confint(lrm)[&quot;log(ab)&quot;,])</code></pre>
 <pre><code>##     2.5 %    97.5 % 
 ## 0.3333609 0.7232952</code></pre>
-<p>Here we can see that the odds ratios are both less than 1, which indicates that as the log(ab) increases, the risk of malaria decreases. For every one-unit increase of log(ab), the risk of malaria decreases by anywhere from 33% to 72%.</p>
+<p>Here we can see that the odds ratio is less than 1, which indicates that as log(ab) increases, the odds of malaria decreases. For every one-unit increase of log(ab), the odds of malaria decreases by anywhere from 28% to 67%. (Note: 1 - 0.33 = 0.67 and 1 - 0.72 = 0.28.)</p>
 <p>If we wanted to, we could have split the data into training and testing data:</p>
 <pre class="r"><code>set.seed(1)  # make reproducible
 i &lt;- sample(x = nrow(malaria), size = 0.75*floor(nrow(malaria)))
