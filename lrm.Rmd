@@ -82,7 +82,10 @@ library(ggplot2)
 
 malaria$group = ifelse(malaria$mal == 0, 'no symptoms', 'symptoms')
 
-ggplot(malaria, aes(x=age, fill = group)) + geom_histogram(binwidth=1, color="black",) + scale_fill_manual(values = c('no symptoms' = 'gray', 'symptoms' = 'cornflowerblue'))
+ggplot(malaria, aes(x=age, fill = group)) + 
+  geom_histogram(binwidth=1, color="black",) + 
+  scale_fill_manual(values = c('no symptoms' = 'gray', 
+                               'symptoms' = 'cornflowerblue'))
 ```
 
 From the histogram, we can see that the ages of subjects are more or less uniformly spread from 3 to 15. From the box plot, we can see that subjects who showed symptoms of malaria tended to be of a younger age. 
@@ -99,30 +102,29 @@ Now we look at a summary of the model:
 summary(lrm)
 ```
 
-Next we assess model fit. 
+Next we assess model fit:
 
 ```{r}
 anova(lrm, test = "Chisq")
 ```
 
-This shows that the model including age is a slightly better fit than the null model (intercept only). The model including both age and log(ab) is a better fit ($\Chi$^2 (1,N=100)=15.63, p<.001) than the model only containing age. In general, a predictor that contributes to a model will reduce deviance by more than 1 or 2 units.
+This shows that the model including age is a slightly better fit than the null model (intercept only). The model including both age and log(ab) is a better fit ($\chi^2(1,N = 100) = 15.63, p < .001$) than the model only containing age. In general, a predictor that contributes to a model will reduce deviance by more than 1 or 2 units.
 
-We can also assess fit of the model by comparing it to the _saturated model_, or a model with perfect fit.
-
-
+We can also assess fit of the model by comparing it to the *saturated model*, or a model with perfect fit.
 
 ```{r}
-vcdExtra::LRstats(lrm)
+vcdExtra::LRstats(m)
 ```
+
 The null of the test is the model is no different from the saturated model. A low p-value rejects the null. Here the p-value is pretty high, so we might have some confidence in using this model to predict the probability of malaria risk.
 
-Before interpreting the model, we can assess model error by looking at a plot of residuals vs. “Hat-values”. Residuals = observed response - predicted probability. Hat-values measure leverage.
+Before interpreting the model, we can assess model error by looking at a plot of residuals vs. "Hat-values". Residuals = observed response - predicted probability. Hat-values measure leverage.
 
 ```{r}
 car::influencePlot(lrm)
-```
+```  
 
-The size of points corresponds to Cook’s Distance. Points to the right of the dotted vertical line have high Hat-Values and could be influencing the fit of the model. Hat-Values measure how far away a subjects predictor values are from the center of the predictor space. Cook’s D measures influence. Big values (ie, big Bubbles) could be influencing the estimated coefficients.
+The size of points corresponds to Cook's Distance.  Points to the right of the dotted vertical line have high Hat-Values and could be influencing the fit of the model. Hat-Values measure how far away a subjects predictor values are from the center of the predictor space. Cook's D measures influence. Big values (ie, big Bubbles) could be influencing the estimated coefficients.
 
 By default the 4 most extreme points are labeled. We can investigate those as follows:
 
@@ -139,7 +141,7 @@ lrm$coefficients
 confint(lrm)
 ```
 
-If we look at the confidence intervals for the coefficients in our model, we can see reasonable ranges of values for the coefficients. The reasonable range of values for the age coefficient is -0.202 to 0.066. Note this range is small and includes 0, which implies that the effect of age on mal is small and we can’t be sure if the effect is positive or negative.
+If we look at the confidence intervals for the coefficients in our model, we can see reasonable ranges of values for the coefficients. The reasonable range of values for the age coefficient is -0.202 to 0.066. Note this range is small and includes 0, which implies that the effect of age on mal is small and we can't be sure if the effect is positive or negative. 
 
 The reasonable range of values for log(ab) is -1.099 to -0.324. This range is entirely negative and suggests that lower antibody count is associated with higher risk of malaria. We can exponentiate this confidence interval to get an odds ratio (the ratio of the odds of showing symptoms to the odds of not showing symptoms of malaria).
 
@@ -147,7 +149,17 @@ The reasonable range of values for log(ab) is -1.099 to -0.324. This range is en
 exp(confint(lrm)["log(ab)",])
 ```
 
-Here we can see that the odds ratio is less than 1, which indicates that as log(ab) increases, the odds of malaria decreases. For every one-unit increase of log(ab), the odds of malaria decreases by anywhere from 28% to 67%. (Note: 1 - 0.33 = 0.67 and 1 - 0.72 = 0.28.)
+Here we can see that the odds ratio is less than 1, which indicates that as log(ab) increases, the odds of malaria decreases. For every one-unit increase of log(ab), the odds of malaria decreases by anywhere from 28% to 67%. (Note: 1 - 0.33 = 0.67 and 1 - 0.72 = 0.28.) 
+
+Now we can assess the accuracy of the model we built. 
+
+```{r}
+anova(lrm, test = "Chisq")
+```
+
+
+
+
 
 If we wanted to, we could have split the data into training and testing data:
 
@@ -158,7 +170,7 @@ malaria.train <- malaria[i,]
 malaria.test <- malaria[-i,]
 ```
 
-We can then test our model on the training data and see how well it performs.
+We can then test our model on the training data and see how well it performs. 
 
 ```{r}
 prediction <- predict(lrm, newdata = malaria.test, type="response")
@@ -182,6 +194,37 @@ rg <- ref_grid(m, at = list(bmi = bmi_vals))
 emmeans(rg, specs = "bmi", type = "response") |>
   contrast("pairwise")
 ```
+
+
+### Logistic regression with numeric and categorical predictors
+
+The text _Applied Logistic Regression (3rd Ed)_ [@hosmer2013] presents data on women who were tracked as part of the Global Longitudinal Study of Osteoporosis in Women (GLOW). The GLOW data has information on 500 women, 125 of whom had a fracture during the first year of follow-up. One goal of this study was to evaluate risk factors for fractures.
+
+The data is available as ".txt" file. Below we import the data using the `read.table()` function with `header=TRUE` since the first row contains column header names. We then select columns we want to analyze and set convert all the variable names to lower case for convenience. 
+
+```{r}
+glow <- read.table("data/GLOW500.txt", header = TRUE)
+glow <- glow[,c("PRIORFRAC", "AGE", "WEIGHT", "PREMENO", "RATERISK", "FRACTURE")]
+names(glow) <- tolower(names(glow))
+```
+
+The variables are as follows:
+
+- priorfrac: history of prior fracture
+- age: age at enrollment
+- weight: weight at enrollment in kilograms
+- premeno: menopause before age 45 (1 = yes, 0 = no)
+- raterisk: self-reported risk of fracture (1 = Less than others of the same age, 2 = Same as others of the same age, 3 = Greater than others of the same age)
+- fracture: any fracture in first year (1 = yes, 0 = no)
+
+Since raterisk is a categorical variable, let's format as a factor with descriptive labels.
+
+```{r}
+glow$raterisk <- factor(glow$raterisk, labels = c("less", "same", "greater"))
+```
+
+Model fracture as a function of the other variables. (Hosmer and Lemeshow 2013, Chapter 2)
+
 
 
 ### Ordered logistic regression
