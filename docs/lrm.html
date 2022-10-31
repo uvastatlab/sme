@@ -384,9 +384,14 @@ div.tocify {
 </div>
 
 
-<div id="logistic-regression-with-no-predictors-intercept-only" class="section level3">
+<div id="logistic-regression-with-no-predictors-intercept-only"
+class="section level3">
 <h3>Logistic regression with no predictors (intercept only)</h3>
-<p>100 Hershey’s Kisses are put into a large cup and dumped on a table. We want to estimate the proportion of Kisses we can expect to land on their base. <span class="citation">(Bilder and Loughin 2015)</span> In our experiment we observe 39 out of 100. What is the 95% confidence interval on the proportion?</p>
+<p>100 Hershey’s Kisses are put into a large cup and dumped on a table.
+We want to estimate the proportion of Kisses we can expect to land on
+their base. <span class="citation">(Bilder and Loughin 2015)</span> In
+our experiment we observe 39 out of 100. What is the 95% confidence
+interval on the proportion?</p>
 <pre class="r"><code>prop.test(x = 39, n = 100)</code></pre>
 <pre><code>## 
 ##  1-sample proportions test with continuity correction
@@ -405,12 +410,15 @@ pout$conf.int</code></pre>
 <pre><code>## [1] 0.2955674 0.4929886
 ## attr(,&quot;conf.level&quot;)
 ## [1] 0.95</code></pre>
-<p>This can be analyzed as an intercept-only binary logistic regression model. The confidence interval is slightly different.</p>
+<p>This can be analyzed as an intercept-only binary logistic regression
+model. The confidence interval is slightly different.</p>
 <pre class="r"><code>m &lt;- glm(cbind(39, 100-39) ~ 1, family = binomial)
 plogis(confint(m))</code></pre>
 <pre><code>##     2.5 %    97.5 % 
 ## 0.2980745 0.4874909</code></pre>
-<p>There are many confidence intervals that can be calculated for proportions. The binom package calculates 11 of them. <span class="citation">(Dorai-Raj 2022)</span></p>
+<p>There are many confidence intervals that can be calculated for
+proportions. The binom package calculates 11 of them. <span
+class="citation">(Dorai-Raj 2022)</span></p>
 <pre class="r"><code>library(binom)
 binom.confint(x = 39, n = 100)</code></pre>
 <pre><code>##           method  x   n      mean     lower     upper
@@ -425,14 +433,24 @@ binom.confint(x = 39, n = 100)</code></pre>
 ## 9            lrt 39 100 0.3900000 0.2980690 0.4875128
 ## 10     prop.test 39 100 0.3900000 0.2955674 0.4929886
 ## 11        wilson 39 100 0.3900000 0.3001687 0.4879698</code></pre>
-<p>The “prop.test” and “profile” versions are the two we calculated above.</p>
+<p>The “prop.test” and “profile” versions are the two we calculated
+above.</p>
 </div>
-<div id="logistic-regression-with-numeric-predictors-1" class="section level3">
+<div id="logistic-regression-with-numeric-predictors-1"
+class="section level3">
 <h3>Logistic regression with numeric predictors (1)</h3>
-<p>The <code>malaria</code> data frame from the ISwR package has 100 rows and 4 columns. It contains data on a sample of 100 children aged 3–15 years from a village in Ghana. Based on observations during the study period, the children were categorized into two groups: individuals with and without symptoms of malaria. Model the risk of malaria (<code>mal</code>) as a function of age (<code>age</code>) and log-transformed antibody levels (<code>log(ab)</code>). <span class="citation">(Dalgaard 2020)</span></p>
+<p>The <code>malaria</code> data frame from the ISwR package has 100
+rows and 4 columns. It contains data on a sample of 100 children aged
+3–15 years from a village in Ghana. Based on observations during the
+study period, the children were categorized into two groups: individuals
+with and without symptoms of malaria. Model the risk of malaria
+(<code>mal</code>) as a function of age (<code>age</code>) and
+log-transformed antibody levels (<code>log(ab)</code>). <span
+class="citation">(Dalgaard 2020)</span></p>
 <pre class="r"><code>library(ISwR)
 data(&quot;malaria&quot;)</code></pre>
-<p>To start, let’s take a quick look at the summary of the data using the <code>summary()</code> function:</p>
+<p>To start, let’s take a quick look at the summary of the data using
+the <code>summary()</code> function:</p>
 <pre class="r"><code>summary(malaria)</code></pre>
 <pre><code>##     subject            age              ab              mal      
 ##  Min.   :  1.00   Min.   : 3.00   Min.   :   2.0   Min.   :0.00  
@@ -441,16 +459,42 @@ data(&quot;malaria&quot;)</code></pre>
 ##  Mean   : 50.50   Mean   : 8.86   Mean   : 311.5   Mean   :0.27  
 ##  3rd Qu.: 75.25   3rd Qu.:12.00   3rd Qu.: 373.8   3rd Qu.:1.00  
 ##  Max.   :100.00   Max.   :15.00   Max.   :2066.0   Max.   :1.00</code></pre>
-<p>Looking at the summary, we can see that mal takes the values 0 and 1. The mean of mal is 0.27, which indicates that 27% of the data take the value 1, meaning 27% of children monitored showed symptoms of malaria.</p>
-<p>We can see that age ranges from 3 to 15 and is slightly left-skewed. We can tell the skewness by comparing the median to the mean. Here, the median, 9.00, is slightly larger than the mean, 8.86. This indicates that more of the data is below the mean – the distribution is pulled out to the left, meaning there are slightly more younger children in this dataset.</p>
-<p>From the summary we can also see that ab is very skewed, but in the opposite direction as age. Ab represents the antibody levels of the subjects and ranges from 2.0 to 2066.0. The median of ab, 111.0, is much smaller than the mean, 311.5. This indicates that ab is right-skewed. If we look at the 3rd quantile, we can see that 75% of the data is below 373.8. The maximum value of 2066.0 is much much larger than the 3rd quantile value, which may hint that the 2066.0 could be an outlier.</p>
-<p>Looking at a box plot of the ab can give us a good visualization of this skewness and spread of the data. Here we plot the distribution of ab by mal and log(ab) by mal.</p>
+<p>Looking at the summary, we can see that mal takes the values 0 and 1.
+The mean of mal is 0.27, which indicates that 27% of the data take the
+value 1, meaning 27% of children monitored showed symptoms of
+malaria.</p>
+<p>We can see that age ranges from 3 to 15 and is slightly left-skewed.
+We can tell the skewness by comparing the median to the mean. Here, the
+median, 9.00, is slightly larger than the mean, 8.86. This indicates
+that more of the data is below the mean – the distribution is pulled out
+to the left, meaning there are slightly more younger children in this
+dataset.</p>
+<p>From the summary we can also see that ab is very skewed, but in the
+opposite direction as age. Ab represents the antibody levels of the
+subjects and ranges from 2.0 to 2066.0. The median of ab, 111.0, is much
+smaller than the mean, 311.5. This indicates that ab is right-skewed. If
+we look at the 3rd quantile, we can see that 75% of the data is below
+373.8. The maximum value of 2066.0 is much much larger than the 3rd
+quantile value, which may hint that the 2066.0 could be an outlier.</p>
+<p>Looking at a box plot of the ab can give us a good visualization of
+this skewness and spread of the data. Here we plot the distribution of
+ab by mal and log(ab) by mal.</p>
 <pre class="r"><code>boxplot(ab ~ mal, data = malaria)</code></pre>
 <p><img src="lrm_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
 <pre class="r"><code>boxplot(log(ab) ~ mal, data = malaria)</code></pre>
 <p><img src="lrm_files/figure-html/unnamed-chunk-7-2.png" width="672" /></p>
-<p>In the first box plot (ab by mal), because of the spread of the data, it appears very sqiushed and hard to interpret. We can see that children who did show symptoms of malaria (mal = 1) tend to have a lower antibody count while those who did not show symptoms (mal = 0) tend to have a higher antibody count. We can also see the right-skewness of the data.</p>
-<p>The log transformed ab data is much clearer. We can see that same trend of lower antibody count for those who showed symptoms of malaria. With this plot we can get a feel for the values of the data: for those who showed no symptoms of malaria, we can see that 50% of the data falls between log(ab) = 4 and 6, whereas 50% of the data for those who did show symptoms of malaria falls between about log(ab) = 3 and 4.</p>
+<p>In the first box plot (ab by mal), because of the spread of the data,
+it appears very sqiushed and hard to interpret. We can see that children
+who did show symptoms of malaria (mal = 1) tend to have a lower antibody
+count while those who did not show symptoms (mal = 0) tend to have a
+higher antibody count. We can also see the right-skewness of the
+data.</p>
+<p>The log transformed ab data is much clearer. We can see that same
+trend of lower antibody count for those who showed symptoms of malaria.
+With this plot we can get a feel for the values of the data: for those
+who showed no symptoms of malaria, we can see that 50% of the data falls
+between log(ab) = 4 and 6, whereas 50% of the data for those who did
+show symptoms of malaria falls between about log(ab) = 3 and 4.</p>
 <p>We can also look at how age varies based on malaria symptoms:</p>
 <pre class="r"><code>library(ggplot2)
 
@@ -461,8 +505,14 @@ ggplot(malaria, aes(x=age, fill = group)) +
   scale_fill_manual(values = c(&#39;no symptoms&#39; = &#39;gray&#39;, 
                                &#39;symptoms&#39; = &#39;cornflowerblue&#39;))</code></pre>
 <p><img src="lrm_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
-<p>From the histogram, we can see that the ages of subjects are more or less uniformly spread from 3 to 15. From the box plot, we can see that subjects who showed symptoms of malaria tended to be of a younger age.</p>
-<p>Now let’s build our model. We will use the <code>glm()</code> function. <code>glm()</code> is used to fit a generalized linear model to the data. To specify logistic regression, in the argument we set the <code>family = binomial(link = "logit")</code>.</p>
+<p>From the histogram, we can see that the ages of subjects are more or
+less uniformly spread from 3 to 15. From the box plot, we can see that
+subjects who showed symptoms of malaria tended to be of a younger
+age.</p>
+<p>Now let’s build our model. We will use the <code>glm()</code>
+function. <code>glm()</code> is used to fit a generalized linear model
+to the data. To specify logistic regression, in the argument we set the
+<code>family = binomial(link = "logit")</code>.</p>
 <pre class="r"><code>lrm &lt;- glm(mal ~ age + log(ab), family = binomial(link = &quot;logit&quot;), data = malaria)</code></pre>
 <p>Now we look at a summary of the model:</p>
 <pre class="r"><code>summary(lrm)</code></pre>
@@ -507,16 +557,27 @@ ggplot(malaria, aes(x=age, fill = group)) +
 ## log(ab)  1  15.2628        97     98.017 9.354e-05 ***
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<p>This shows that the model including age is a slightly better fit than the null model (intercept only). The model including both age and log(ab) is a better fit (<span class="math inline">\(\chi^2(1,N = 100) = 15.63, p &lt; .001\)</span>) than the model only containing age. In general, a predictor that contributes to a model will reduce deviance by more than 1 or 2 units.</p>
-<p>We can also assess fit of the model by comparing it to the <em>saturated model</em>, or a model with perfect fit.</p>
+<p>This shows that the model including age is a slightly better fit than
+the null model (intercept only). The model including both age and
+log(ab) is a better fit (<span class="math inline">\(\chi^2(1,N = 100) =
+15.63, p &lt; .001\)</span>) than the model only containing age. In
+general, a predictor that contributes to a model will reduce deviance by
+more than 1 or 2 units.</p>
+<p>We can also assess fit of the model by comparing it to the
+<em>saturated model</em>, or a model with perfect fit.</p>
 <pre class="r"><code>vcdExtra::LRstats(m)</code></pre>
 <pre><code>## Likelihood summary table:
 ##      AIC    BIC   LR Chisq Df Pr(&gt;Chisq)    
 ## m 7.0125 5.0125 5.3291e-15  0  &lt; 2.2e-16 ***
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<p>The null of the test is the model is no different from the saturated model. A low p-value rejects the null. Here the p-value is pretty high, so we might have some confidence in using this model to predict the probability of malaria risk.</p>
-<p>Before interpreting the model, we can assess model error by looking at a plot of residuals vs. “Hat-values.” Residuals = observed response - predicted probability. Hat-values measure leverage.</p>
+<p>The null of the test is the model is no different from the saturated
+model. A low p-value rejects the null. Here the p-value is pretty high,
+so we might have some confidence in using this model to predict the
+probability of malaria risk.</p>
+<p>Before interpreting the model, we can assess model error by looking
+at a plot of residuals vs. “Hat-values”. Residuals = observed response -
+predicted probability. Hat-values measure leverage.</p>
 <pre class="r"><code>car::influencePlot(lrm)</code></pre>
 <p><img src="lrm_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
 <pre><code>##      StudRes        Hat      CookD
@@ -524,16 +585,25 @@ ggplot(malaria, aes(x=age, fill = group)) +
 ## 19 -1.151539 0.08404905 0.02888989
 ## 35 -1.951080 0.07877297 0.14008864
 ## 78  2.264687 0.03103829 0.11085074</code></pre>
-<p>The size of points corresponds to Cook’s Distance. Points to the right of the dotted vertical line have high Hat-Values and could be influencing the fit of the model. Hat-Values measure how far away a subjects predictor values are from the center of the predictor space. Cook’s D measures influence. Big values (ie, big Bubbles) could be influencing the estimated coefficients.</p>
-<p>By default the 4 most extreme points are labeled. We can investigate those as follows:</p>
+<p>The size of points corresponds to Cook’s Distance. Points to the
+right of the dotted vertical line have high Hat-Values and could be
+influencing the fit of the model. Hat-Values measure how far away a
+subjects predictor values are from the center of the predictor space.
+Cook’s D measures influence. Big values (ie, big Bubbles) could be
+influencing the estimated coefficients.</p>
+<p>By default the 4 most extreme points are labeled. We can investigate
+those as follows:</p>
 <pre class="r"><code>malaria[c(13,19,35, 78),]</code></pre>
 <pre><code>##    subject age   ab mal       group
 ## 13      13  14 1407   1    symptoms
 ## 19      19  14   14   0 no symptoms
 ## 35      35   9    2   0 no symptoms
 ## 78      78   5  791   1    symptoms</code></pre>
-<p>These points have very high and very low levels of ab. The two highest are unusual because most subjects with mal = 1 have low ab values.</p>
-<p>We can also look at the model coefficients and confidence intervals.</p>
+<p>These points have very high and very low levels of ab. The two
+highest are unusual because most subjects with mal = 1 have low ab
+values.</p>
+<p>We can also look at the model coefficients and confidence
+intervals.</p>
 <pre class="r"><code>lrm$coefficients</code></pre>
 <pre><code>## (Intercept)         age     log(ab) 
 ##  2.57233727 -0.06546061 -0.68235363</code></pre>
@@ -542,72 +612,163 @@ ggplot(malaria, aes(x=age, fill = group)) +
 ## (Intercept)  0.7810426  4.5452306
 ## age         -0.2024576  0.0655621
 ## log(ab)     -1.0985294 -0.3239378</code></pre>
-<p>If we look at the confidence intervals for the coefficients in our model, we can see reasonable ranges of values for the coefficients. The reasonable range of values for the age coefficient is -0.202 to 0.066. Note this range is small and includes 0, which implies that the effect of age on mal is small and we can’t be sure if the effect is positive or negative.</p>
-<p>The reasonable range of values for log(ab) is -1.099 to -0.324. This range is entirely negative and suggests that lower antibody count is associated with higher risk of malaria. We can exponentiate this confidence interval to get an odds ratio (the ratio of the odds of showing symptoms to the odds of not showing symptoms of malaria).</p>
+<p>If we look at the confidence intervals for the coefficients in our
+model, we can see reasonable ranges of values for the coefficients. The
+reasonable range of values for the age coefficient is -0.202 to 0.066.
+Note this range is small and includes 0, which implies that the effect
+of age on mal is small and we can’t be sure if the effect is positive or
+negative.</p>
+<p>The reasonable range of values for log(ab) is -1.099 to -0.324. This
+range is entirely negative and suggests that lower antibody count is
+associated with higher risk of malaria. We can exponentiate this
+confidence interval to get an odds ratio (the ratio of the odds of
+showing symptoms to the odds of not showing symptoms of malaria).</p>
 <pre class="r"><code>exp(confint(lrm)[&quot;log(ab)&quot;,])</code></pre>
 <pre><code>##     2.5 %    97.5 % 
 ## 0.3333609 0.7232952</code></pre>
-<p>Here we can see that the odds ratio is less than 1, which indicates that as log(ab) increases, the odds of malaria decreases. For every one-unit increase of log(ab), the odds of malaria decreases by anywhere from 28% to 67%. (Note: 1 - 0.33 = 0.67 and 1 - 0.72 = 0.28.)</p>
-<p>If we wanted to, we could have split the data into training and testing data:</p>
+<p>Here we can see that the odds ratio is less than 1, which indicates
+that as log(ab) increases, the odds of malaria decreases. For every
+one-unit increase of log(ab), the odds of malaria decreases by anywhere
+from 28% to 67%. (Note: 1 - 0.33 = 0.67 and 1 - 0.72 = 0.28.)</p>
+<p>If we wanted to, we could have split the data into training and
+testing data:</p>
 <pre class="r"><code>set.seed(1)  # make reproducible
 i &lt;- sample(x = nrow(malaria), size = 0.75*floor(nrow(malaria)))
 malaria.train &lt;- malaria[i,]
 malaria.test &lt;- malaria[-i,]</code></pre>
-<p>We can then test our model on the training data and see how well it performs.</p>
+<p>We can then test our model on the training data and see how well it
+performs.</p>
 <pre class="r"><code>prediction &lt;- predict(lrm, newdata = malaria.test, type=&quot;response&quot;)</code></pre>
 </div>
-<div id="logistic-regression-with-numeric-predictors-2" class="section level3">
+<div id="logistic-regression-with-numeric-predictors-2"
+class="section level3">
 <h3>Logistic regression with numeric predictors (2)</h3>
-<p>The <code>pima</code> data frame from the faraway package contains data on 768 adult female Pima Indians living near Phoenix <span class="citation">(Faraway 2016)</span>. This data was collected by <a href="https://www.niddk.nih.gov/">The National Institute of Diabetes and Digestive and Kidney Diseases</a>. The purpose of the study was to investigate factors related to diabetes. The variable <code>test</code> indicates whether the patient showed signs of diabetes (coded 0 if negative, 1 if positive). Model <code>test</code> as a function of all other predictors.</p>
+<p>The <code>pima</code> data frame from the faraway package contains
+data on 768 adult female Pima Indians living near Phoenix <span
+class="citation">(Faraway 2016)</span>. This data was collected by <a
+href="https://www.niddk.nih.gov/">The National Institute of Diabetes and
+Digestive and Kidney Diseases</a>. The purpose of the study was to
+investigate factors related to diabetes. The variable <code>test</code>
+indicates whether the patient showed signs of diabetes (coded 0 if
+negative, 1 if positive). Model <code>test</code> as a function of all
+other predictors.</p>
 <pre class="r"><code>library(faraway)
 data(&quot;pima&quot;)</code></pre>
-<p>What is the difference in odds of testing positive for diabetes for a subject with BMI in the first quartile compared to a subject with BMI at the third quartile? <span class="citation">(Faraway 2006)</span></p>
+<p>What is the difference in odds of testing positive for diabetes for a
+subject with BMI in the first quartile compared to a subject with BMI at
+the third quartile? <span class="citation">(Faraway 2006)</span></p>
 <pre class="r"><code>library(emmeans)
 bmi_vals &lt;- quantile(pima$bmi, probs = c(0.25,0.75))
 rg &lt;- ref_grid(m, at = list(bmi = bmi_vals))
 emmeans(rg, specs = &quot;bmi&quot;, type = &quot;response&quot;) |&gt;
   contrast(&quot;pairwise&quot;)</code></pre>
 </div>
+<div id="logistic-regression-with-numeric-and-categorical-predictors"
+class="section level3">
+<h3>Logistic regression with numeric and categorical predictors</h3>
+<p>The text <em>Applied Logistic Regression (3rd Ed)</em> <span
+class="citation">(Hosmer and Lemeshow 2013)</span> presents data on
+women who were tracked as part of the Global Longitudinal Study of
+Osteoporosis in Women (GLOW). The GLOW data has information on 500
+women, 125 of whom had a fracture during the first year of follow-up.
+One goal of this study was to evaluate risk factors for fractures.</p>
+<p>The data is available as “.txt” file. Below we import the data using
+the <code>read.table()</code> function with <code>header=TRUE</code>
+since the first row contains column header names. We then select columns
+we want to analyze and set convert all the variable names to lower case
+for convenience.</p>
+<pre class="r"><code>glow &lt;- read.table(&quot;data/GLOW500.txt&quot;, header = TRUE)
+glow &lt;- glow[,c(&quot;PRIORFRAC&quot;, &quot;AGE&quot;, &quot;WEIGHT&quot;, &quot;PREMENO&quot;, &quot;RATERISK&quot;, &quot;FRACTURE&quot;)]
+names(glow) &lt;- tolower(names(glow))</code></pre>
+<p>The variables are as follows:</p>
+<ul>
+<li>priorfrac: history of prior fracture</li>
+<li>age: age at enrollment</li>
+<li>weight: weight at enrollment in kilograms</li>
+<li>premeno: menopause before age 45 (1 = yes, 0 = no)</li>
+<li>raterisk: self-reported risk of fracture (1 = Less than others of
+the same age, 2 = Same as others of the same age, 3 = Greater than
+others of the same age)</li>
+<li>fracture: any fracture in first year (1 = yes, 0 = no)</li>
+</ul>
+<p>Since raterisk is a categorical variable, let’s format as a factor
+with descriptive labels.</p>
+<pre class="r"><code>glow$raterisk &lt;- factor(glow$raterisk, labels = c(&quot;less&quot;, &quot;same&quot;, &quot;greater&quot;))</code></pre>
+<p>Model fracture as a function of the other variables. (Hosmer and
+Lemeshow 2013, Chapter 2)</p>
+</div>
 <div id="ordered-logistic-regression" class="section level3">
 <h3>Ordered logistic regression</h3>
-<p>The <code>Vietnam</code> data frame in the vcdExtra package <span class="citation">(Friendly 2022)</span> contains survey data from 1967 on student opinions of the Vietnam War. Students were asked to indicate which policy out of A, B, C or D they supported. The response categories were:</p>
+<p>The <code>Vietnam</code> data frame in the vcdExtra package <span
+class="citation">(Friendly 2022)</span> contains survey data from 1967
+on student opinions of the Vietnam War. Students were asked to indicate
+which policy out of A, B, C or D they supported. The response categories
+were:</p>
 <ul>
 <li>A: Defeat North Vietnam by widespread bombing and land invasion</li>
 <li>B: Maintain the present policy</li>
-<li>C: De-escalate military activity, stop bombing and begin negotiations</li>
+<li>C: De-escalate military activity, stop bombing and begin
+negotiations</li>
 <li>D: Withdraw military forces Immediately</li>
 </ul>
-<p>These are ordered levels, moving from very pro-war (A) to anti-war (D). Fit a proportional odds model to the data, modeling <code>response</code> as a function of <code>sex</code>, <code>year</code>, and their interaction. <span class="citation">(Friendly and Meyer 2016)</span> (<code>year</code> is an integer ranging from 1 - 5, corresponding to Freshmen, Sophomore, Junior, Senior, and Grad student.)</p>
+<p>These are ordered levels, moving from very pro-war (A) to anti-war
+(D). Fit a proportional odds model to the data, modeling
+<code>response</code> as a function of <code>sex</code>,
+<code>year</code>, and their interaction. <span
+class="citation">(Friendly and Meyer 2016)</span> (<code>year</code> is
+an integer ranging from 1 - 5, corresponding to Freshmen, Sophomore,
+Junior, Senior, and Grad student.)</p>
 <pre class="r"><code>library(vcdExtra)
 data(&quot;Vietnam&quot;)</code></pre>
-<p>This will require using the <code>weights</code> argument with the <code>polr()</code> function. <span class="citation">(Venables and Ripley 2002)</span></p>
+<p>This will require using the <code>weights</code> argument with the
+<code>polr()</code> function. <span class="citation">(Venables and
+Ripley 2002)</span></p>
 </div>
 <div id="references" class="section level3 unnumbered">
 <h3 class="unnumbered">References</h3>
 <div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-bilder2015" class="csl-entry">
-Bilder, Christopher R., and Thomas M. Loughin. 2015. <em>Analysis of Categorical Data in <span>R</span></em>. Boca Raton: <span>CRC</span> Press.
+Bilder, Christopher R., and Thomas M. Loughin. 2015. <em>Analysis of
+Categorical Data in <span>R</span></em>. Boca Raton: <span>CRC</span>
+Press.
 </div>
 <div id="ref-ISwR" class="csl-entry">
-Dalgaard, Peter. 2020. <em>ISwR: Introductory Statistics with <span>R</span></em>. <a href="https://CRAN.R-project.org/package=ISwR">https://CRAN.R-project.org/package=ISwR</a>.
+Dalgaard, Peter. 2020. <em>ISwR: Introductory Statistics with
+<span>R</span></em>. <a
+href="https://CRAN.R-project.org/package=ISwR">https://CRAN.R-project.org/package=ISwR</a>.
 </div>
 <div id="ref-binom" class="csl-entry">
-Dorai-Raj, Sundar. 2022. <em>Binom: Binomial Confidence Intervals for Several Parameterizations</em>. <a href="https://CRAN.R-project.org/package=binom">https://CRAN.R-project.org/package=binom</a>.
+Dorai-Raj, Sundar. 2022. <em>Binom: Binomial Confidence Intervals for
+Several Parameterizations</em>. <a
+href="https://CRAN.R-project.org/package=binom">https://CRAN.R-project.org/package=binom</a>.
 </div>
 <div id="ref-faraway_book" class="csl-entry">
-Faraway, Julian. 2006. <em>Extending the Linear Model with <span>R</span></em>. CRC press. <a href="https://julianfaraway.github.io/faraway/ELM/">https://julianfaraway.github.io/faraway/ELM/</a>.
+Faraway, Julian. 2006. <em>Extending the Linear Model with
+<span>R</span></em>. CRC press. <a
+href="https://julianfaraway.github.io/faraway/ELM/">https://julianfaraway.github.io/faraway/ELM/</a>.
 </div>
 <div id="ref-faraway" class="csl-entry">
-———. 2016. <em>Faraway: Functions and Datasets for Books by Julian Faraway</em>. <a href="https://CRAN.R-project.org/package=faraway">https://CRAN.R-project.org/package=faraway</a>.
+———. 2016. <em>Faraway: Functions and Datasets for Books by Julian
+Faraway</em>. <a
+href="https://CRAN.R-project.org/package=faraway">https://CRAN.R-project.org/package=faraway</a>.
 </div>
 <div id="ref-vcdextra" class="csl-entry">
-Friendly, Michael. 2022. <em>vcdExtra: ’Vcd’ Extensions and Additions</em>. <a href="https://CRAN.R-project.org/package=vcdExtra">https://CRAN.R-project.org/package=vcdExtra</a>.
+Friendly, Michael. 2022. <em>vcdExtra: ’Vcd’ Extensions and
+Additions</em>. <a
+href="https://CRAN.R-project.org/package=vcdExtra">https://CRAN.R-project.org/package=vcdExtra</a>.
 </div>
 <div id="ref-friendly2016" class="csl-entry">
-Friendly, Michael, and David Meyer. 2016. <em>Discrete Data Analysis with <span>R</span></em>. Boca Raton: <span>CRC</span> Press.
+Friendly, Michael, and David Meyer. 2016. <em>Discrete Data Analysis
+with <span>R</span></em>. Boca Raton: <span>CRC</span> Press.
+</div>
+<div id="ref-hosmer2013" class="csl-entry">
+Hosmer, David W., and Stanley Lemeshow. 2013. <em>Applied Logistic
+Regression, 3rd Ed.</em> New York: Wiley.
 </div>
 <div id="ref-MASS" class="csl-entry">
-Venables, W. N., and B. D. Ripley. 2002. <em>Modern Applied Statistics with s</em>. Fourth. New York: Springer. <a href="https://www.stats.ox.ac.uk/pub/MASS4/">https://www.stats.ox.ac.uk/pub/MASS4/</a>.
+Venables, W. N., and B. D. Ripley. 2002. <em>Modern Applied Statistics
+with s</em>. Fourth. New York: Springer. <a
+href="https://www.stats.ox.ac.uk/pub/MASS4/">https://www.stats.ox.ac.uk/pub/MASS4/</a>.
 </div>
 </div>
 </div>
