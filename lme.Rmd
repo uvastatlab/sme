@@ -11,7 +11,7 @@ bibliography: refs.bib
 knitr::opts_chunk$set(echo = TRUE, message = FALSE)
 ```
 
-### multilevel modeling
+### Multilevel model: two levels
 
 The `eggprod` data in the faraway package contains data on egg production. [@faraway] Six pullets (young hens) were placed into each of 12 pens. Four blocks were formed from groups of 3 pens based on location. Three treatments were applied. The number of eggs produced was recorded. Start by visualizing the distribution of eggs produced split by blocks and treatment. 
 
@@ -92,7 +92,26 @@ plot(m)
 plot(m, treat ~ resid(.))
 ```
 
-### longitudinal modeling
+
+### Repeated-Measures model
+
+The book _Linear Mixed Models_ presents a study on rat brains [@west2015]. In this study, five rats had three regions of their brains measured for "activation" after two different treatments. Since all rats received both treatments and had the same three regions measured both times, this is a _repeated-measures_ analysis. Of interest is how the numeric dependent variable, activate, changes based on treatment and brain region.
+
+The data is available in the file "rat_brain.dat". We can import this file using the `read.table()` function. We set `header = TRUE` because the first row of the data contains column headers.
+
+```{r}
+rats <- read.table("data/rat_brain.dat", header = TRUE)
+```
+
+The animal column contains the id for each rat. Below we use the `head()` function to view the first six rows of data. Notice the first rat, R111097, has one measure for each combination of treatment and region. This is why we refer to this as repeated-measures data.
+
+```{r}
+head(rats)
+```
+
+
+
+### Longitudinal model
 
 The `phosphate` data in the HSAUR3 package contains plasma inorganic phosphate levels from 33 subjects (20 controls, 13 obese). [@hsaur3]
 

@@ -196,6 +196,37 @@ emmeans(rg, specs = "bmi", type = "response") |>
 ```
 
 
+### Logistic regression with numeric and categorical predictors
+
+The text _Applied Logistic Regression (3rd Ed)_ [@hosmer2013] presents data on women who were tracked as part of the Global Longitudinal Study of Osteoporosis in Women (GLOW). The GLOW data has information on 500 women, 125 of whom had a fracture during the first year of follow-up. One goal of this study was to evaluate risk factors for fractures.
+
+The data is available as ".txt" file. Below we import the data using the `read.table()` function with `header=TRUE` since the first row contains column header names. We then select columns we want to analyze and set convert all the variable names to lower case for convenience. 
+
+```{r}
+glow <- read.table("data/GLOW500.txt", header = TRUE)
+glow <- glow[,c("PRIORFRAC", "AGE", "WEIGHT", "PREMENO", "RATERISK", "FRACTURE")]
+names(glow) <- tolower(names(glow))
+```
+
+The variables are as follows:
+
+- priorfrac: history of prior fracture
+- age: age at enrollment
+- weight: weight at enrollment in kilograms
+- premeno: menopause before age 45 (1 = yes, 0 = no)
+- raterisk: self-reported risk of fracture (1 = Less than others of the same age, 2 = Same as others of the same age, 3 = Greater than others of the same age)
+- fracture: any fracture in first year (1 = yes, 0 = no)
+
+Since raterisk is a categorical variable, let's format as a factor with descriptive labels.
+
+```{r}
+glow$raterisk <- factor(glow$raterisk, labels = c("less", "same", "greater"))
+```
+
+Model fracture as a function of the other variables. (Hosmer and Lemeshow 2013, Chapter 2)
+
+
+
 ### Ordered logistic regression
 
 The `Vietnam` data frame in the vcdExtra package [@vcdextra] contains survey data from 1967 on student opinions of the Vietnam War. Students were asked to indicate which policy out of A, B, C or D they supported. The response categories were:
