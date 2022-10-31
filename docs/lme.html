@@ -13,7 +13,7 @@
 
 <title>Mixed-Effect Models</title>
 
-<script src="site_libs/header-attrs-2.17/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.13/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
@@ -166,15 +166,11 @@ $(document).ready(function () {
     href = "index.html";
   var menuAnchor = $('a[href="' + href + '"]');
 
-  // mark the anchor link active (and if it's in a dropdown, also mark that active)
-  var dropdown = menuAnchor.closest('li.dropdown');
-  if (window.bootstrap) { // Bootstrap 4+
-    menuAnchor.addClass('active');
-    dropdown.find('> .dropdown-toggle').addClass('active');
-  } else { // Bootstrap 3
-    menuAnchor.parent().addClass('active');
-    dropdown.addClass('active');
-  }
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
 
   // Navbar adjustments
   var navHeight = $(".navbar").first().height() + 15;
@@ -203,8 +199,8 @@ $(document).ready(function () {
   border-radius: 4px;
 }
 
-.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
-  content: "\e259";
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
   font-family: 'Glyphicons Halflings';
   display: inline-block;
   padding: 10px;
@@ -212,9 +208,16 @@ $(document).ready(function () {
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
-  content: "\e258";
-  font-family: 'Glyphicons Halflings';
+  content: "&#xe258;";
   border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
 }
 
 .tabset-dropdown > .nav-tabs > li.active {
@@ -386,12 +389,7 @@ div.tocify {
 
 <div id="multilevel-model-two-levels" class="section level3">
 <h3>Multilevel model: two levels</h3>
-<p>The <code>eggprod</code> data in the faraway package contains data on
-egg production. <span class="citation">(Faraway 2016)</span> Six pullets
-(young hens) were placed into each of 12 pens. Four blocks were formed
-from groups of 3 pens based on location. Three treatments were applied.
-The number of eggs produced was recorded. Start by visualizing the
-distribution of eggs produced split by blocks and treatment.</p>
+<p>The <code>eggprod</code> data in the faraway package contains data on egg production. <span class="citation">(Faraway 2016)</span> Six pullets (young hens) were placed into each of 12 pens. Four blocks were formed from groups of 3 pens based on location. Three treatments were applied. The number of eggs produced was recorded. Start by visualizing the distribution of eggs produced split by blocks and treatment.</p>
 <pre class="r"><code>library(faraway)
 data(&quot;eggprod&quot;)
 
@@ -408,17 +406,11 @@ ggplot(eggprod, aes(x=block, y=eggs, color = block)) + # Plotting eggs~treat, co
   coord_flip() + # Flipping x and y coordinates to mimic Base R plotting
   theme_classic() # Using classic theme</code></pre>
 <p><img src="lme_files/figure-html/unnamed-chunk-1-2.png" width="672" /></p>
-<p>This shows visually that treatment O may have produced fewer eggs
-than treatment F or E whose distributions are more similar and closer to
-one another. The distributions of eggs produced by each block seem to
-overlap and are very similar to one another.</p>
-<p>Now, we model the number of eggs produced with <code>treat</code> as
-a fixed effect and <code>block</code> as a random effect. <span
-class="citation">(Faraway 2006)</span> Does <code>treat</code> appear to
-affect the number of eggs, and if so, which treatment seems
-superior?</p>
-<pre class="r"><code>library(lme4)
-m &lt;- lmer(eggs ~ treat + (1|block), data = eggprod)
+<p>This shows visually that treatment O may have produced fewer eggs than treatment F or E whose distributions are more similar and closer to one another. The distributions of eggs produced by each block seem to overlap and are very similar to one another.</p>
+<p>Now, we model the number of eggs produced with <code>treat</code> as a fixed effect and <code>block</code> as a random effect. <span class="citation">(Faraway 2006)</span> Does <code>treat</code> appear to affect the number of eggs, and if so, which treatment seems superior?</p>
+<pre class="r"><code>library(lme4)</code></pre>
+<pre><code>## Warning: package &#39;lme4&#39; was built under R version 4.1.2</code></pre>
+<pre class="r"><code>m &lt;- lmer(eggs ~ treat + (1|block), data = eggprod)
 summary(m)</code></pre>
 <pre><code>## Linear mixed model fit by REML [&#39;lmerMod&#39;]
 ## Formula: eggs ~ treat + (1 | block)
@@ -446,8 +438,9 @@ summary(m)</code></pre>
 ##        (Intr) treatF
 ## treatF -0.612       
 ## treatO -0.612  0.500</code></pre>
-<pre class="r"><code>library(performance)
-icc(m)</code></pre>
+<pre class="r"><code>library(performance)</code></pre>
+<pre><code>## Warning: package &#39;performance&#39; was built under R version 4.1.2</code></pre>
+<pre class="r"><code>icc(m)</code></pre>
 <pre><code>## # Intraclass Correlation Coefficient
 ## 
 ##     Adjusted ICC: 0.251
@@ -456,15 +449,8 @@ icc(m)</code></pre>
 <pre><code>##  Groups   Name        Std.Dev.
 ##  block    (Intercept) 11.399  
 ##  Residual             19.670</code></pre>
-<p>The likeness of egg production in the same block is .25. The
-variation around the intercept is 11.40 across blocks. The intercept
-fixed effect is the grand mean of eggs across the entire sample when
-treat = “E”. The treatF and treatO fixed effects can be interpreted as
-the difference in means (e.g., treatE - treatF). Therefore, treatF
-produces 6.25 less mean egg production and treatO produces 42.50 less
-mean egg production.</p>
-<p>This is further substantiated by looking at the means by treatment.
-Observed means of eggs by treat:</p>
+<p>The likeness of egg production in the same block is .25. The variation around the intercept is 11.40 across blocks. The intercept fixed effect is the grand mean of eggs across the entire sample when treat = “E”. The treatF and treatO fixed effects can be interpreted as the difference in means (e.g., treatE - treatF). Therefore, treatF produces 6.25 less mean egg production and treatO produces 42.50 less mean egg production.</p>
+<p>This is further substantiated by looking at the means by treatment. Observed means of eggs by treat:</p>
 <pre class="r"><code>tapply(eggprod$eggs, eggprod$treat, mean)</code></pre>
 <pre><code>##      E      F      O 
 ## 349.00 342.75 306.50</code></pre>
@@ -548,12 +534,7 @@ summary(m)</code></pre>
 ##        (Intr) treatF
 ## treatF -0.612       
 ## treatO -0.612  0.500</code></pre>
-<p>Running a <span class="math inline">\(\chi^2\)</span> test on the
-model, we see that the model including treat is a better fit (<span
-class="math inline">\(\chi^2(2,N = 12) = 10.887, p &lt; .01\)</span>)
-than the null model (intercept only). By loading the
-<code>lmerTest</code> package, we can see in the summary that
-specifically, treatment O is significant less than treatment E.</p>
+<p>Running a <span class="math inline">\(\chi^2\)</span> test on the model, we see that the model including treat is a better fit (<span class="math inline">\(\chi^2(2,N = 12) = 10.887, p &lt; .01\)</span>) than the null model (intercept only). By loading the <code>lmerTest</code> package, we can see in the summary that specifically, treatment O is significant less than treatment E.</p>
 <pre class="r"><code># normality of residuals; looks good
 lattice::qqmath(m)</code></pre>
 <p><img src="lme_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
@@ -566,24 +547,10 @@ plot(m, treat ~ resid(.))</code></pre>
 </div>
 <div id="repeated-measures-model" class="section level3">
 <h3>Repeated-Measures model</h3>
-<p>The book <em>Linear Mixed Models</em> presents a study on rat brains
-<span class="citation">(West, Welch, and Galecki 2015)</span>. In this
-study, five rats had three regions of their brains measured for
-“activation” after two different treatments. Since all rats received
-both treatments and had the same three regions measured both times, this
-is a <em>repeated-measures</em> analysis. Of interest is how the numeric
-dependent variable, activate, changes based on treatment and brain
-region.</p>
-<p>The data is available in the file “rat_brain.dat”. We can import this
-file using the <code>read.table()</code> function. We set
-<code>header = TRUE</code> because the first row of the data contains
-column headers.</p>
+<p>The book <em>Linear Mixed Models</em> presents a study on rat brains <span class="citation">(West, Welch, and Galecki 2015)</span>. In this study, five rats had three regions of their brains measured for “activation” after two different treatments. Since all rats received both treatments and had the same three regions measured both times, this is a <em>repeated-measures</em> analysis. Of interest is how the numeric dependent variable, activate, changes based on treatment and brain region.</p>
+<p>The data is available in the file “rat_brain.dat”. We can import this file using the <code>read.table()</code> function. We set <code>header = TRUE</code> because the first row of the data contains column headers.</p>
 <pre class="r"><code>rats &lt;- read.table(&quot;data/rat_brain.dat&quot;, header = TRUE)</code></pre>
-<p>The animal column contains the id for each rat. Below we use the
-<code>head()</code> function to view the first six rows of data. Notice
-the first rat, R111097, has one measure for each combination of
-treatment and region. This is why we refer to this as repeated-measures
-data.</p>
+<p>The animal column contains the id for each rat. Below we use the <code>head()</code> function to view the first six rows of data. Notice the first rat, R111097, has one measure for each combination of treatment and region. This is why we refer to this as repeated-measures data.</p>
 <pre class="r"><code>head(rats)</code></pre>
 <pre><code>##    animal treatment region activate
 ## 1 R111097         1      1   366.19
@@ -595,9 +562,7 @@ data.</p>
 </div>
 <div id="longitudinal-model" class="section level3">
 <h3>Longitudinal model</h3>
-<p>The <code>phosphate</code> data in the HSAUR3 package contains plasma
-inorganic phosphate levels from 33 subjects (20 controls, 13 obese).
-<span class="citation">(Hothorn and Everitt 2022)</span></p>
+<p>The <code>phosphate</code> data in the HSAUR3 package contains plasma inorganic phosphate levels from 33 subjects (20 controls, 13 obese). <span class="citation">(Hothorn and Everitt 2022)</span></p>
 <pre class="r"><code>library(HSAUR3)
 data(&quot;phosphate&quot;)
 head(phosphate)</code></pre>
@@ -608,13 +573,10 @@ head(phosphate)</code></pre>
 ## 4 control 3.6  3.0 2.2  2.8 2.9 3.9 3.8 4.0
 ## 5 control 4.1  3.8 2.1  3.0 3.6 3.4 3.6 3.7
 ## 6 control 3.8  2.2 2.0  2.6 3.8 3.6 3.0 3.5</code></pre>
-<p>Reshaping the data facilitates data visualization. The
-<code>pivot_longer()</code> function from the tidyr package makes quick
-work of this. <span class="citation">(Wickham and Girlich 2022)</span>
-We add a subject <code>id</code> to identify subjects after reshaping
-the data into a “long” format.</p>
-<pre class="r"><code>library(tidyr)
-phosphate$id &lt;- 1:nrow(phosphate)
+<p>Reshaping the data facilitates data visualization. The <code>pivot_longer()</code> function from the tidyr package makes quick work of this. <span class="citation">(Wickham and Girlich 2022)</span> We add a subject <code>id</code> to identify subjects after reshaping the data into a “long” format.</p>
+<pre class="r"><code>library(tidyr)</code></pre>
+<pre><code>## Warning: package &#39;tidyr&#39; was built under R version 4.1.2</code></pre>
+<pre class="r"><code>phosphate$id &lt;- 1:nrow(phosphate)
 phosphateL &lt;- pivot_longer(phosphate, cols = t0:t5, 
                            names_to = &quot;time&quot;, 
                            names_prefix = &quot;t&quot;,
@@ -634,44 +596,32 @@ head(phosphateL, n = 10)</code></pre>
 ##  8 control     1   5     4.4
 ##  9 control     2   0     3.7
 ## 10 control     2   0.5   2.6</code></pre>
-<p>There appears to be a great deal of variability between the
-subjects.</p>
+<p>There appears to be a great deal of variability between the subjects.</p>
 <pre class="r"><code>library(ggplot2)
 ggplot(phosphateL) +
   aes(x = time, y = level, group = id) +
   geom_line() +
   facet_wrap(~group)</code></pre>
 <p><img src="lme_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
-<p>What might be a sensible linear mixed effect model to quantify trend
-in time, effect of obesity, and variation between subjects?</p>
+<p>What might be a sensible linear mixed effect model to quantify trend in time, effect of obesity, and variation between subjects?</p>
 </div>
 <div id="references" class="section level3 unnumbered">
 <h3 class="unnumbered">References</h3>
 <div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-faraway_book" class="csl-entry">
-Faraway, Julian. 2006. <em>Extending the Linear Model with
-<span>R</span></em>. CRC press. <a
-href="https://julianfaraway.github.io/faraway/ELM/">https://julianfaraway.github.io/faraway/ELM/</a>.
+Faraway, Julian. 2006. <em>Extending the Linear Model with <span>R</span></em>. CRC press. <a href="https://julianfaraway.github.io/faraway/ELM/">https://julianfaraway.github.io/faraway/ELM/</a>.
 </div>
 <div id="ref-faraway" class="csl-entry">
-———. 2016. <em>Faraway: Functions and Datasets for Books by Julian
-Faraway</em>. <a
-href="https://CRAN.R-project.org/package=faraway">https://CRAN.R-project.org/package=faraway</a>.
+———. 2016. <em>Faraway: Functions and Datasets for Books by Julian Faraway</em>. <a href="https://CRAN.R-project.org/package=faraway">https://CRAN.R-project.org/package=faraway</a>.
 </div>
 <div id="ref-hsaur3" class="csl-entry">
-Hothorn, Torsten, and Brian S. Everitt. 2022. <em>Hsaur3: A Handbook of
-Statistical Analyses Using r (3rd Edition)</em>. <a
-href="https://CRAN.R-project.org/package=HSAUR3">https://CRAN.R-project.org/package=HSAUR3</a>.
+Hothorn, Torsten, and Brian S. Everitt. 2022. <em>Hsaur3: A Handbook of Statistical Analyses Using r (3rd Edition)</em>. <a href="https://CRAN.R-project.org/package=HSAUR3">https://CRAN.R-project.org/package=HSAUR3</a>.
 </div>
 <div id="ref-west2015" class="csl-entry">
-West, Brady T., Kathleen B. Welch, and Andrzej T. Galecki. 2015.
-<em>Linear Mixed Models, 2nd Ed.</em> Boca Raton: <span>CRC</span>
-Press.
+West, Brady T., Kathleen B. Welch, and Andrzej T. Galecki. 2015. <em>Linear Mixed Models, 2nd Ed.</em> Boca Raton: <span>CRC</span> Press.
 </div>
 <div id="ref-tidyr" class="csl-entry">
-Wickham, Hadley, and Maximilian Girlich. 2022. <em>Tidyr: Tidy Messy
-Data</em>. <a
-href="https://CRAN.R-project.org/package=tidyr">https://CRAN.R-project.org/package=tidyr</a>.
+Wickham, Hadley, and Maximilian Girlich. 2022. <em>Tidyr: Tidy Messy Data</em>. <a href="https://CRAN.R-project.org/package=tidyr">https://CRAN.R-project.org/package=tidyr</a>.
 </div>
 </div>
 </div>
