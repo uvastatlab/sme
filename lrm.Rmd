@@ -178,21 +178,11 @@ prediction <- predict(lrm, newdata = malaria.test, type="response")
 
 ### Logistic regression with numeric predictors (2)
 
-The `pima` data frame from the faraway package contains data on 768 adult female Pima Indians living near Phoenix [@faraway]. This data was collected by [The National Institute of Diabetes and Digestive and Kidney Diseases](https://www.niddk.nih.gov/). The purpose of the study was to investigate factors related to diabetes. The variable `test` indicates whether the patient showed signs of diabetes (coded 0 if negative, 1 if positive). Model `test` as a function of all other predictors.
+The `pima` data frame from the faraway package contains data on 768 adult female Pima Indians living near Phoenix [@faraway]. This data was collected by [The National Institute of Diabetes and Digestive and Kidney Diseases](https://www.niddk.nih.gov/). The purpose of the study was to investigate factors related to diabetes. The variable test indicates whether the patient showed signs of diabetes (coded 0 if negative, 1 if positive). Model test as a function of all other predictors.
 
 ```{r}
 library(faraway)
 data("pima")
-```
-
-What is the difference in odds of testing positive for diabetes for a subject with BMI in the first quartile compared to a subject with BMI at the third quartile? [@faraway_book]
-
-```{r eval=FALSE}
-library(emmeans)
-bmi_vals <- quantile(pima$bmi, probs = c(0.25,0.75))
-rg <- ref_grid(m, at = list(bmi = bmi_vals))
-emmeans(rg, specs = "bmi", type = "response") |>
-  contrast("pairwise")
 ```
 
 
@@ -200,7 +190,7 @@ emmeans(rg, specs = "bmi", type = "response") |>
 
 The text _Applied Logistic Regression (3rd Ed)_ [@hosmer2013] presents data on women who were tracked as part of the Global Longitudinal Study of Osteoporosis in Women (GLOW). The GLOW data has information on 500 women, 125 of whom had a fracture during the first year of follow-up. One goal of this study was to evaluate risk factors for fractures.
 
-The data is available as ".txt" file. Below we import the data using the `read.table()` function with `header=TRUE` since the first row contains column header names. We then select columns we want to analyze and set convert all the variable names to lower case for convenience. 
+The data is available as a ".txt" file. Below we import the data using the `read.table()` function with `header=TRUE` since the first row contains column header names. We then select columns we want to analyze and convert all the variable names to lower case for convenience. 
 
 ```{r}
 glow <- read.table("data/GLOW500.txt", header = TRUE)

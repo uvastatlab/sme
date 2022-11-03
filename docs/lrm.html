@@ -630,6 +630,23 @@ showing symptoms to the odds of not showing symptoms of malaria).</p>
 that as log(ab) increases, the odds of malaria decreases. For every
 one-unit increase of log(ab), the odds of malaria decreases by anywhere
 from 28% to 67%. (Note: 1 - 0.33 = 0.67 and 1 - 0.72 = 0.28.)</p>
+<p>Now we can assess the accuracy of the model we built.</p>
+<pre class="r"><code>anova(lrm, test = &quot;Chisq&quot;)</code></pre>
+<pre><code>## Analysis of Deviance Table
+## 
+## Model: binomial, link: logit
+## 
+## Response: mal
+## 
+## Terms added sequentially (first to last)
+## 
+## 
+##         Df Deviance Resid. Df Resid. Dev  Pr(&gt;Chi)    
+## NULL                       99    116.652              
+## age      1   3.3718        98    113.280   0.06632 .  
+## log(ab)  1  15.2628        97     98.017 9.354e-05 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p>If we wanted to, we could have split the data into training and
 testing data:</p>
 <pre class="r"><code>set.seed(1)  # make reproducible
@@ -648,20 +665,11 @@ data on 768 adult female Pima Indians living near Phoenix <span
 class="citation">(Faraway 2016)</span>. This data was collected by <a
 href="https://www.niddk.nih.gov/">The National Institute of Diabetes and
 Digestive and Kidney Diseases</a>. The purpose of the study was to
-investigate factors related to diabetes. The variable <code>test</code>
-indicates whether the patient showed signs of diabetes (coded 0 if
-negative, 1 if positive). Model <code>test</code> as a function of all
-other predictors.</p>
+investigate factors related to diabetes. The variable test indicates
+whether the patient showed signs of diabetes (coded 0 if negative, 1 if
+positive). Model test as a function of all other predictors.</p>
 <pre class="r"><code>library(faraway)
 data(&quot;pima&quot;)</code></pre>
-<p>What is the difference in odds of testing positive for diabetes for a
-subject with BMI in the first quartile compared to a subject with BMI at
-the third quartile? <span class="citation">(Faraway 2006)</span></p>
-<pre class="r"><code>library(emmeans)
-bmi_vals &lt;- quantile(pima$bmi, probs = c(0.25,0.75))
-rg &lt;- ref_grid(m, at = list(bmi = bmi_vals))
-emmeans(rg, specs = &quot;bmi&quot;, type = &quot;response&quot;) |&gt;
-  contrast(&quot;pairwise&quot;)</code></pre>
 </div>
 <div id="logistic-regression-with-numeric-and-categorical-predictors"
 class="section level3">
@@ -672,11 +680,11 @@ women who were tracked as part of the Global Longitudinal Study of
 Osteoporosis in Women (GLOW). The GLOW data has information on 500
 women, 125 of whom had a fracture during the first year of follow-up.
 One goal of this study was to evaluate risk factors for fractures.</p>
-<p>The data is available as “.txt” file. Below we import the data using
-the <code>read.table()</code> function with <code>header=TRUE</code>
-since the first row contains column header names. We then select columns
-we want to analyze and set convert all the variable names to lower case
-for convenience.</p>
+<p>The data is available as a “.txt” file. Below we import the data
+using the <code>read.table()</code> function with
+<code>header=TRUE</code> since the first row contains column header
+names. We then select columns we want to analyze and convert all the
+variable names to lower case for convenience.</p>
 <pre class="r"><code>glow &lt;- read.table(&quot;data/GLOW500.txt&quot;, header = TRUE)
 glow &lt;- glow[,c(&quot;PRIORFRAC&quot;, &quot;AGE&quot;, &quot;WEIGHT&quot;, &quot;PREMENO&quot;, &quot;RATERISK&quot;, &quot;FRACTURE&quot;)]
 names(glow) &lt;- tolower(names(glow))</code></pre>
@@ -742,14 +750,9 @@ Dorai-Raj, Sundar. 2022. <em>Binom: Binomial Confidence Intervals for
 Several Parameterizations</em>. <a
 href="https://CRAN.R-project.org/package=binom">https://CRAN.R-project.org/package=binom</a>.
 </div>
-<div id="ref-faraway_book" class="csl-entry">
-Faraway, Julian. 2006. <em>Extending the Linear Model with
-<span>R</span></em>. CRC press. <a
-href="https://julianfaraway.github.io/faraway/ELM/">https://julianfaraway.github.io/faraway/ELM/</a>.
-</div>
 <div id="ref-faraway" class="csl-entry">
-———. 2016. <em>Faraway: Functions and Datasets for Books by Julian
-Faraway</em>. <a
+Faraway, Julian. 2016. <em>Faraway: Functions and Datasets for Books by
+Julian Faraway</em>. <a
 href="https://CRAN.R-project.org/package=faraway">https://CRAN.R-project.org/package=faraway</a>.
 </div>
 <div id="ref-vcdextra" class="csl-entry">
