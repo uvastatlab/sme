@@ -565,12 +565,10 @@ general, a predictor that contributes to a model will reduce deviance by
 more than 1 or 2 units.</p>
 <p>We can also assess fit of the model by comparing it to the
 <em>saturated model</em>, or a model with perfect fit.</p>
-<pre class="r"><code>vcdExtra::LRstats(m)</code></pre>
+<pre class="r"><code>vcdExtra::LRstats(lrm)</code></pre>
 <pre><code>## Likelihood summary table:
-##      AIC    BIC   LR Chisq Df Pr(&gt;Chisq)    
-## m 7.0125 5.0125 5.3291e-15  0  &lt; 2.2e-16 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+##        AIC    BIC LR Chisq Df Pr(&gt;Chisq)
+## lrm 104.02 111.83   98.017 97      0.452</code></pre>
 <p>The null of the test is the model is no different from the saturated
 model. A low p-value rejects the null. Here the p-value is pretty high,
 so we might have some confidence in using this model to predict the
