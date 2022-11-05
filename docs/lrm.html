@@ -628,6 +628,25 @@ showing symptoms to the odds of not showing symptoms of malaria).</p>
 that as log(ab) increases, the odds of malaria decreases. For every
 one-unit increase of log(ab), the odds of malaria decreases by anywhere
 from 28% to 67%. (Note: 1 - 0.33 = 0.67 and 1 - 0.72 = 0.28.)</p>
+<p>Add a column of log transformed antibody values to data frame instead
+of log transforming on-the-fly and then refit the model. This helps us
+create an effect plot.</p>
+<pre class="r"><code>malaria$logab &lt;- log(malaria$ab)
+lrm &lt;- glm(mal ~ age + logab, family = binomial(link = &quot;logit&quot;), data = malaria)</code></pre>
+<p>Now we can create an effect plot for “logab” as follows using the
+ggpredict() function from the ggeffects package. This is basically
+predicted probabilities of malaria over the range of observed log
+antibody levels, holding age at its mean level (in this case, around
+9).</p>
+<pre class="r"><code>library(ggeffects)
+plot(ggpredict(model = lrm, terms = &quot;logab [all]&quot;))</code></pre>
+<p><img src="lrm_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
+<p>We see the probability of being at risk of malaria drops pretty
+dramatically when logab is greater than 3, or transformed back to the
+original scale, when ab is exp(3) = 54.59, or about 55. The grey strip
+is a 95% confidence ribbon that gives some indication of the uncertainty
+of our predictions. Where it’s bigger we have less data and more
+uncertainty.</p>
 <p>Now we can assess the accuracy of the model we built.</p>
 <pre class="r"><code>anova(lrm, test = &quot;Chisq&quot;)</code></pre>
 <pre><code>## Analysis of Deviance Table
@@ -639,10 +658,10 @@ from 28% to 67%. (Note: 1 - 0.33 = 0.67 and 1 - 0.72 = 0.28.)</p>
 ## Terms added sequentially (first to last)
 ## 
 ## 
-##         Df Deviance Resid. Df Resid. Dev  Pr(&gt;Chi)    
-## NULL                       99    116.652              
-## age      1   3.3718        98    113.280   0.06632 .  
-## log(ab)  1  15.2628        97     98.017 9.354e-05 ***
+##       Df Deviance Resid. Df Resid. Dev  Pr(&gt;Chi)    
+## NULL                     99    116.652              
+## age    1   3.3718        98    113.280   0.06632 .  
+## logab  1  15.2628        97     98.017 9.354e-05 ***
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p>If we wanted to, we could have split the data into training and
