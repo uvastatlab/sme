@@ -557,22 +557,28 @@ to the data. To specify logistic regression, in the argument we set the
 ## log(ab)  1  15.2628        97     98.017 9.354e-05 ***
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<p>This shows that the model including age is a slightly better fit than
-the null model (intercept only). The model including both age and
-log(ab) is a better fit (<span class="math inline">\(\chi^2(1,N = 100) =
-15.63, p &lt; .001\)</span>) than the model only containing age. In
-general, a predictor that contributes to a model will reduce deviance by
-more than 1 or 2 units.</p>
+<p>This test helps us to determine if predictors reduce model deviance.
+The first line of this output shows the null model containing only the
+intercept – it uses the observed proportion of subjects at risk of
+malaria. The second line shows a model including age. We can see that
+this has a slightly better fit than the null model because the deviance
+reduced from about 116 to about 113. The next row shows the model
+including both age and log(ab), and we can see that this is an even
+better fit (<span class="math inline">\(\chi^2(1,N = 100) = 15.63, p
+&lt; .001\)</span>) than the model only containing age. Here the
+deviance dropped down to about 98. In general, a predictor that
+contributes to a model will reduce deviance by more than 1 or 2
+units.</p>
 <p>We can also assess fit of the model by comparing it to the
 <em>saturated model</em>, or a model with perfect fit.</p>
 <pre class="r"><code>vcdExtra::LRstats(lrm)</code></pre>
 <pre><code>## Likelihood summary table:
 ##        AIC    BIC LR Chisq Df Pr(&gt;Chisq)
 ## lrm 104.02 111.83   98.017 97      0.452</code></pre>
-<p>The null of the test is the model is no different from the saturated
-model. A low p-value rejects the null. Here the p-value is pretty high,
-so we might have some confidence in using this model to predict the
-probability of malaria risk.</p>
+<p>The null hypothesis of this test is that the model is no different
+from the saturated model. A low p-value rejects the null. Here the
+p-value is pretty high, so we might have some confidence in using this
+model to predict the probability of malaria risk.</p>
 <p>Before interpreting the model, we can assess model error by looking
 at a plot of residuals vs. “Hat-values”. Residuals = observed response -
 predicted probability. Hat-values measure leverage.</p>
@@ -628,13 +634,13 @@ showing symptoms to the odds of not showing symptoms of malaria).</p>
 that as log(ab) increases, the odds of malaria decreases. For every
 one-unit increase of log(ab), the odds of malaria decreases by anywhere
 from 28% to 67%. (Note: 1 - 0.33 = 0.67 and 1 - 0.72 = 0.28.)</p>
-<p>Add a column of log transformed antibody values to data frame instead
-of log transforming on-the-fly and then refit the model. This helps us
-create an effect plot.</p>
+<p>We can add a column of log transformed antibody values to data frame
+instead of log transforming on-the-fly and then refit the model. This
+helps us create an effect plot.</p>
 <pre class="r"><code>malaria$logab &lt;- log(malaria$ab)
 lrm &lt;- glm(mal ~ age + logab, family = binomial(link = &quot;logit&quot;), data = malaria)</code></pre>
-<p>Now we can create an effect plot for “logab” as follows using the
-ggpredict() function from the ggeffects package. This is basically
+<p>To create an effect plot for “logab” we can use the ggpredict()
+function from the ggeffects package. This plot basically shows the
 predicted probabilities of malaria over the range of observed log
 antibody levels, holding age at its mean level (in this case, around
 9).</p>
@@ -644,9 +650,9 @@ plot(ggpredict(model = lrm, terms = &quot;logab [all]&quot;))</code></pre>
 <p>We see the probability of being at risk of malaria drops pretty
 dramatically when logab is greater than 3, or transformed back to the
 original scale, when ab is exp(3) = 54.59, or about 55. The grey strip
-is a 95% confidence ribbon that gives some indication of the uncertainty
-of our predictions. Where it’s bigger we have less data and more
-uncertainty.</p>
+surronding the line is a 95% confidence ribbon that gives some
+indication of the uncertainty of our predictions. This ribbon is wider
+where we have less data and more uncertainty.</p>
 <p>Now we can assess the accuracy of the model we built.</p>
 <pre class="r"><code>anova(lrm, test = &quot;Chisq&quot;)</code></pre>
 <pre><code>## Analysis of Deviance Table
@@ -740,14 +746,119 @@ negotiations</li>
 (D). Fit a proportional odds model to the data, modeling
 <code>response</code> as a function of <code>sex</code>,
 <code>year</code>, and their interaction. <span
-class="citation">(Friendly and Meyer 2016)</span> (<code>year</code> is
-an integer ranging from 1 - 5, corresponding to Freshmen, Sophomore,
-Junior, Senior, and Grad student.)</p>
+class="citation">(Friendly and Meyer 2016)</span> This will require
+using the <code>weights</code> argument with the <code>polr()</code>
+function. <span class="citation">(Venables and Ripley 2002)</span></p>
 <pre class="r"><code>library(vcdExtra)
-data(&quot;Vietnam&quot;)</code></pre>
-<p>This will require using the <code>weights</code> argument with the
-<code>polr()</code> function. <span class="citation">(Venables and
-Ripley 2002)</span></p>
+data(&quot;Vietnam&quot;)
+head(Vietnam)</code></pre>
+<pre><code>##      sex year response Freq
+## 1 Female    1        A   13
+## 2 Female    1        B   19
+## 3 Female    1        C   40
+## 4 Female    1        D    5
+## 5 Female    2        A    5
+## 6 Female    2        B    9</code></pre>
+<p>Let’s label the response variable for ease of interpretation. We can
+do this with the <code>factor()</code> function. In addition we set
+<code>ordered = TRUE</code> to tell R this is an ordered categorical
+variable.</p>
+<pre class="r"><code>Vietnam$response &lt;- factor(Vietnam$response, 
+                           labels = c(&quot;Defeat&quot;, &quot;Maintain&quot;,
+                                      &quot;De-escalate&quot;, &quot;Withdraw&quot;),
+                           ordered = TRUE)</code></pre>
+<p>The year variable is an integer ranging from 1 - 5, corresponding to
+Freshmen, Sophomore, Junior, Senior, and Grad student. Let’s format that
+as a factor as well.</p>
+<pre class="r"><code>Vietnam$year &lt;- factor(Vietnam$year, labels = c(&quot;Freshman&quot;, &quot;Sophmore&quot;,
+                                                &quot;Junior&quot;, &quot;Senior&quot;, 
+                                                &quot;Grad student&quot;))</code></pre>
+<p>The Freq column counts the number of responses for each combination
+of sex, year and response. We can use the <code>xtabs()</code> function
+to create tables to help us summarize and understand the data. One table
+of interest is simply a breakdown of responses across all years and both
+sexes. The syntax <code>Freq ~ response</code> says “sum Freq by
+response levels”. We see most students preferred to De-escalate.</p>
+<pre class="r"><code>xtabs(Freq ~ response, data = Vietnam)</code></pre>
+<pre><code>## response
+##      Defeat    Maintain De-escalate    Withdraw 
+##         801         738        1319         289</code></pre>
+<p>We can pipe the table into <code>proportions()</code> to see a
+breakdown of proportions.</p>
+<pre class="r"><code>xtabs(Freq ~ response, data = Vietnam) |&gt;
+  proportions() |&gt;
+  round(2)</code></pre>
+<pre><code>## response
+##      Defeat    Maintain De-escalate    Withdraw 
+##        0.25        0.23        0.42        0.09</code></pre>
+<p>Counts of sexes and years can be obtained this way as well. Over 80%
+of respondents were Male.</p>
+<pre class="r"><code>xtabs(Freq ~ sex, data = Vietnam) |&gt;
+  proportions() |&gt;
+  round(2)</code></pre>
+<pre><code>## sex
+## Female   Male 
+##   0.18   0.82</code></pre>
+<p>A majority of respondents were Grad students.</p>
+<pre class="r"><code>xtabs(Freq ~ year, data = Vietnam) |&gt;
+  proportions() |&gt;
+  round(2)</code></pre>
+<pre><code>## year
+##     Freshman     Sophmore       Junior       Senior Grad student 
+##         0.16         0.16         0.19         0.18         0.31</code></pre>
+<p>How do proportions of war response compare by sex? We can add the sex
+variable to the <code>xtabs()</code> syntax to get this information.
+Notice when we pipe into <code>proportions()</code> we enter
+<code>margin = 1</code> to specify we want proportions calculated along
+the first dimension which is the rows. This shows that both sexes prefer
+to De-escalate, but that females prefer to De-escalate by a much wider
+margin.</p>
+<pre class="r"><code>xtabs(Freq ~ sex + response, data = Vietnam) |&gt;
+  proportions(margin = 1) |&gt;
+  round(2)</code></pre>
+<pre><code>##         response
+## sex      Defeat Maintain De-escalate Withdraw
+##   Female   0.12     0.18        0.63     0.06
+##   Male     0.28     0.25        0.37     0.10</code></pre>
+<p>Does preference depend on year of the student? Again we can modify
+the <code>xtabs()</code> syntax as we did before. This time we see a
+slight preference for Defeat in the Freshman group and a large
+proportion preferring Withdraw in the Grad student group.</p>
+<pre class="r"><code>xtabs(Freq ~ year + response, data = Vietnam) |&gt;
+  proportions(margin = 1) |&gt;
+  round(2)</code></pre>
+<pre><code>##               response
+## year           Defeat Maintain De-escalate Withdraw
+##   Freshman       0.36     0.26        0.33     0.04
+##   Sophmore       0.34     0.27        0.34     0.05
+##   Junior         0.26     0.25        0.44     0.06
+##   Senior         0.28     0.20        0.43     0.09
+##   Grad student   0.14     0.21        0.49     0.16</code></pre>
+<p>Finally we might want to look at response by year and sex. Below we
+only look at the Freshman group using the <code>subset</code> argument.
+Setting <code>drop.unused.levels = TRUE</code> ensures we only see
+results for Freshman. We see Males prefer “Defeat” while Females prefer
+“De-escalate”.</p>
+<pre class="r"><code>xtabs(Freq ~ sex + response + year, data = Vietnam, 
+      subset = year == &quot;Freshman&quot;, 
+      drop.unused.levels = TRUE) |&gt;
+  proportions(margin = 1) |&gt;
+  round(2)</code></pre>
+<pre><code>## , , year = Freshman
+## 
+##         response
+## sex      Defeat Maintain De-escalate Withdraw
+##   Female   0.17     0.25        0.52     0.06
+##   Male     0.40     0.26        0.30     0.04</code></pre>
+<pre class="r"><code>v_df &lt;- xtabs(Freq ~ sex + response + year, data = Vietnam) |&gt;
+  proportions(margin = c(1,3)) |&gt;
+  as.data.frame(responseName = &quot;Prop&quot;)</code></pre>
+<pre class="r"><code>library(ggplot2)
+ggplot(v_df) +
+  aes(x = year, y = Prop, fill = sex) +
+  geom_col(position = &quot;dodge&quot;) +
+  facet_wrap(~ response)</code></pre>
+<p><img src="lrm_files/figure-html/unnamed-chunk-36-1.png" width="672" /></p>
 </div>
 <div id="references" class="section level3 unnumbered">
 <h3 class="unnumbered">References</h3>

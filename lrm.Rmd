@@ -238,14 +238,133 @@ The `Vietnam` data frame in the vcdExtra package [@vcdextra] contains survey dat
 - C: De-escalate military activity, stop bombing and begin negotiations
 - D: Withdraw military forces Immediately
 
-These are ordered levels, moving from very pro-war (A) to anti-war (D). Fit a proportional odds model to the data, modeling `response` as a function of `sex`, `year`, and their interaction. [@friendly2016] (`year` is an integer ranging from 1 - 5, corresponding to Freshmen, Sophomore, Junior, Senior, and Grad student.) 
+These are ordered levels, moving from very pro-war (A) to anti-war (D). Fit a proportional odds model to the data, modeling `response` as a function of `sex`, `year`, and their interaction. [@friendly2016] This will require using the `weights` argument with the `polr()` function. [@MASS]
 
 ```{r}
 library(vcdExtra)
 data("Vietnam")
+head(Vietnam)
 ```
 
-This will require using the `weights` argument with the `polr()` function. [@MASS]
+Let's label the response variable for ease of interpretation. We can do this with the `factor()` function. In addition we set `ordered = TRUE` to tell R this is an ordered categorical variable.
+
+```{r}
+Vietnam$response <- factor(Vietnam$response, 
+                           labels = c("Defeat", "Maintain",
+                                      "De-escalate", "Withdraw"),
+                           ordered = TRUE)
+```
+
+The year variable is an integer ranging from 1 - 5, corresponding to Freshmen, Sophomore, Junior, Senior, and Grad student. Let's format that as a factor as well.
+
+```{r}
+Vietnam$year <- factor(Vietnam$year, labels = c("Freshman", "Sophmore",
+                                                "Junior", "Senior", 
+                                                "Grad student"))
+```
+
+The Freq column counts the number of responses for each combination of sex, year and response. We can use the `xtabs()` function to create tables to help us summarize and understand the data. One table of interest is simply a breakdown of responses across all years and both sexes. The syntax `Freq ~ response` says "sum Freq by response levels". We see most students preferred to De-escalate.
+
+```{r}
+xtabs(Freq ~ response, data = Vietnam)
+```
+
+We can pipe the table into `proportions()` to see a breakdown of proportions.
+
+```{r}
+xtabs(Freq ~ response, data = Vietnam) |>
+  proportions() |>
+  round(2)
+```
+
+Counts of sexes and years can be obtained this way as well. Over 80% of respondents were Male.
+
+```{r}
+xtabs(Freq ~ sex, data = Vietnam) |>
+  proportions() |>
+  round(2)
+```
+
+A majority of respondents were Grad students.
+
+```{r}
+xtabs(Freq ~ year, data = Vietnam) |>
+  proportions() |>
+  round(2)
+```
+
+How do proportions of war response compare by sex? We can add the sex variable to the `xtabs()` syntax to get this information. Notice when we pipe into `proportions()` we enter `margin = 1` to specify we want proportions calculated along the first dimension which is the rows. This shows that both sexes prefer to De-escalate, but that females prefer to De-escalate by a much wider margin.
+
+```{r}
+xtabs(Freq ~ sex + response, data = Vietnam) |>
+  proportions(margin = 1) |>
+  round(2)
+
+```
+
+Does preference depend on year of the student? Again we can modify the `xtabs()` syntax as we did before. This time we see a slight preference for Defeat in the Freshman group and a large proportion preferring Withdraw in the Grad student group. 
+
+```{r}
+xtabs(Freq ~ year + response, data = Vietnam) |>
+  proportions(margin = 1) |>
+  round(2)
+```
+
+Finally we might want to look at response by year and sex. Below we only look at the Freshman group using the `subset` argument. Setting `drop.unused.levels = TRUE` ensures we only see results for Freshman. We see Males prefer "Defeat" while Females prefer "De-escalate".
+
+```{r}
+xtabs(Freq ~ sex + response + year, data = Vietnam, 
+      subset = year == "Freshman", 
+      drop.unused.levels = TRUE) |>
+  proportions(margin = 1) |>
+  round(2)
+
+```
+
+We can create a data frame for visualizing the response proportions for all years by removing the `subset` argument from `xtabs()` and setting `margin = c(1,3)` in the call to `proportions()`. This calculates proportions along the rows (1) within each year (3). Piping into `as.data.frame(responseName = "Prop")` returns a data frame with a column called "Prop" containing the proportions for each male/female response within each year group. 
+
+```{r}
+v_df <- xtabs(Freq ~ sex + response + year, data = Vietnam) |>
+  proportions(margin = c(1,3)) |>
+  as.data.frame(responseName = "Prop")
+```
+
+We can now visualize the data using the ggplot2 package [@ggplot2]. Since the proportions have already been calculated we use the `geom_col()` function to create the bar charts. We see that Males preferred Defeat over all year groups while Females preferred De-escalate over all year groups. We also notice that as we move higher along the class groups, we see increasing support among Males for De-escalate and Withdraw policies.
+
+```{r}
+library(ggplot2)
+ggplot(v_df) +
+  aes(x = year, y = Prop, fill = sex) +
+  geom_col(position = "dodge") +
+  facet_wrap(~ response)
+```
+
+We now proceed to model response as a function of sex, year and their interaction. We use the `polr()` function [@MASS] to model response as a proportional odds logistic regression model.
+
+```{r}
+library(MASS)
+m <- polr(response ~ sex * year, data = Vietnam, weights = Freq)
+summary(m)
+```
+
+
+```{r}
+library(car)
+Anova(m)
+```
+
+
+```{r}
+library(ggeffects)
+ggeffect(m, terms = c("year", "sex")) |> plot()
+```
+
+```{r}
+library(emmeans)
+emmeans(m, ~ year|response, mode = "prob") |>
+  plot()
+```
 
 
 ### References
+
