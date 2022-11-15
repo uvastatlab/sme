@@ -740,7 +740,7 @@ were:</p>
 <li>B: Maintain the present policy</li>
 <li>C: De-escalate military activity, stop bombing and begin
 negotiations</li>
-<li>D: Withdraw military forces Immediately</li>
+<li>D: Withdraw military forces immediately</li>
 </ul>
 <p>These are ordered levels, moving from very pro-war (A) to anti-war
 (D). Fit a proportional odds model to the data, modeling
@@ -749,6 +749,11 @@ negotiations</li>
 class="citation">(Friendly and Meyer 2016)</span> This will require
 using the <code>weights</code> argument with the <code>polr()</code>
 function. <span class="citation">(Venables and Ripley 2002)</span></p>
+<p>We load the vcdExtra package and then load the Vietnam data using the
+<code>data()</code> function. The <code>head()</code> function returns
+the first 6 rows of the data frame and shows the data structured as
+<em>one row per variable combination</em>. For example, the first row
+shows 13 Freshman Females selected response A.</p>
 <pre class="r"><code>library(vcdExtra)
 data(&quot;Vietnam&quot;)
 head(Vietnam)</code></pre>
@@ -770,7 +775,7 @@ variable.</p>
 <p>The year variable is an integer ranging from 1 - 5, corresponding to
 Freshmen, Sophomore, Junior, Senior, and Grad student. Let’s format that
 as a factor as well.</p>
-<pre class="r"><code>Vietnam$year &lt;- factor(Vietnam$year, labels = c(&quot;Freshman&quot;, &quot;Sophmore&quot;,
+<pre class="r"><code>Vietnam$year &lt;- factor(Vietnam$year, labels = c(&quot;Freshman&quot;, &quot;Sophomore&quot;,
                                                 &quot;Junior&quot;, &quot;Senior&quot;, 
                                                 &quot;Grad student&quot;))</code></pre>
 <p>The Freq column counts the number of responses for each combination
@@ -784,7 +789,8 @@ response levels”. We see most students preferred to De-escalate.</p>
 ##      Defeat    Maintain De-escalate    Withdraw 
 ##         801         738        1319         289</code></pre>
 <p>We can pipe the table into <code>proportions()</code> to see a
-breakdown of proportions.</p>
+breakdown of proportions. The proportion preferring De-escalation is
+0.42, or 42 percent.</p>
 <pre class="r"><code>xtabs(Freq ~ response, data = Vietnam) |&gt;
   proportions() |&gt;
   round(2)</code></pre>
@@ -804,15 +810,15 @@ of respondents were Male.</p>
   proportions() |&gt;
   round(2)</code></pre>
 <pre><code>## year
-##     Freshman     Sophmore       Junior       Senior Grad student 
+##     Freshman    Sophomore       Junior       Senior Grad student 
 ##         0.16         0.16         0.19         0.18         0.31</code></pre>
 <p>How do proportions of war response compare by sex? We can add the sex
 variable to the <code>xtabs()</code> syntax to get this information.
 Notice when we pipe into <code>proportions()</code> we enter
 <code>margin = 1</code> to specify we want proportions calculated along
-the first dimension which is the rows. This shows that both sexes prefer
-to De-escalate, but that females prefer to De-escalate by a much wider
-margin.</p>
+the first dimension, which is the rows. This shows that both sexes
+prefer to De-escalate, but that females prefer to De-escalate by a much
+wider margin.</p>
 <pre class="r"><code>xtabs(Freq ~ sex + response, data = Vietnam) |&gt;
   proportions(margin = 1) |&gt;
   round(2)</code></pre>
@@ -830,7 +836,7 @@ proportion preferring Withdraw in the Grad student group.</p>
 <pre><code>##               response
 ## year           Defeat Maintain De-escalate Withdraw
 ##   Freshman       0.36     0.26        0.33     0.04
-##   Sophmore       0.34     0.27        0.34     0.05
+##   Sophomore      0.34     0.27        0.34     0.05
 ##   Junior         0.26     0.25        0.44     0.06
 ##   Senior         0.28     0.20        0.43     0.09
 ##   Grad student   0.14     0.21        0.49     0.16</code></pre>
@@ -850,15 +856,387 @@ results for Freshman. We see Males prefer “Defeat” while Females prefer
 ## sex      Defeat Maintain De-escalate Withdraw
 ##   Female   0.17     0.25        0.52     0.06
 ##   Male     0.40     0.26        0.30     0.04</code></pre>
+<p>We can create a data frame for visualizing the response proportions
+for all years by removing the <code>subset</code> argument from
+<code>xtabs()</code> and setting <code>margin = c(1,3)</code> in the
+call to <code>proportions()</code>. This calculates proportions along
+the rows (1st dimension) within each year (3rd dimension). Piping into
+<code>as.data.frame(responseName = "Prop")</code> returns a data frame
+with a column called “Prop” containing the proportions for each
+male/female response within each year group.</p>
 <pre class="r"><code>v_df &lt;- xtabs(Freq ~ sex + response + year, data = Vietnam) |&gt;
   proportions(margin = c(1,3)) |&gt;
   as.data.frame(responseName = &quot;Prop&quot;)</code></pre>
+<p>We can now visualize the data using the ggplot2 package <span
+class="citation">(Wickham 2016)</span>. Since the proportions have
+already been calculated we use the <code>geom_col()</code> function to
+create the bar charts. We see that Males preferred Defeat over all year
+groups while Females preferred De-escalate over all year groups. We also
+notice that as we move higher along the class groups, we see increasing
+support among Males for De-escalate and Withdraw policies.</p>
 <pre class="r"><code>library(ggplot2)
 ggplot(v_df) +
   aes(x = year, y = Prop, fill = sex) +
   geom_col(position = &quot;dodge&quot;) +
   facet_wrap(~ response)</code></pre>
 <p><img src="lrm_files/figure-html/unnamed-chunk-36-1.png" width="672" /></p>
+<p>We now proceed to model the ordered categorical response as a
+function of sex, year and their interaction. We use the
+<code>polr()</code> function <span class="citation">(Venables and Ripley
+2002)</span> to fit a <em>proportional odds logistic regression
+model</em>. This models the <em>cumulative probabilities</em> of the
+ordered response. We call the model <em>proportional</em> because we
+assume the predictor effects are the same, <em>no matter what cumulative
+probability we consider</em>. For example, we assume the effect of sex
+is the same whether we consider <span
+class="math inline">\(P(\text{response} &lt;= \text{Maintain})\)</span>
+or <span class="math inline">\(P(\text{response} &lt;=
+\text{De-escalate})\)</span>.</p>
+<p>In the <code>polr()</code> code below we specify
+<code>weights = Freq</code> since our data is structured as one row per
+sex/year combination instead of one row per response, and we set
+<code>Hess = TRUE</code> to compute standard errors.</p>
+<pre class="r"><code>library(MASS)
+m &lt;- polr(response ~ sex * year, data = Vietnam, 
+          weights = Freq, Hess = TRUE)
+summary(m)</code></pre>
+<pre><code>## Call:
+## polr(formula = response ~ sex * year, data = Vietnam, weights = Freq, 
+##     Hess = TRUE)
+## 
+## Coefficients:
+##                            Value Std. Error t value
+## sexMale                  -0.9778     0.2238 -4.3699
+## yearSophomore             0.3859     0.3264  1.1821
+## yearJunior                0.2422     0.2477  0.9774
+## yearSenior                0.3399     0.2744  1.2384
+## yearGrad student          0.4832     0.2444  1.9770
+## sexMale:yearSophomore    -0.2659     0.3488 -0.7622
+## sexMale:yearJunior        0.1568     0.2769  0.5664
+## sexMale:yearSenior        0.2400     0.3009  0.7976
+## sexMale:yearGrad student  0.8577     0.2685  3.1946
+## 
+## Intercepts:
+##                      Value   Std. Error t value
+## Defeat|Maintain      -1.3930  0.2077    -6.7069
+## Maintain|De-escalate -0.2897  0.2059    -1.4068
+## De-escalate|Withdraw  2.1677  0.2121    10.2215
+## 
+## Residual Deviance: 7736.07 
+## AIC: 7760.07</code></pre>
+<p>In the output we get one set of coefficients for the predictors but
+<em>three intercepts</em> reflecting the three possible cumulative
+probabilities:</p>
+<ol style="list-style-type: decimal">
+<li><span class="math inline">\(P(\text{response} &lt;=
+\text{Defeat})\)</span></li>
+<li><span class="math inline">\(P(\text{response} &lt;=
+\text{Maintain})\)</span></li>
+<li><span class="math inline">\(P(\text{response} &lt;=
+\text{De-escalate})\)</span></li>
+</ol>
+<p>By definition, the <span class="math inline">\(P(\text{response}
+&lt;= \text{Withdraw}) = 1\)</span> and thus is not modeled.</p>
+<p>We can interpret the coefficients as <em>odds ratios</em> by
+exponentiating them. An odds ratio is the odds of one event divided by
+the odds of another event. Odds are defined as <span
+class="math inline">\(p/(1-p)\)</span>, where p is the probability of an
+event. For example, if the probability a Freshman Male prefers Defeat is
+0.40, and the probability a Freshman Female prefers Defeat is 0.20, then
+the odds ratio is calculated as follows:</p>
+<p><span class="math display">\[\frac{0.40/(1 - 0.40)}{0.20/(1 - 0.20)}
+= \frac{0.67}{0.25} = 2.67 \]</span></p>
+<p>This says the odds that a Freshman Male prefers Defeat is about 2.67
+times the the odds that a Freshman Female prefers Defeat.</p>
+<p>The model output shows coefficients for Males and all years except
+Freshman. This implies the reference levels are Female and Freshman.
+Therefore exponentiating the coefficients will produce an odds ratio in
+comparison to Freshman Females. But since we have interactions, the main
+effect coefficients only apply to certain groups. For example:</p>
+<ul>
+<li>the Male coefficient of -0.9778 applies to Freshman Males.</li>
+<li>The Sophomore coefficient of 0.3859 applies to Sophomore
+Females.</li>
+<li>The effect of Sophomore Males is the sum of the Male coefficient,
+the Sophomore coefficient, and their interaction: -0.9778 + 0.3859 +
+-0.2659 = -0.8578.</li>
+</ul>
+<p>Exponentiating the Male coefficient returns an odds ratio of 0.376.
+This says the odds of Freshman Males preferring a certain response or
+lower is 1 - 0.376 = 0.624, or about 62% lower than the odds of Freshman
+Females preferring a certain response or lower.</p>
+<pre class="r"><code>exp(coef(m)[&quot;sexMale&quot;])</code></pre>
+<pre><code>##   sexMale 
+## 0.3761472</code></pre>
+<p>Remember, we’re modeling cumulative probabilities, hence the
+expression, “some response or lower”. Also the coefficients apply to all
+responses. It doesn’t matter whether we’re considering “Maintain or
+lower” or “De-escalate or lower.”</p>
+<p>Likewise, exponentiating the sum of coefficients for Sophomore Males,
+-0.8578, returns an odds ratio of 0.424. This says the odds of Sophomore
+Males preferring a certain response or lower is 1 - 0.424 = 0.576, or
+about 58% lower than the odds of Freshman Females preferring a certain
+response or lower.</p>
+<pre class="r"><code>vars &lt;- c(&quot;sexMale&quot;, &quot;yearSophomore&quot;, &quot;sexMale:yearSophomore&quot;)
+exp(sum(coef(m)[vars]))</code></pre>
+<pre><code>## [1] 0.4241029</code></pre>
+<p>We can also use the model to get estimated cumulative probabilities
+instead of odds rations. For example, what is the estimated cumulative
+probability that Grad Student Females prefer De-escalate or lower? Using
+our model coefficients, we can write this out as follows:</p>
+<p><span class="math display">\[P(\text{response} &lt;=
+\text{De-escalate}) = 2.1677 - 0.4832\]</span> We subtract instead of
+add coefficients because that’s how proportional odds models are
+defined. (see <code>?polr</code>) We use the
+<code>De-escalate|Withdraw</code> intercept because we’re interested in
+the cumulative probability of De-escalate or lower. The result, 1.6845
+is on the log odds scale. If we take the inverse logit using the
+<code>plogis()</code> function we get the result as a cumulative
+probability. (Note: we can use the <code>zeta</code> component of the
+model object to extract the intercepts.) The estimated cumulative
+probability is about 0.84. We estimate a high probability of a Grad
+student Female of preferring De-escalate or lower.</p>
+<pre class="r"><code>plogis(m$zeta[&quot;De-escalate|Withdraw&quot;] - coef(m)[&quot;yearGrad student&quot;])</code></pre>
+<pre><code>## De-escalate|Withdraw 
+##            0.8434966</code></pre>
+<p>To estimate the probability of preferring just the De-escalate
+response, we need to subtract the cumulative probability of preferring
+Maintain or lower. The result is about 0.53.</p>
+<pre class="r"><code>plogis(m$zeta[&quot;De-escalate|Withdraw&quot;] - coef(m)[&quot;yearGrad student&quot;]) - 
+  plogis(m$zeta[&quot;Maintain|De-escalate&quot;] - coef(m)[&quot;yearGrad student&quot;])</code></pre>
+<pre><code>## De-escalate|Withdraw 
+##            0.5276468</code></pre>
+<p>We can get the specific probabilities directly by using the
+<code>predict()</code> function with <code>type = "probs"</code>.</p>
+<pre class="r"><code>predict(m, newdata = data.frame(sex = &quot;Female&quot;, year = &quot;Grad student&quot;), 
+        type = &quot;probs&quot; )</code></pre>
+<pre><code>##      Defeat    Maintain De-escalate    Withdraw 
+##   0.1328289   0.1830209   0.5276468   0.1565034</code></pre>
+<p>If we pipe the result into <code>cumsum()</code> we get the estimated
+probability for De-escalate that we calculated “by hand” above.</p>
+<pre class="r"><code>predict(m, newdata = data.frame(sex = &quot;Female&quot;, year = &quot;Grad student&quot;), 
+        type = &quot;probs&quot; ) |&gt;
+  cumsum()</code></pre>
+<pre><code>##      Defeat    Maintain De-escalate    Withdraw 
+##   0.1328289   0.3158498   0.8434966   1.0000000</code></pre>
+<p>Recall the assumption of proportional odds. Is this assumption
+plausible? There a few ways we can assess this. One is to carry out a
+test for proportional odds <span class="citation">(Brant 1990)</span>
+using the <code>poTest()</code> function in the car package <span
+class="citation">(Fox and Weisberg 2019)</span>. For this to work we
+need to refit our model using data structured with one row <em>per
+response</em>. To convert our data frame to this structure, we can use
+the <code>uncount()</code> function from the tidyr package <span
+class="citation">(Wickham and Girlich 2022)</span>. We then refit our
+model using <code>polr()</code> but this time without the weights
+argument. Notice the model estimated coefficients are identical to the
+first model.</p>
+<pre class="r"><code>library(tidyr)
+Vietnam2 &lt;- uncount(Vietnam, weights = Freq)
+m2 &lt;- polr(response ~ sex * year, data = Vietnam2, Hess = TRUE)
+all.equal(coef(m2), coef(m))</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<p>Now we carry out the proportional odds test. A low p-value is
+evidence against the null hypothesis that the proportional odds
+assumption is satisfied. Several tests are computed:</p>
+<ul>
+<li>an overall test of the proportional odds assumption (in the first
+row)</li>
+<li>separate tests for each coefficient (all remaining rows)</li>
+</ul>
+<p>The first column contains the coefficients for the <code>polr</code>
+model. The second, third, and fourth rows contain coefficients for a
+series of binary logistic regression models. For example, the second
+column shows the coefficients for modeling the binary response of Not
+Defeat vs Defeat.<a href="#fn1" class="footnote-ref"
+id="fnref1"><sup>1</sup></a> The general idea is that the coefficients
+should be roughly the same across the three binary logistic regressions
+and similar to the <code>polr</code> coefficient.</p>
+<p>The Overall test is rejected but the tests for each predictor appear
+fine. This seems contradictory. However, Brant (1990) notes that “even
+if the [overall] test is sufficiently powerful to detect departures from
+proportionality, inspection of the individual components of the test
+statistic…may provide no clear indication as to the nature of the
+discrepancy detected.” (page 1173)</p>
+<pre class="r"><code>library(car)
+poTest(m2)</code></pre>
+<pre><code>## 
+## Tests for Proportional Odds
+## polr(formula = response ~ sex * year, data = Vietnam2, Hess = TRUE)
+## 
+##                          b[polr] b[&gt;Defeat] b[&gt;Maintain] b[&gt;De-escalate]
+## Overall                                                                 
+## sexMale                  -0.9778    -1.1828      -1.0170         -0.5446
+## yearSophomore             0.3859     0.6033       0.6035         -0.0843
+## yearJunior                0.2422     0.2918       0.4808         -0.6224
+## yearSenior                0.3399     0.4098       0.3821          0.4590
+## yearGrad student          0.4832     0.5856       0.7792          0.0731
+## sexMale:yearSophomore    -0.2659    -0.4477      -0.5336          0.2980
+## sexMale:yearJunior        0.1568     0.1280      -0.1247          1.1952
+## sexMale:yearSenior        0.2400    -0.0169       0.2471          0.4849
+## sexMale:yearGrad student  0.8577     0.7278       0.3995          1.6275
+##                          Chisquare df Pr(&gt;Chisq)    
+## Overall                      72.82 18    1.5e-08 ***
+## sexMale                       1.23  2       0.54    
+## yearSophomore                 0.77  2       0.68    
+## yearJunior                    3.25  2       0.20    
+## yearSenior                    0.02  2       0.99    
+## yearGrad student              1.83  2       0.40    
+## sexMale:yearSophomore         0.98  2       0.61    
+## sexMale:yearJunior            3.88  2       0.14    
+## sexMale:yearSenior            0.62  2       0.73    
+## sexMale:yearGrad student      4.58  2       0.10    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p>Another approach to inspecting the proportional odds assumption is to
+look at the <em>differences of logits</em> of the cumulative
+probabilities using the relative frequencies, as described in Venables
+and Ripley (2002, page 204). To begin we calculate cumulative
+probabilities for each of the 10 possible variable combinations.</p>
+<pre class="r"><code>vietnam.cpr &lt;- xtabs(Freq ~ sex + year + response, data = Vietnam) |&gt;
+  ftable(col.vars = &quot;response&quot;) |&gt;
+  proportions(margin = 1) |&gt;
+  apply(MARGIN = 1, cumsum)
+vietnam.cpr</code></pre>
+<pre><code>##              sex_year
+## response      Female_Freshman Female_Sophomore Female_Junior Female_Senior
+##   Defeat            0.1688312             0.10     0.1317365     0.1188119
+##   Maintain          0.4155844             0.28     0.3053892     0.3267327
+##   De-escalate       0.9350649             0.94     0.9640719     0.9009901
+##   Withdraw          1.0000000             1.00     1.0000000     1.0000000
+##              sex_year
+## response      Female_Grad student Male_Freshman Male_Sophomore Male_Junior
+##   Defeat                0.1016043     0.3986333      0.3619910   0.3034483
+##   Maintain              0.2459893     0.6628702      0.6470588   0.5793103
+##   De-escalate           0.9304813     0.9612756      0.9524887   0.9333333
+##   Withdraw              1.0000000     1.0000000      1.0000000   1.0000000
+##              sex_year
+## response      Male_Senior Male_Grad student
+##   Defeat        0.3091684         0.1512821
+##   Maintain      0.5117271         0.3769231
+##   De-escalate   0.9061834         0.8192308
+##   Withdraw      1.0000000         1.0000000</code></pre>
+<p>Next we use the <code>qlogis()</code> function to convert to logits
+(ie, log odds) and then take the difference in logits between row 2
+(Maintain) and row 1 (Defeat). We would like these differences to be
+about the same. The mean difference is about 1.14 and there doesn’t seem
+to be too much deviance from it, with minimum of 0.85 and maximum of
+1.28.</p>
+<pre class="r"><code>vietnam.ld &lt;- qlogis(vietnam.cpr[2,]) - qlogis(vietnam.cpr[1,])
+sort(vietnam.ld)</code></pre>
+<pre><code>##         Male_Senior Female_Grad student       Female_Junior       Male_Freshman 
+##           0.8509267           1.0594065           1.0639267           1.0872741 
+##         Male_Junior      Male_Sophomore   Male_Grad student    Female_Sophomore 
+##           1.1508738           1.1728691           1.2219521           1.2527630 
+##     Female_Freshman       Female_Senior 
+##           1.2530071           1.2807296</code></pre>
+<pre class="r"><code>summary(vietnam.ld)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##  0.8509  1.0698  1.1619  1.1394  1.2451  1.2807</code></pre>
+<p>We can also take the difference in logits between row 3 (De-Escalate)
+and row 2 (Maintain). The mean is about 2.9 with a bit more
+variability.</p>
+<pre class="r"><code>vietnam.ld &lt;- qlogis(vietnam.cpr[3,]) - qlogis(vietnam.cpr[2,])
+sort(vietnam.ld)</code></pre>
+<pre><code>##   Male_Grad student         Male_Senior         Male_Junior      Male_Sophomore 
+##            2.013773            2.220983            2.319114            2.391975 
+##       Male_Freshman       Female_Senior     Female_Freshman    Female_Sophomore 
+##            2.535681            2.931275            3.008155            3.695997 
+## Female_Grad student       Female_Junior 
+##            3.714224            4.111409</code></pre>
+<pre class="r"><code>summary(vietnam.ld)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##   2.014   2.337   2.733   2.894   3.524   4.111</code></pre>
+<p>It appears the proportional odds assumption is mostly safe, though
+the Overall test result from the <code>poTest()</code> function may
+cause concern. However, Frank Harrell notes in his article, <a
+href="https://www.fharrell.com/post/po/">Violation of Proportional Odds
+is Not Fatal</a> that “violations of the proportional odds assumption
+usually do not prevent the proportional odds model from providing a
+reasonable treatment effect assessment.” We’ll continue with the
+proportional odds model but note that the <code>clm()</code> function in
+the ordinal package and the <code>vglm()</code> function in the VGAM
+package allow the fitting of <em>partial</em> proportional odds models.
+These models allow certain predictors to have multiple coefficients
+corresponding to the multiple intercepts. That is, the proportional odds
+assumption is relaxed for specified predictors.</p>
+<p>As with any model that contains interactions, we should assess if the
+interaction is necessary. We can do this with the <code>Anova()</code>
+function from the car package. The large Chi-square statistic provides
+good evidence that the interaction is worth keeping in the model. This
+means the effect of year and sex on the survey response depend on each
+other.</p>
+<pre class="r"><code>Anova(m)</code></pre>
+<pre><code>## Analysis of Deviance Table (Type II tests)
+## 
+## Response: response
+##          LR Chisq Df Pr(&gt;Chisq)    
+## sex        58.672  1  1.863e-14 ***
+## year      181.554  4  &lt; 2.2e-16 ***
+## sex:year   20.986  4  0.0003187 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p>How do year and sex interact? We can explore this with an effect
+display. One way to create an effect display is to use the
+<code>ggeffect()</code> function in the ggeffects package <span
+class="citation">(Lüdecke 2018)</span>. Below we generate a plot with
+year on the x-axis and sex as a grouping variable. We see the
+interaction most vividly in Males in the Defeat and De-escalate
+responses. The probability of responding “Defeat” <em>decreases</em> as
+year increases, but the probability of responding “De-escalate”
+<em>increases</em> as year increases.</p>
+<pre class="r"><code>library(ggeffects)
+ggeffect(m, terms = c(&quot;year&quot;, &quot;sex&quot;)) |&gt; plot()</code></pre>
+<p><img src="lrm_files/figure-html/unnamed-chunk-50-1.png" width="672" /></p>
+<p>Looking at the effect display we see varying differences in predicted
+probabilities between Males and Females. How can we quantify those
+differences? One way is using the emmeans package <span
+class="citation">(Lenth 2022)</span>. Below we calculate pairwise
+differences between Males and Females conditioned on year and response.
+Setting <code>mode = "prob"</code> returns probabilities and piping into
+<code>confint()</code> returns confidence intervals on the differences.
+Finally we use the emmeans <code>subset()</code> method to see
+differences in predicted probabilities for just response = 3, which
+corresponds to “De-escalate”. We see differences greater than 0 for all
+years except Grad student.</p>
+<pre class="r"><code>library(emmeans)
+emm_polr &lt;- emmeans(m, pairwise ~ sex | year * response, mode = &quot;prob&quot;) |&gt;
+  confint()
+subset(emm_polr$contrasts, response == 3)</code></pre>
+<pre><code>##         contrast         year response   estimate         SE  df   asymp.LCL
+## 11 Female - Male     Freshman        3 0.17604124 0.03557084 Inf  0.10632367
+## 12 Female - Male    Sophomore        3 0.20327726 0.03084429 Inf  0.14282358
+## 13 Female - Male       Junior        3 0.13473409 0.02405512 Inf  0.08758691
+## 14 Female - Male       Senior        3 0.11230869 0.02554212 Inf  0.06224706
+## 15 Female - Male Grad student        3 0.01129815 0.01319687 Inf -0.01456723
+##     asymp.UCL
+## 11 0.24575880
+## 12 0.26373095
+## 13 0.18188126
+## 14 0.16237032
+## 15 0.03716353</code></pre>
+<p>In fact there appears to be no real difference between Males and
+Females when they’re Grad Students. Notice below we set
+<code>at = list(year = "Grad student")</code> to restrict our
+comparisons to just Grad students.</p>
+<pre class="r"><code>emm_polr2 &lt;- emmeans(m, pairwise ~ sex | year * response, mode = &quot;prob&quot;, 
+                    at = list(year = &quot;Grad student&quot;)) 
+emm_polr2$contrasts</code></pre>
+<pre><code>## year = Grad student, response = 1:
+##  contrast      estimate     SE  df z.ratio p.value
+##  Female - Male  -0.0145 0.0175 Inf  -0.827  0.4080
+## 
+## year = Grad student, response = 2:
+##  contrast      estimate     SE  df z.ratio p.value
+##  Female - Male  -0.0121 0.0150 Inf  -0.805  0.4210
+## 
+## year = Grad student, response = 3:
+##  contrast      estimate     SE  df z.ratio p.value
+##  Female - Male   0.0113 0.0132 Inf   0.856  0.3919
+## 
+## year = Grad student, response = 4:
+##  contrast      estimate     SE  df z.ratio p.value
+##  Female - Male   0.0152 0.0193 Inf   0.788  0.4308</code></pre>
 </div>
 <div id="references" class="section level3 unnumbered">
 <h3 class="unnumbered">References</h3>
@@ -867,6 +1245,11 @@ ggplot(v_df) +
 Bilder, Christopher R., and Thomas M. Loughin. 2015. <em>Analysis of
 Categorical Data in <span>R</span></em>. Boca Raton: <span>CRC</span>
 Press.
+</div>
+<div id="ref-brant" class="csl-entry">
+Brant, Rollin. 1990. <span>“Assessing Proportionality in the
+Proportional Odds Model for Ordinal Logistic Regression,”</span>
+1171–78.
 </div>
 <div id="ref-ISwR" class="csl-entry">
 Dalgaard, Peter. 2020. <em>ISwR: Introductory Statistics with
@@ -883,6 +1266,12 @@ Faraway, Julian. 2016. <em>Faraway: Functions and Datasets for Books by
 Julian Faraway</em>. <a
 href="https://CRAN.R-project.org/package=faraway">https://CRAN.R-project.org/package=faraway</a>.
 </div>
+<div id="ref-car" class="csl-entry">
+Fox, John, and Sanford Weisberg. 2019. <em>An <span>R</span> Companion
+to Applied Regression</em>. Third. Thousand Oaks <span>CA</span>: Sage.
+<a
+href="https://socialsciences.mcmaster.ca/jfox/Books/Companion/">https://socialsciences.mcmaster.ca/jfox/Books/Companion/</a>.
+</div>
 <div id="ref-vcdextra" class="csl-entry">
 Friendly, Michael. 2022. <em>vcdExtra: ’Vcd’ Extensions and
 Additions</em>. <a
@@ -896,12 +1285,41 @@ with <span>R</span></em>. Boca Raton: <span>CRC</span> Press.
 Hosmer, David W., and Stanley Lemeshow. 2013. <em>Applied Logistic
 Regression, 3rd Ed.</em> New York: Wiley.
 </div>
+<div id="ref-emmeans" class="csl-entry">
+Lenth, Russell V. 2022. <em>Emmeans: Estimated Marginal Means, Aka
+Least-Squares Means</em>. <a
+href="https://CRAN.R-project.org/package=emmeans">https://CRAN.R-project.org/package=emmeans</a>.
+</div>
+<div id="ref-ggeffects" class="csl-entry">
+Lüdecke, Daniel. 2018. <span>“Ggeffects: Tidy Data Frames of Marginal
+Effects from Regression Models.”</span> <em>Journal of Open Source
+Software</em> 3 (26): 772. <a
+href="https://doi.org/10.21105/joss.00772">https://doi.org/10.21105/joss.00772</a>.
+</div>
 <div id="ref-MASS" class="csl-entry">
 Venables, W. N., and B. D. Ripley. 2002. <em>Modern Applied Statistics
 with s</em>. Fourth. New York: Springer. <a
 href="https://www.stats.ox.ac.uk/pub/MASS4/">https://www.stats.ox.ac.uk/pub/MASS4/</a>.
 </div>
+<div id="ref-ggplot2" class="csl-entry">
+Wickham, Hadley. 2016. <em>Ggplot2: Elegant Graphics for Data
+Analysis</em>. Springer-Verlag New York. <a
+href="https://ggplot2.tidyverse.org">https://ggplot2.tidyverse.org</a>.
 </div>
+<div id="ref-tidyr" class="csl-entry">
+Wickham, Hadley, and Maximilian Girlich. 2022. <em>Tidyr: Tidy Messy
+Data</em>. <a
+href="https://CRAN.R-project.org/package=tidyr">https://CRAN.R-project.org/package=tidyr</a>.
+</div>
+</div>
+</div>
+<div class="footnotes footnotes-end-of-document">
+<hr />
+<ol>
+<li id="fn1"><p>You can verify this by running
+<code>glm(response != "Defeat" ~  sex * year, data = Vietnam2, family = binomial)</code><a
+href="#fnref1" class="footnote-back">↩︎</a></p></li>
+</ol>
 </div>
 
 

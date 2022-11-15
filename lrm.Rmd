@@ -236,9 +236,11 @@ The `Vietnam` data frame in the vcdExtra package [@vcdextra] contains survey dat
 - A: Defeat North Vietnam by widespread bombing and land invasion
 - B: Maintain the present policy
 - C: De-escalate military activity, stop bombing and begin negotiations
-- D: Withdraw military forces Immediately
+- D: Withdraw military forces immediately
 
 These are ordered levels, moving from very pro-war (A) to anti-war (D). Fit a proportional odds model to the data, modeling `response` as a function of `sex`, `year`, and their interaction. [@friendly2016] This will require using the `weights` argument with the `polr()` function. [@MASS]
+
+We load the vcdExtra package and then load the Vietnam data using the `data()` function. The `head()` function returns the first 6 rows of the data frame and shows the data structured as _one row per variable combination_. For example, the first row shows 13 Freshman Females selected response A.
 
 ```{r}
 library(vcdExtra)
@@ -269,7 +271,7 @@ The Freq column counts the number of responses for each combination of sex, year
 xtabs(Freq ~ response, data = Vietnam)
 ```
 
-We can pipe the table into `proportions()` to see a breakdown of proportions.
+We can pipe the table into `proportions()` to see a breakdown of proportions. The proportion preferring De-escalation is 0.42, or 42 percent.
 
 ```{r}
 xtabs(Freq ~ response, data = Vietnam) |>
@@ -358,26 +360,34 @@ In the output we get one set of coefficients for the predictors but _three inter
 
 By definition, the $P(\text{response} <= \text{Withdraw}) = 1$ and thus is not modeled.
 
-We can interpret the coefficients as odds ratios by exponentiating them. But since we have interactions, the main effect coefficients only apply to certain groups. For example: 
+We can interpret the coefficients as _odds ratios_ by exponentiating them. An odds ratio is the odds of one event divided by the odds of another event. Odds are defined as $p/(1-p)$, where p is the probability of an event. For example, if the probability a Freshman Male prefers Defeat is 0.40, and the probability a Freshman Female prefers Defeat is 0.20, then the odds ratio is calculated as follows:
+
+$$\frac{0.40/(1 - 0.40)}{0.20/(1 - 0.20)} = \frac{0.67}{0.25} = 2.67 $$
+
+This says the odds that a Freshman Male prefers Defeat is about 2.67 times the the odds that a Freshman Female prefers Defeat.
+
+The model output shows coefficients for Males and all years except Freshman. This implies the reference levels are Female and Freshman. Therefore exponentiating the coefficients will produce an odds ratio in comparison to Freshman Females. But since we have interactions, the main effect coefficients only apply to certain groups. For example: 
 
 - the Male coefficient of -0.9778 applies to Freshman Males. 
-- The Sophomore coefficient of 0.3859 applies Freshman Females. 
+- The Sophomore coefficient of 0.3859 applies to Sophomore Females. 
 - The effect of Sophomore Males is the sum of the Male coefficient, the Sophomore coefficient, and their interaction: -0.9778 + 0.3859 + -0.2659 = -0.8578.
 
-Exponentiating the Male coefficient returns an odds ratio of 0.376. This says the odds of Freshman Males preferring, say, De-escalate or lower is (1 - 0.376 = 0.624) about 62% lower than the odds of Freshman Females preferring De-escalate or lower.
+Exponentiating the Male coefficient returns an odds ratio of 0.376. This says the odds of Freshman Males preferring a certain response or lower is 1 - 0.376 = 0.624, or about 62% lower than the odds of Freshman Females preferring a certain response or lower. 
 
 ```{r}
 exp(coef(m)["sexMale"])
 ```
 
-Likewise, exponentiating the sum of coefficients for Sophomore Males, -0.8578, returns an odds ratio of 0.424. This says the odds of Sophomore Males preferring, say, De-escalate or lower is (1 - 0.424 = 0.576) about 58% lower than the odds of Sophomore Females preferring De-escalate or lower.
+Remember, we're modeling cumulative probabilities, hence the expression, "some response or lower". Also the coefficients apply to all responses. It doesn't matter whether we're considering "Maintain or lower" or "De-escalate or lower."
+
+Likewise, exponentiating the sum of coefficients for Sophomore Males, -0.8578, returns an odds ratio of 0.424. This says the odds of Sophomore Males preferring a certain response or lower is 1 - 0.424 = 0.576, or about 58% lower than the odds of Freshman Females preferring a certain response or lower.
 
 ```{r}
 vars <- c("sexMale", "yearSophomore", "sexMale:yearSophomore")
 exp(sum(coef(m)[vars]))
 ```
 
-We can also use the model to get estimated cumulative probabilities. For example, what is the estimated cumulative probability that Grad Student Females prefer De-escalate or lower? Using our model coefficients, we can write this out as follows:
+We can also use the model to get estimated cumulative probabilities instead of odds rations. For example, what is the estimated cumulative probability that Grad Student Females prefer De-escalate or lower? Using our model coefficients, we can write this out as follows:
 
 $$P(\text{response} <= \text{De-escalate}) = 2.1677 - 0.4832$$
 We subtract instead of add coefficients because that's how proportional odds models are defined. (see `?polr`) We use the `De-escalate|Withdraw` intercept because we're interested in the cumulative probability of De-escalate or lower. The result, 1.6845 is on the log odds scale. If we take the inverse logit using the `plogis()` function we get the result as a cumulative probability. (Note: we can use the `zeta` component of the model object to extract the intercepts.) The estimated cumulative probability is about 0.84. We estimate a high probability of a Grad student Female of preferring De-escalate or lower. 
@@ -408,7 +418,7 @@ predict(m, newdata = data.frame(sex = "Female", year = "Grad student"),
   cumsum()
 ```
 
-Recall the assumption of proportional odds. Is this assumption plausible? There a few ways we can assess this. One is to carry out a test for proportional odds using the `poTest()` function in the car package [@car]. For this to work we need to refit our model using data structured with one row _per response_. To convert our data frame, we use the `uncount()` function from the tidyr package [@tidyr]. We then refit our model using `polr()` but this time without the weights argument. Notice the model estimated coefficients are identical to the first model. 
+Recall the assumption of proportional odds. Is this assumption plausible? There a few ways we can assess this. One is to carry out a test for proportional odds [@brant] using the `poTest()` function in the car package [@car]. For this to work we need to refit our model using data structured with one row _per response_. To convert our data frame to this structure, we can use the `uncount()` function from the tidyr package [@tidyr]. We then refit our model using `polr()` but this time without the weights argument. Notice the model estimated coefficients are identical to the first model. 
 
 ```{r}
 library(tidyr)
@@ -417,45 +427,79 @@ m2 <- polr(response ~ sex * year, data = Vietnam2, Hess = TRUE)
 all.equal(coef(m2), coef(m))
 ```
 
-Now we carry out the proportional odds test. A low p-value is evidence against the hypothesis of proportional odds. The Overall test is rejected but the tests for each predictor appear fine. 
+Now we carry out the proportional odds test. A low p-value is evidence against the null hypothesis that the proportional odds assumption is satisfied. Several tests are computed:
+
+- an overall test of the proportional odds assumption (in the first row)
+- separate tests for each coefficient (all remaining rows)
+
+The first column contains the coefficients for the `polr` model. The second, third, and fourth rows contain coefficients for a series of binary logistic regression models. For example, the second column shows the coefficients for modeling the binary response of Not Defeat vs Defeat.^[You can verify this by running `glm(response != "Defeat" ~  sex * year, data = Vietnam2, family = binomial)`] The general idea is that the coefficients should be roughly the same across the three binary logistic regressions and similar to the `polr` coefficient.
+
+The Overall test is rejected but the tests for each predictor appear fine. This seems contradictory. However, Brant (1990) notes that "even if the [overall] test is sufficiently powerful to detect departures from proportionality, inspection of the individual components of the test statistic...may provide no clear indication as to the nature of the discrepancy detected." (page 1173)
 
 ```{r}
 library(car)
 poTest(m2)
 ```
 
-Checking proportional odds as described in MASS (p. 204)
+Another approach to inspecting the proportional odds assumption is to look at the _differences of logits_ of the cumulative probabilities using the relative frequencies, as described in Venables and Ripley (2002, page 204). To begin we calculate cumulative probabilities for each of the 10 possible variable combinations.
+
 
 ```{r}
 vietnam.cpr <- xtabs(Freq ~ sex + year + response, data = Vietnam) |>
   ftable(col.vars = "response") |>
   proportions(margin = 1) |>
   apply(MARGIN = 1, cumsum)
-vietnam.ld <- qlogis(vietnam.cpr[2,]) - qlogis(vietnam.cpr[1,])
-sort(vietnam.ld)
-mean(vietnam.ld)
+vietnam.cpr
 ```
+
+Next we use the `qlogis()` function to convert to logits (ie, log odds) and then take the difference in logits between row 2 (Maintain) and row 1 (Defeat). We would like these differences to be about the same. The mean difference is about 1.14 and there doesn't seem to be too much deviance from it, with minimum of 0.85 and maximum of 1.28.
 
 ```{r}
-plot(vietnam.ld, ylim = c(0,3))
+vietnam.ld <- qlogis(vietnam.cpr[2,]) - qlogis(vietnam.cpr[1,])
+sort(vietnam.ld)
+summary(vietnam.ld)
 ```
 
+We can also take the difference in logits between row 3 (De-Escalate) and row 2 (Maintain). The mean is about 2.9 with a bit more variability. 
+
+```{r}
+vietnam.ld <- qlogis(vietnam.cpr[3,]) - qlogis(vietnam.cpr[2,])
+sort(vietnam.ld)
+summary(vietnam.ld)
+```
+
+It appears the proportional odds assumption is mostly safe, though the Overall test result from the `poTest()` function may cause concern. However, Frank Harrell notes in his article, [Violation of Proportional Odds is Not Fatal](https://www.fharrell.com/post/po/) that "violations of the proportional odds assumption usually do not prevent the proportional odds model from providing a reasonable treatment effect assessment." We'll continue with the proportional odds model but note that the `clm()` function in the ordinal package and the `vglm()` function in the VGAM package allow the fitting of _partial_ proportional odds models. These models allow certain predictors to have multiple coefficients corresponding to the multiple intercepts. That is, the proportional odds assumption is relaxed for specified predictors.
+
+As with any model that contains interactions, we should assess if the interaction is necessary. We can do this with the `Anova()` function from the car package. The large Chi-square statistic provides good evidence that the interaction is worth keeping in the model. This means the effect of year and sex on the survey response depend on each other. 
 
 ```{r}
 Anova(m)
 ```
 
+How do year and sex interact? We can explore this with an effect display. One way to create an effect display is to use the `ggeffect()` function in the ggeffects package [@ggeffects]. Below we generate a plot with year on the x-axis and sex as a grouping variable. We see the interaction most vividly in Males in the Defeat and De-escalate responses. The probability of responding "Defeat" _decreases_ as year increases, but the probability of responding "De-escalate" _increases_ as year increases. 
 
 ```{r}
 library(ggeffects)
 ggeffect(m, terms = c("year", "sex")) |> plot()
 ```
 
+Looking at the effect display we see varying differences in predicted probabilities between Males and Females. How can we quantify those differences? One way is using the emmeans package [@emmeans]. Below we calculate pairwise differences between Males and Females conditioned on year and response. Setting `mode = "prob"` returns probabilities and piping into `confint()` returns confidence intervals on the differences. Finally we use the emmeans `subset()` method to see differences in predicted probabilities for just response = 3, which corresponds to "De-escalate". We see differences greater than 0 for all years except Grad student.
+
 ```{r}
 library(emmeans)
-emmeans(m, ~ year|response, mode = "prob") |>
-  plot()
+emm_polr <- emmeans(m, pairwise ~ sex | year * response, mode = "prob") |>
+  confint()
+subset(emm_polr$contrasts, response == 3)
 ```
+
+In fact there appears to be no real difference between Males and Females when they're Grad Students. Notice below we set `at = list(year = "Grad student")` to restrict our comparisons to just Grad students.
+
+```{r}
+emm_polr2 <- emmeans(m, pairwise ~ sex | year * response, mode = "prob", 
+                    at = list(year = "Grad student")) 
+emm_polr2$contrasts
+```
+
 
 
 ### References
