@@ -879,7 +879,7 @@ ggplot(v_df) +
   aes(x = year, y = Prop, fill = sex) +
   geom_col(position = &quot;dodge&quot;) +
   facet_wrap(~ response)</code></pre>
-<p><img src="lrm_files/figure-html/unnamed-chunk-36-1.png" width="672" /></p>
+<p><img src="lrm_files/figure-html/unnamed-chunk-36-1.png" width="912" /></p>
 <p>We now proceed to model the ordered categorical response as a
 function of sex, year and their interaction. We use the
 <code>polr()</code> function <span class="citation">(Venables and Ripley
@@ -1186,8 +1186,9 @@ responses. The probability of responding “Defeat” <em>decreases</em> as
 year increases, but the probability of responding “De-escalate”
 <em>increases</em> as year increases.</p>
 <pre class="r"><code>library(ggeffects)
-ggeffect(m, terms = c(&quot;year&quot;, &quot;sex&quot;)) |&gt; plot()</code></pre>
-<p><img src="lrm_files/figure-html/unnamed-chunk-50-1.png" width="672" /></p>
+ggeffect(m, terms = c(&quot;year&quot;, &quot;sex&quot;)) |&gt; 
+  plot()</code></pre>
+<p><img src="lrm_files/figure-html/unnamed-chunk-50-1.png" width="912" /></p>
 <p>Looking at the effect display we see varying differences in predicted
 probabilities between Males and Females. How can we quantify those
 differences? One way is using the emmeans package <span

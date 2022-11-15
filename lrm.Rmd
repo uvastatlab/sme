@@ -333,7 +333,7 @@ v_df <- xtabs(Freq ~ sex + response + year, data = Vietnam) |>
 
 We can now visualize the data using the ggplot2 package [@ggplot2]. Since the proportions have already been calculated we use the `geom_col()` function to create the bar charts. We see that Males preferred Defeat over all year groups while Females preferred De-escalate over all year groups. We also notice that as we move higher along the class groups, we see increasing support among Males for De-escalate and Withdraw policies.
 
-```{r}
+```{r fig.width=9.5}
 library(ggplot2)
 ggplot(v_df) +
   aes(x = year, y = Prop, fill = sex) +
@@ -478,9 +478,10 @@ Anova(m)
 
 How do year and sex interact? We can explore this with an effect display. One way to create an effect display is to use the `ggeffect()` function in the ggeffects package [@ggeffects]. Below we generate a plot with year on the x-axis and sex as a grouping variable. We see the interaction most vividly in Males in the Defeat and De-escalate responses. The probability of responding "Defeat" _decreases_ as year increases, but the probability of responding "De-escalate" _increases_ as year increases. 
 
-```{r}
+```{r fig.width=9.5}
 library(ggeffects)
-ggeffect(m, terms = c("year", "sex")) |> plot()
+ggeffect(m, terms = c("year", "sex")) |> 
+  plot()
 ```
 
 Looking at the effect display we see varying differences in predicted probabilities between Males and Females. How can we quantify those differences? One way is using the emmeans package [@emmeans]. Below we calculate pairwise differences between Males and Females conditioned on year and response. Setting `mode = "prob"` returns probabilities and piping into `confint()` returns confidence intervals on the differences. Finally we use the emmeans `subset()` method to see differences in predicted probabilities for just response = 3, which corresponds to "De-escalate". We see differences greater than 0 for all years except Grad student.
