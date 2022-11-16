@@ -312,12 +312,11 @@ xtabs(Freq ~ year + response, data = Vietnam) |>
   round(2)
 ```
 
-Finally we might want to look at response by year and sex. Below we only look at the Freshman group using the `subset` argument. Setting `drop.unused.levels = TRUE` ensures we only see results for Freshman. We see Males prefer "Defeat" while Females prefer "De-escalate".
+We might want to look at response by year and sex. Below we only look at the Freshman group using the `subset` argument. We see Males prefer "Defeat" while Females prefer "De-escalate".
 
 ```{r}
-xtabs(Freq ~ sex + response + year, data = Vietnam, 
-      subset = year == "Freshman", 
-      drop.unused.levels = TRUE) |>
+xtabs(Freq ~ sex + response, data = Vietnam, 
+      subset = year == "Freshman") |>
   proportions(margin = 1) |>
   round(2)
 
@@ -343,6 +342,16 @@ ggplot(v_df) +
 
 We now proceed to model the ordered categorical response as a function of sex, year and their interaction. We use the `polr()` function [@MASS] to fit a _proportional odds logistic regression model_. This models the _cumulative probabilities_ of the ordered response. We call the model _proportional_ because we assume the predictor effects are the same, _no matter what cumulative probability we consider_. For example, we assume the effect of sex is the same whether we consider $P(\text{response} <= \text{Maintain})$ or $P(\text{response} <= \text{De-escalate})$.
 
+Before we begin, let's look at the observed _cumulative proportions_ of response by year and sex. We do this by applying the `cumsum()` function along the rows for each year using `apply(MARGIN = c(1,3), cumsum)`. Notice we need to use the `aperm()` function (Array Transposition) to rotate the results. The vector `c(2, 1, 3)` says to put the columns (2) on the rows, the rows (1) on the columns, and leave the strata (3) as is. We see, for example, that 0.42 of Freshman Females prefer "Maintain" or "Defeat", while 0.66 of Freshman Males prefer "Maintain" or "Defeat". The final columns are all 1s because all students prefer "Withdraw" or a lower response. It is these cumulative proportions that we will model.
+
+```{r}
+xtabs(Freq ~ sex + response + year, data = Vietnam) |>
+  proportions(margin = c(1, 3)) |>
+  apply(MARGIN = c(1, 3), cumsum) |> 
+  round(2) |>
+  aperm(c(2, 1, 3))
+```
+
 In the `polr()` code below we specify `weights = Freq` since our data is structured as one row per sex/year combination instead of one row per response, and we set `Hess = TRUE` to compute standard errors. 
 
 ```{r}
@@ -358,7 +367,7 @@ In the output we get one set of coefficients for the predictors but _three inter
 2. $P(\text{response} <= \text{Maintain})$
 3. $P(\text{response} <= \text{De-escalate})$
 
-By definition, the $P(\text{response} <= \text{Withdraw}) = 1$ and thus is not modeled.
+By definition, the $P(\text{response} <= \text{Withdraw}) = 1$, so it is not modeled.
 
 We can interpret the coefficients as _odds ratios_ by exponentiating them. An odds ratio is the odds of one event divided by the odds of another event. Odds are defined as $p/(1-p)$, where p is the probability of an event. For example, if the probability a Freshman Male prefers Defeat is 0.40, and the probability a Freshman Female prefers Defeat is 0.20, then the odds ratio is calculated as follows:
 
@@ -387,7 +396,7 @@ vars <- c("sexMale", "yearSophomore", "sexMale:yearSophomore")
 exp(sum(coef(m)[vars]))
 ```
 
-We can also use the model to get estimated cumulative probabilities instead of odds rations. For example, what is the estimated cumulative probability that Grad Student Females prefer De-escalate or lower? Using our model coefficients, we can write this out as follows:
+We can also use the model to get estimated cumulative probabilities instead of odds ratios. For example, what is the estimated cumulative probability that Grad Student Females prefer De-escalate or lower? Using our model coefficients, we can write this out as follows:
 
 $$P(\text{response} <= \text{De-escalate}) = 2.1677 - 0.4832$$
 We subtract instead of add coefficients because that's how proportional odds models are defined. (see `?polr`) We use the `De-escalate|Withdraw` intercept because we're interested in the cumulative probability of De-escalate or lower. The result, 1.6845 is on the log odds scale. If we take the inverse logit using the `plogis()` function we get the result as a cumulative probability. (Note: we can use the `zeta` component of the model object to extract the intercepts.) The estimated cumulative probability is about 0.84. We estimate a high probability of a Grad student Female of preferring De-escalate or lower. 
@@ -441,7 +450,7 @@ library(car)
 poTest(m2)
 ```
 
-Another approach to inspecting the proportional odds assumption is to look at the _differences of logits_ of the cumulative probabilities using the relative frequencies, as described in Venables and Ripley (2002, page 204). To begin we calculate cumulative probabilities for each of the 10 possible variable combinations.
+Another approach to inspecting the proportional odds assumption is to look at the _differences of logits_ of the cumulative probabilities using the relative frequencies, as described in Venables and Ripley (2002, page 204). To begin we calculate the observed cumulative proportions for each of the 10 possible variable combinations. The result below shows cumulative proportions for the 10 combinations in the columns. 
 
 
 ```{r}

@@ -13,7 +13,7 @@
 
 <title>Logistic Regression Models</title>
 
-<script src="site_libs/header-attrs-2.17/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.18/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
@@ -840,19 +840,14 @@ proportion preferring Withdraw in the Grad student group.</p>
 ##   Junior         0.26     0.25        0.44     0.06
 ##   Senior         0.28     0.20        0.43     0.09
 ##   Grad student   0.14     0.21        0.49     0.16</code></pre>
-<p>Finally we might want to look at response by year and sex. Below we
-only look at the Freshman group using the <code>subset</code> argument.
-Setting <code>drop.unused.levels = TRUE</code> ensures we only see
-results for Freshman. We see Males prefer “Defeat” while Females prefer
-“De-escalate”.</p>
-<pre class="r"><code>xtabs(Freq ~ sex + response + year, data = Vietnam, 
-      subset = year == &quot;Freshman&quot;, 
-      drop.unused.levels = TRUE) |&gt;
+<p>We might want to look at response by year and sex. Below we only look
+at the Freshman group using the <code>subset</code> argument. We see
+Males prefer “Defeat” while Females prefer “De-escalate”.</p>
+<pre class="r"><code>xtabs(Freq ~ sex + response, data = Vietnam, 
+      subset = year == &quot;Freshman&quot;) |&gt;
   proportions(margin = 1) |&gt;
   round(2)</code></pre>
-<pre><code>## , , year = Freshman
-## 
-##         response
+<pre><code>##         response
 ## sex      Defeat Maintain De-escalate Withdraw
 ##   Female   0.17     0.25        0.52     0.06
 ##   Male     0.40     0.26        0.30     0.04</code></pre>
@@ -892,6 +887,57 @@ is the same whether we consider <span
 class="math inline">\(P(\text{response} &lt;= \text{Maintain})\)</span>
 or <span class="math inline">\(P(\text{response} &lt;=
 \text{De-escalate})\)</span>.</p>
+<p>Before we begin, let’s look at the observed <em>cumulative
+proportions</em> of response by year and sex. We do this by applying the
+<code>cumsum()</code> function along the rows for each year using
+<code>apply(MARGIN = c(1,3), cumsum)</code>. Notice we need to use the
+<code>aperm()</code> function (Array Transposition) to rotate the
+results. The vector <code>c(2, 1, 3)</code> says to put the columns (2)
+on the rows, the rows (1) on the columns, and leave the strata (3) as
+is. We see, for example, that 0.42 of Freshman Females prefer “Maintain”
+or “Defeat”, while 0.66 of Freshman Males prefer “Maintain” or “Defeat”.
+The final columns are all 1s because all students prefer “Withdraw” or a
+lower response. It is these cumulative proportions that we will
+model.</p>
+<pre class="r"><code>xtabs(Freq ~ sex + response + year, data = Vietnam) |&gt;
+  proportions(margin = c(1, 3)) |&gt;
+  apply(MARGIN = c(1, 3), cumsum) |&gt; 
+  round(2) |&gt;
+  aperm(c(2, 1, 3))</code></pre>
+<pre><code>## , , year = Freshman
+## 
+##         response
+## sex      Defeat Maintain De-escalate Withdraw
+##   Female   0.17     0.42        0.94        1
+##   Male     0.40     0.66        0.96        1
+## 
+## , , year = Sophomore
+## 
+##         response
+## sex      Defeat Maintain De-escalate Withdraw
+##   Female   0.10     0.28        0.94        1
+##   Male     0.36     0.65        0.95        1
+## 
+## , , year = Junior
+## 
+##         response
+## sex      Defeat Maintain De-escalate Withdraw
+##   Female   0.13     0.31        0.96        1
+##   Male     0.30     0.58        0.93        1
+## 
+## , , year = Senior
+## 
+##         response
+## sex      Defeat Maintain De-escalate Withdraw
+##   Female   0.12     0.33        0.90        1
+##   Male     0.31     0.51        0.91        1
+## 
+## , , year = Grad student
+## 
+##         response
+## sex      Defeat Maintain De-escalate Withdraw
+##   Female   0.10     0.25        0.93        1
+##   Male     0.15     0.38        0.82        1</code></pre>
 <p>In the <code>polr()</code> code below we specify
 <code>weights = Freq</code> since our data is structured as one row per
 sex/year combination instead of one row per response, and we set
@@ -936,7 +982,7 @@ probabilities:</p>
 \text{De-escalate})\)</span></li>
 </ol>
 <p>By definition, the <span class="math inline">\(P(\text{response}
-&lt;= \text{Withdraw}) = 1\)</span> and thus is not modeled.</p>
+&lt;= \text{Withdraw}) = 1\)</span>, so it is not modeled.</p>
 <p>We can interpret the coefficients as <em>odds ratios</em> by
 exponentiating them. An odds ratio is the odds of one event divided by
 the odds of another event. Odds are defined as <span
@@ -981,7 +1027,7 @@ response or lower.</p>
 exp(sum(coef(m)[vars]))</code></pre>
 <pre><code>## [1] 0.4241029</code></pre>
 <p>We can also use the model to get estimated cumulative probabilities
-instead of odds rations. For example, what is the estimated cumulative
+instead of odds ratios. For example, what is the estimated cumulative
 probability that Grad Student Females prefer De-escalate or lower? Using
 our model coefficients, we can write this out as follows:</p>
 <p><span class="math display">\[P(\text{response} &lt;=
@@ -1091,8 +1137,10 @@ poTest(m2)</code></pre>
 <p>Another approach to inspecting the proportional odds assumption is to
 look at the <em>differences of logits</em> of the cumulative
 probabilities using the relative frequencies, as described in Venables
-and Ripley (2002, page 204). To begin we calculate cumulative
-probabilities for each of the 10 possible variable combinations.</p>
+and Ripley (2002, page 204). To begin we calculate the observed
+cumulative proportions for each of the 10 possible variable
+combinations. The result below shows cumulative proportions for the 10
+combinations in the columns.</p>
 <pre class="r"><code>vietnam.cpr &lt;- xtabs(Freq ~ sex + year + response, data = Vietnam) |&gt;
   ftable(col.vars = &quot;response&quot;) |&gt;
   proportions(margin = 1) |&gt;
@@ -1188,7 +1236,7 @@ year increases, but the probability of responding “De-escalate”
 <pre class="r"><code>library(ggeffects)
 ggeffect(m, terms = c(&quot;year&quot;, &quot;sex&quot;)) |&gt; 
   plot()</code></pre>
-<p><img src="lrm_files/figure-html/unnamed-chunk-50-1.png" width="912" /></p>
+<p><img src="lrm_files/figure-html/unnamed-chunk-51-1.png" width="912" /></p>
 <p>Looking at the effect display we see varying differences in predicted
 probabilities between Males and Females. How can we quantify those
 differences? One way is using the emmeans package <span
