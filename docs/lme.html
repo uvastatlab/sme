@@ -600,10 +600,14 @@ Measurements</em> <span class="citation">(Davis 2002)</span> presents
 data on plasma inorganic phosphate measurements for 33 subjects (13
 controls, 20 obese) after an <a
 href="https://www.mayoclinic.org/tests-procedures/glucose-challenge-test/about/pac-20394277">oral
-glucose challenge</a>. Measurements were taken at baseline (t0), 0.5, 1,
-1.5, 2, and 3 hours. Of interest is how the plasma inorganic phosphate
-levels differ over time and between the two groups. Fit a sensible
-linear mixed-effect model to investigate these questions.</p>
+glucose challenge</a>. Measurements were taken at baseline, 0.5, 1, 1.5,
+2, and 3 hours. Of interest is how the plasma inorganic phosphate levels
+differ over time and between the two groups. We present two models to
+investigate these questions:</p>
+<ul>
+<li>a linear mixed-effect model</li>
+<li>a generalized least squares model</li>
+</ul>
 <p>Below we read in the data, provide columns names, and format the
 group column as a factor. Notice the data is in “wide” format, with one
 record per subject.</p>
@@ -638,20 +642,16 @@ phosphateL &lt;- pivot_longer(phosphate, cols = t0:t3,
                            names_prefix = &quot;t&quot;,
                            names_transform = list(time = as.numeric),
                            values_to = &quot;level&quot;)
-head(phosphateL, n = 10)</code></pre>
-<pre><code>## # A tibble: 10 × 4
-##    group      id  time level
-##    &lt;fct&gt;   &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt;
-##  1 control     1   0     4.3
-##  2 control     1   0.5   3.3
-##  3 control     1   1     3  
-##  4 control     1   1.5   2.6
-##  5 control     1   2     2.2
-##  6 control     1   3     2.5
-##  7 control     2   0     3.7
-##  8 control     2   0.5   2.6
-##  9 control     2   1     2.6
-## 10 control     2   1.5   1.9</code></pre>
+head(phosphateL)</code></pre>
+<pre><code>## # A tibble: 6 × 4
+##   group      id  time level
+##   &lt;fct&gt;   &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 control     1   0     4.3
+## 2 control     1   0.5   3.3
+## 3 control     1   1     3  
+## 4 control     1   1.5   2.6
+## 5 control     1   2     2.2
+## 6 control     1   3     2.5</code></pre>
 <p>Now we can use the ggplot2 package <span class="citation">(Wickham
 2016)</span> to visualize the data. Below we plot the phosphate
 trajectories over time for each subject, with the plots broken out by
@@ -681,145 +681,208 @@ by hour 3 they seem about the same.</p>
 <p>In both plots it appears the effect of time differs between groups.
 Therefore it seems reasonable to allow these terms to interact in our
 mixed-effect model.</p>
-<p>To fit our models we will use the <code>lmer()</code> function in the
-lme4 package <span class="citation">(Bates et al. 2015)</span>. Below we
-model level as a function of time, group, and their interaction. We also
-fit a random intercept for each subject using the syntax
-<code>(1|id:group)</code>. The reason we use <code>id:group</code> is
-because the id numbers are nested within each group. This creates 33
-separate id groups. The summary output shows a fairly large t value for
-the interaction, which provides good evidence that the interaction is
-reliably negative. (The summary output for lmer models does not display
-p values since the null distributions for the t values are unknown for
-unbalanced data.)</p>
+<p>Before we begin modeling, we make the baseline phosphate measure a
+predictor since a baseline is technically not a response to any
+treatment or condition. <span class="citation">(Senn 2006)</span> To do
+this we use <code>pivot_longer()</code> again but this time without
+selecting column t0. When finished we rename the column as “baseline”.
+We now have a column called “baseline” in our long data frame that we
+will use as a predictor in our models.</p>
+<pre class="r"><code>phosphateL &lt;- pivot_longer(phosphate, cols = t0.5:t3, 
+                           names_to = &quot;time&quot;, 
+                           names_prefix = &quot;t&quot;,
+                           names_transform = list(time = as.numeric),
+                           values_to = &quot;level&quot;)
+names(phosphateL)[3] &lt;- &quot;baseline&quot;
+head(phosphateL)</code></pre>
+<pre><code>## # A tibble: 6 × 5
+##   group      id baseline  time level
+##   &lt;fct&gt;   &lt;int&gt;    &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 control     1      4.3   0.5   3.3
+## 2 control     1      4.3   1     3  
+## 3 control     1      4.3   1.5   2.6
+## 4 control     1      4.3   2     2.2
+## 5 control     1      4.3   3     2.5
+## 6 control     2      3.7   0.5   2.6</code></pre>
+<p>Finally we renumber group ids in the obese group to pick up where the
+control group id numbering leaves off at 13.</p>
+<pre class="r"><code>phosphateL$id &lt;- ifelse(phosphateL$group == &quot;obese&quot;, 
+                        phosphateL$id + 13, 
+                        phosphateL$id)</code></pre>
+<div id="linear-mixed-effect-model" class="section level4">
+<h4>Linear Mixed-Effect Model</h4>
+<p>To fit our mixed-effect models we will use the <code>lmer()</code>
+function in the lme4 package <span class="citation">(Bates et al.
+2015)</span>. A mixed-effect model essentially allows us to fit separate
+models to each subject. We assume each subject exerts some <em>random
+effect</em> on certain model parameters. The most basic mixed-effect
+model is the random intercept model, where each subject receives their
+own intercept. This is the model we will fit.</p>
+<p>Below we model level as a function of baseline (t0), time, group, and
+the time:group interaction. We also fit a random intercept for each
+subject using the syntax <code>(1|id)</code>. The summary output shows a
+fairly large t value for the interaction, which provides good evidence
+that the interaction is reliably negative. (The summary output for lmer
+models does not display p values since the null distributions for the t
+values are unknown for unbalanced data in mixed-effect model
+framework.)</p>
 <pre class="r"><code>library(lme4)
-m &lt;- lmer(level ~ time * group + (1|id:group), data = phosphateL)
+m &lt;- lmer(level ~ baseline + time * group + (1|id), data = phosphateL)
 summary(m, corr = FALSE)</code></pre>
 <pre><code>## Linear mixed model fit by REML. t-tests use Satterthwaite&#39;s method [
 ## lmerModLmerTest]
-## Formula: level ~ time * group + (1 | id:group)
+## Formula: level ~ baseline + time * group + (1 | id)
 ##    Data: phosphateL
 ## 
-## REML criterion at convergence: 389.6
+## REML criterion at convergence: 269.1
 ## 
 ## Scaled residuals: 
 ##      Min       1Q   Median       3Q      Max 
-## -2.34465 -0.60816 -0.08669  0.56476  2.25586 
+## -2.33236 -0.58048 -0.00628  0.57732  2.45665 
 ## 
 ## Random effects:
 ##  Groups   Name        Variance Std.Dev.
-##  id:group (Intercept) 0.2762   0.5255  
-##  Residual             0.2934   0.5416  
-## Number of obs: 198, groups:  id:group, 33
+##  id       (Intercept) 0.05685  0.2384  
+##  Residual             0.23781  0.4877  
+## Number of obs: 165, groups:  id, 33
 ## 
 ## Fixed effects:
-##                 Estimate Std. Error       df t value Pr(&gt;|t|)    
-## (Intercept)       3.4201     0.1785  49.6845  19.154  &lt; 2e-16 ***
-## time             -0.1776     0.0622 163.0000  -2.855 0.004863 ** 
-## groupobese        0.8819     0.2294  49.6845   3.845 0.000344 ***
-## time:groupobese  -0.2364     0.0799 163.0000  -2.959 0.003546 ** 
+##                  Estimate Std. Error        df t value Pr(&gt;|t|)    
+## (Intercept)       0.02284    0.37509  36.14284   0.061    0.952    
+## baseline          0.68366    0.08465  30.00000   8.076 5.15e-09 ***
+## time              0.11310    0.07031 130.00000   1.608    0.110    
+## groupobese        0.97883    0.18844 120.25872   5.194 8.49e-07 ***
+## time:groupobese  -0.42850    0.09032 130.00000  -4.744 5.43e-06 ***
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<p>Before we use or interpret this model we should assess the residuals
+<p>If we view the coefficients we see each subject has their own model,
+but only the intercept varies between the subjects. Hence the reason we
+call this a random-intercept model.</p>
+<pre class="r"><code>head(coef(m)$id)</code></pre>
+<pre><code>##   (Intercept)  baseline      time groupobese time:groupobese
+## 1 -0.20776681 0.6836591 0.1130977  0.9788342      -0.4285031
+## 2 -0.02798001 0.6836591 0.1130977  0.9788342      -0.4285031
+## 3  0.11081072 0.6836591 0.1130977  0.9788342      -0.4285031
+## 4  0.18347980 0.6836591 0.1130977  0.9788342      -0.4285031
+## 5  0.11714532 0.6836591 0.1130977  0.9788342      -0.4285031
+## 6  0.04369291 0.6836591 0.1130977  0.9788342      -0.4285031</code></pre>
+<p>Before we use or interpret this model, we should assess the residuals
 vs fitted value plot. We can create this plot by simply calling
 <code>plot()</code> on the model object. We would like to see a uniform
 distribution of residuals hovering closely around 0. This plot looks OK
-until our fitted values exceed 4.0, at which point we begin to
-under-predict. Most of the residuals are positive in this range,
-indicating our model-fitted values are systematically smaller than what
-we observed.</p>
+for the most part.</p>
 <pre class="r"><code>plot(m)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
 <p>The model we fit assumes the effect of time is <em>linear</em>, and
 that the linear effect of time changes for each group. We can visualize
 the model using the ggeffects package <span class="citation">(Lüdecke
-2018)</span>. With the data added we can see that linear effects seem to
-simplistic.</p>
+2018)</span>. With the data added it seems like the linear effects may
+be too simplistic.</p>
 <pre class="r"><code>library(ggeffects)
 ggeffect(m, terms = c(&quot;time&quot;, &quot;group&quot;)) |&gt;
   plot(add.data = TRUE, jitter = 0)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-19-1.png" width="672" /></p>
 <p>Given our exploratory plots we may want to entertain a
 <em>non-linear</em> effect of time. One way to do this is with natural
 cubic splines. Using the splines package <span class="citation">(R Core
 Team 2022)</span>, we can specify that we want to allow the trajectory
-of time to change directions twice using the syntax
-<code>ns(time, df = 2)</code>. We skip summarizing the model and look at
-the residuals vs fitted value plot. This looks better than the previous
-plot, though it still exhibits some under-predicting in the higher end
-of the fitted values.</p>
+of time to change directions up to 3 times using the syntax
+<code>ns(time, df = 3)</code>. We skip summarizing the model and look at
+the residuals vs fitted value plot. This looks about the same as the
+previous plot but a careful look at the y axis reveals we have slightly
+smaller residuals.</p>
 <pre class="r"><code>library(splines)
-m2 &lt;- lmer(level ~ ns(time, df = 2) * group + (1|group:id), 
+m2 &lt;- lmer(level ~ baseline + ns(time, df = 3) * group + (1|id), 
            data = phosphateL)
 plot(m2)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-17-1.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-20-1.png" width="672" /></p>
+<p>We can also examine the distribution of residuals by time within each
+group using the syntax below. The plot looks pretty good. The residuals
+look evenly distributed and not too far from 0.</p>
+<pre class="r"><code>plot(m2, resid(.) ~ time | group)</code></pre>
+<p><img src="lme_files/figure-html/unnamed-chunk-21-1.png" width="672" /></p>
+<p>Just as with linear models, we assume errors for a mixed-effect model
+are drawn from a Normal distribution. A QQ plot helps us assess this
+assumption. For models fit with lme4 we need to use the
+<code>qqmath()</code> function from the lattice package <span
+class="citation">(Sarkar 2008)</span> to create a QQ plot. The plot
+below provides no reason for us to question this assumption.</p>
+<pre class="r"><code>lattice::qqmath(m2)</code></pre>
+<p><img src="lme_files/figure-html/unnamed-chunk-22-1.png" width="672" /></p>
 <p>We can compare the models’ AIC values to assess whether the more
-complicated model is better. Recall that lower AIC values suggest a
-model will perform better on out-of-sample data. It appears the model
-with non-linear effects is a good deal better than the model with linear
-effects. The df column refers to the number of parameters in the
-model.</p>
+complicated noon-linear model is better. Recall that lower AIC values
+suggest a model will perform better on out-of-sample data. It appears
+the model with non-linear effects is a good deal better than the model
+with linear effects. The df column refers to the number of parameters in
+the model.</p>
 <pre class="r"><code>AIC(m, m2)</code></pre>
 <pre><code>##    df      AIC
-## m   6 401.6025
-## m2  8 321.0661</code></pre>
-<p>The non-linear model is better than the original linear model. But is
-the non-linear model a <em>good</em> model? One way to assess this is to
-simulate data using the model and see how it compares to the original
-data. Below we use the <code>simulate()</code> function to simulate 50
-sets of phosphate values from our non-linear model. Next we plot a
-smooth histogram of the observed data. Then we loop through the
+## m   7 283.0897
+## m2 11 252.1101</code></pre>
+<p>The non-linear model seems to better than the original linear model.
+But is the non-linear model a <em>good</em> model? One way to assess
+this is to simulate data using the model and see how it compares to the
+original data. Below we use the <code>simulate()</code> function to
+simulate 50 sets of phosphate values from our non-linear model. Next we
+plot a smooth histogram of the observed data. Then we loop through the
 simulated data and plot a smooth histogram for each simulation. What we
 see is that our model is generating data that looks pretty similar to
-our original data. It’s not perfect, and we wouldn’t want it to be, but
-it looks good enough.</p>
+our original data, though it seems to be a little off in the 3 - 4
+range. It’s not perfect, and we wouldn’t want it to be, but it looks
+good enough.</p>
 <pre class="r"><code>sim1 &lt;- simulate(m2, nsim = 50)
 plot(density(phosphateL$level), ylim = c(0, 0.6))
 for(i in 1:50)lines(density(sim1[[i]]), col = &quot;grey90&quot;)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-19-1.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-24-1.png" width="672" /></p>
 <p>As before, let’s use ggeffects to visualize our model. We see the
 bend in our fitted lines due to our non-linear model.</p>
 <pre class="r"><code>ggeffect(m2, terms = c(&quot;time&quot;, &quot;group&quot;)) |&gt;
   plot(add.data = TRUE, jitter = 0)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-20-1.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-25-1.png" width="672" /></p>
 <p>Looking at the summary for model m2 reveals coefficients that are
 impossible to interpret. This is one of the drawbacks of models with
 non-linear effects. However we see under the Random effects section that
-there is more variation between subjects (0.54) than within subjects
-(0.42). This probably makes biological sense.</p>
+there is more variation within subjects (0.435) than between subjects
+(0.258).</p>
 <pre class="r"><code>summary(m2, corr = FALSE)</code></pre>
 <pre><code>## Linear mixed model fit by REML. t-tests use Satterthwaite&#39;s method [
 ## lmerModLmerTest]
-## Formula: level ~ ns(time, df = 2) * group + (1 | group:id)
+## Formula: level ~ baseline + ns(time, df = 3) * group + (1 | id)
 ##    Data: phosphateL
 ## 
-## REML criterion at convergence: 305.1
+## REML criterion at convergence: 230.1
 ## 
 ## Scaled residuals: 
-##     Min      1Q  Median      3Q     Max 
-## -2.3481 -0.5403  0.0777  0.5780  2.8434 
+##      Min       1Q   Median       3Q      Max 
+## -2.42067 -0.52371  0.07521  0.58973  2.49791 
 ## 
 ## Random effects:
 ##  Groups   Name        Variance Std.Dev.
-##  group:id (Intercept) 0.2953   0.5434  
-##  Residual             0.1787   0.4227  
-## Number of obs: 198, groups:  group:id, 33
+##  id       (Intercept) 0.06836  0.2615  
+##  Residual             0.18027  0.4246  
+## Number of obs: 165, groups:  id, 33
 ## 
 ## Fixed effects:
 ##                               Estimate Std. Error        df t value Pr(&gt;|t|)
-## (Intercept)                    3.97849    0.18217  53.50768  21.839  &lt; 2e-16
-## ns(time, df = 2)1             -2.20405    0.24410 161.00000  -9.029 5.08e-16
-## ns(time, df = 2)2              0.21989    0.13821 161.00000   1.591   0.1136
-## groupobese                     0.59564    0.23401  53.50768   2.545   0.0138
-## ns(time, df = 2)1:groupobese   0.03403    0.31355 161.00000   0.109   0.9137
-## ns(time, df = 2)2:groupobese  -0.90276    0.17753 161.00000  -5.085 1.01e-06
+## (Intercept)                    0.47602    0.37259  35.20730   1.278 0.209744
+## baseline                       0.68366    0.08465  30.00000   8.076 5.15e-09
+## ns(time, df = 3)1              0.14832    0.23792 126.00000   0.623 0.534155
+## ns(time, df = 3)2             -0.79764    0.28400 126.00000  -2.809 0.005770
+## ns(time, df = 3)3              0.61529    0.15111 126.00000   4.072 8.19e-05
+## groupobese                     0.56063    0.18006 108.99651   3.114 0.002361
+## ns(time, df = 3)1:groupobese  -1.15172    0.30561 126.00000  -3.769 0.000251
+## ns(time, df = 3)2:groupobese  -0.43565    0.36481 126.00000  -1.194 0.234648
+## ns(time, df = 3)3:groupobese  -1.14106    0.19411 126.00000  -5.878 3.48e-08
 ##                                 
-## (Intercept)                  ***
-## ns(time, df = 2)1            ***
-## ns(time, df = 2)2               
-## groupobese                   *  
-## ns(time, df = 2)1:groupobese    
-## ns(time, df = 2)2:groupobese ***
+## (Intercept)                     
+## baseline                     ***
+## ns(time, df = 3)1               
+## ns(time, df = 3)2            ** 
+## ns(time, df = 3)3            ***
+## groupobese                   ** 
+## ns(time, df = 3)1:groupobese ***
+## ns(time, df = 3)2:groupobese    
+## ns(time, df = 3)3:groupobese ***
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p>Judging from the effect display the interaction in the model is
@@ -832,10 +895,11 @@ Anova(m2)</code></pre>
 <pre><code>## Analysis of Deviance Table (Type II Wald chisquare tests)
 ## 
 ## Response: level
-##                           Chisq Df Pr(&gt;Chisq)    
-## ns(time, df = 2)       205.0647  2  &lt; 2.2e-16 ***
-## group                    7.7832  1   0.005273 ** 
-## ns(time, df = 2):group  26.8095  2  1.508e-06 ***
+##                          Chisq Df Pr(&gt;Chisq)    
+## baseline               65.2257  1  6.679e-16 ***
+## ns(time, df = 3)       52.0478  3  2.926e-11 ***
+## group                   5.8791  1    0.01532 *  
+## ns(time, df = 3):group 37.6901  3  3.287e-08 ***
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p>Since we have both non-linear effects and interactions, there is no
@@ -843,30 +907,164 @@ convenient interpretation of our model parameters. However we can use
 our model to make predictions at levels of interest and then compare the
 expected values. For example, what is the expected difference in
 phosphate values between control and obese subjects at 1 hour post
-glucose challenge? We can answer this using the emmeams package <span
-class="citation">(Lenth 2022)</span>. Below we specify we want to use m2
-and compare groups at time = 1, and then pipe into the
-<code>confint()</code> function for a 95% confidence interval on the
-difference. (We can disregard the note about interactions since we
-specified the time.) The output indicates an estimated difference of
-about -0.83 with a 95% CI of [-1.26, -0.40].</p>
+glucose challenge assuming a baseline value of 4? We can answer this
+using the emmeans package <span class="citation">(Lenth 2022)</span>.
+Below we specify we want to use model m2 and compare groups at time = 1
+and baseline = 4, and then pipe into the <code>confint()</code> function
+for a 95% confidence interval on the difference. (We can disregard the
+note about interactions since we specified the time.) The output
+indicates an estimated difference of about -0.825 with a 95% CI of
+[-1.15, -0.502].</p>
 <pre class="r"><code>library(emmeans)
-emmeans(m2, specs = pairwise ~ group, at = list(time = 1)) |&gt;
+emmeans(m2, specs = pairwise ~ group, 
+        at = list(time = 1, baseline = 4)) |&gt;
   confint()</code></pre>
 <pre><code>## $emmeans
-##  group   emmean    SE df lower.CL upper.CL
-##  control   2.88 0.164 36     2.55     3.21
-##  obese     3.71 0.132 36     3.44     3.98
+##  group   emmean    SE   df lower.CL upper.CL
+##  control   2.62 0.123 89.1     2.37     2.86
+##  obese     3.44 0.109 73.2     3.22     3.66
 ## 
 ## Degrees-of-freedom method: kenward-roger 
 ## Confidence level used: 0.95 
 ## 
 ## $contrasts
-##  contrast        estimate    SE df lower.CL upper.CL
-##  control - obese   -0.832 0.211 36    -1.26   -0.404
+##  contrast        estimate    SE   df lower.CL upper.CL
+##  control - obese   -0.825 0.162 84.1    -1.15   -0.502
 ## 
 ## Degrees-of-freedom method: kenward-roger 
 ## Confidence level used: 0.95</code></pre>
+</div>
+<div id="generalized-least-squares-model" class="section level4">
+<h4>Generalized Least Squares Model</h4>
+<p>Another approach to analyzing longitudinal data is via Generalized
+Least Squares <span class="citation">(J. C. Pinheiro and Bates
+2000)</span>. In this framework we do away with random effects and model
+<em>correlated</em> errors. The nlme package that comes with R <span
+class="citation">(J. Pinheiro, Bates, and R Core Team 2022)</span>
+provides the <code>gls()</code> function for this task along with a
+family of Correlation Structure Classes that allow us to model various
+correlation structures.</p>
+<p>To motivate the Generalized Least Squares approach, let’s ignore the
+grouping structure and fit a simple linear model using the
+<code>gls()</code> function.</p>
+<pre class="r"><code>library(nlme)
+m0 &lt;- gls(level ~ baseline + ns(time, df = 3) * group,
+          data = phosphateL)</code></pre>
+<p>A tool for investigating correlation of errors is the
+<em>semivariogram</em>. Below we use the <code>Variogram()</code>
+function from the nlme package and pipe the result into the
+<code>plot()</code> function. The arguments
+<code>form = ~ time | id</code> and <code>resType = "n"</code> says to
+look at the “normalized” residuals over time by id. In addition we
+specify <code>robust = TRUE</code> to reduce the influence of outliers.
+The increase in the semivariogram values over “distance” (ie, the
+positive slope) indicate the errors are correlated.</p>
+<pre class="r"><code>Variogram(m0, form = ~ time | id, resType = &quot;n&quot;, robust = TRUE) |&gt;
+  plot(span = 0.8)</code></pre>
+<p><img src="lme_files/figure-html/unnamed-chunk-30-1.png" width="672" /></p>
+<p>To help understand this, let’s extract the residuals from our simple
+linear model, and then apply the <code>acf()</code> function to the
+residuals by subject id. The <code>acf()</code> calculates
+autocorrelation at all possible lags. We then extract the
+autocorrelation at lag 1 and sort by absolute value. Notice that more
+than half the subjects have an autocorrelation at lag 1 greater than 0.2
+in absolute value.</p>
+<pre class="r"><code>r &lt;- residuals(m0)
+acf_out &lt;- tapply(r, phosphateL$id, acf, plot = FALSE)
+lag1 &lt;- sapply(acf_out, function(x)x[1,1][[&quot;acf&quot;]])
+sort(abs(lag1), decreasing = TRUE)</code></pre>
+<pre><code>##          25          21           2          26           1           7 
+## 0.801361725 0.587725363 0.563604248 0.502440393 0.455518346 0.448095309 
+##          27           6           5          32          10           9 
+## 0.435633772 0.410840501 0.404460291 0.399772731 0.394167189 0.388756500 
+##          22          12          11          18          13           3 
+## 0.354833082 0.346049406 0.320451014 0.318464311 0.291166337 0.245451863 
+##          16          19           8          31          20          17 
+## 0.236778098 0.185909622 0.160075193 0.155537263 0.124550755 0.106523920 
+##          24          30          33          28          23          14 
+## 0.095862449 0.092427943 0.061508257 0.053936246 0.042798894 0.039474101 
+##           4          29          15 
+## 0.029565145 0.010622626 0.002470783</code></pre>
+<p>Now we model this correlation using the <code>corCAR1()</code>
+correlation structure. This will estimate a single correlation parameter
+for the errors that will decrease exponentially with each lag. Notice
+the model has not changed. We’ve simply added the argument
+<code>correlation = corCAR1(form = ~ time | id)</code>.</p>
+<pre class="r"><code>m3 &lt;- gls(level ~ baseline + ns(time, df = 3) * group,
+          data = phosphateL,
+          correlation = corCAR1(form = ~ time | id))</code></pre>
+<p>Now the semivariogram shows no pattern, suggesting the model with the
+correlation structure is adequate.</p>
+<pre class="r"><code>Variogram(m3, form = ~ time | id, resType = &quot;n&quot;, robust = TRUE) |&gt;
+  plot(span = 0.8)</code></pre>
+<p><img src="lme_files/figure-html/unnamed-chunk-33-1.png" width="672" /></p>
+<p>In addition we can formally compare the models using the
+<code>anova()</code> function. The large test statistic and difference
+in AIC/BIC values provides strong evidence against the assumption of
+independent errors.</p>
+<pre class="r"><code>anova(m0, m3)</code></pre>
+<pre><code>##    Model df      AIC      BIC    logLik   Test  L.Ratio p-value
+## m0     1 10 266.7059 297.2045 -123.3530                        
+## m3     2 11 241.0958 274.6442 -109.5479 1 vs 2 27.61011  &lt;.0001</code></pre>
+<p>Let’s look at a summary of the model.</p>
+<pre class="r"><code>m3_summary &lt;- summary(m3)
+m3_summary$modelStruct$corStruct</code></pre>
+<pre><code>## Correlation structure of class corCAR1 representing
+##       Phi 
+## 0.3026456</code></pre>
+<pre class="r"><code>coef(m3_summary)</code></pre>
+<pre><code>##                                   Value  Std.Error   t-value      p-value
+## (Intercept)                   0.4091347 0.38361051  1.066537 2.878289e-01
+## baseline                      0.6976846 0.08699849  8.019502 2.356676e-13
+## ns(time, df = 3)1             0.1572562 0.24999798  0.629030 5.302494e-01
+## ns(time, df = 3)2            -0.7716235 0.28387468 -2.718184 7.307124e-03
+## ns(time, df = 3)3             0.6129700 0.19036134  3.220034 1.559771e-03
+## groupobese                    0.5689284 0.18739199  3.036034 2.809947e-03
+## ns(time, df = 3)1:groupobese -1.1653201 0.32112822 -3.628831 3.853622e-04
+## ns(time, df = 3)2:groupobese -0.4752147 0.36464363 -1.303230 1.944163e-01
+## ns(time, df = 3)3:groupobese -1.1375232 0.24452357 -4.651998 6.969175e-06</code></pre>
+<p>Compare to mixed-effect model coefficients.</p>
+<pre class="r"><code>coef(summary(m2))</code></pre>
+<pre><code>##                                Estimate Std. Error       df    t value
+## (Intercept)                   0.4760242 0.37258684  35.2073  1.2776195
+## baseline                      0.6836591 0.08465065  30.0000  8.0762412
+## ns(time, df = 3)1             0.1483164 0.23791902 126.0000  0.6233903
+## ns(time, df = 3)2            -0.7976376 0.28400303 126.0000 -2.8085533
+## ns(time, df = 3)3             0.6152937 0.15111466 126.0000  4.0717009
+## groupobese                    0.5606301 0.18005581 108.9965  3.1136460
+## ns(time, df = 3)1:groupobese -1.1517234 0.30561251 126.0000 -3.7685740
+## ns(time, df = 3)2:groupobese -0.4356495 0.36480850 126.0000 -1.1941868
+## ns(time, df = 3)3:groupobese -1.1410573 0.19411030 126.0000 -5.8783965
+##                                  Pr(&gt;|t|)
+## (Intercept)                  2.097442e-01
+## baseline                     5.145071e-09
+## ns(time, df = 3)1            5.341549e-01
+## ns(time, df = 3)2            5.770005e-03
+## ns(time, df = 3)3            8.189057e-05
+## groupobese                   2.360871e-03
+## ns(time, df = 3)1:groupobese 2.510336e-04
+## ns(time, df = 3)2:groupobese 2.346482e-01
+## ns(time, df = 3)3:groupobese 3.481695e-08</code></pre>
+<p>As with the mixed-effect model we should assess model fit, the
+constant variance assumption, and normality of residuals. No pattern in
+the residuals is evident and just about all the standardized residuals
+are within 2 units of 0.</p>
+<pre class="r"><code>plot(m3)</code></pre>
+<p><img src="lme_files/figure-html/unnamed-chunk-38-1.png" width="672" /></p>
+<p>The constant variance appears to hold at the 5 time points as
+well.</p>
+<pre class="r"><code>plot(m3, resid(.) ~ time | group)</code></pre>
+<p><img src="lme_files/figure-html/unnamed-chunk-39-1.png" width="672" /></p>
+<p>And the QQ plot of residuals gives no reason to doubt the assumption
+of normality.</p>
+<pre class="r"><code>qqnorm(m3)</code></pre>
+<p><img src="lme_files/figure-html/unnamed-chunk-40-1.png" width="672" /></p>
+<p>Once again we can use the ggeffects package to visualize our
+model.</p>
+<pre class="r"><code>ggeffect(m3, terms = c(&quot;time&quot;, &quot;group&quot;)) |&gt;
+  plot(add.data = TRUE, jitter = 0)</code></pre>
+<p><img src="lme_files/figure-html/unnamed-chunk-41-1.png" width="672" /></p>
+</div>
 </div>
 <div id="references" class="section level3 unnumbered">
 <h3 class="unnumbered">References</h3>
@@ -909,10 +1107,29 @@ Effects from Regression Models.”</span> <em>Journal of Open Source
 Software</em> 3 (26): 772. <a
 href="https://doi.org/10.21105/joss.00772">https://doi.org/10.21105/joss.00772</a>.
 </div>
+<div id="ref-nlmebook" class="csl-entry">
+Pinheiro, José C., and Douglas M. Bates. 2000. <em>Mixed-Effects Models
+in s and s-PLUS</em>. New York: Springer. <a
+href="https://doi.org/10.1007/b98882">https://doi.org/10.1007/b98882</a>.
+</div>
+<div id="ref-nlme" class="csl-entry">
+Pinheiro, José, Douglas Bates, and R Core Team. 2022. <em>Nlme: Linear
+and Nonlinear Mixed Effects Models</em>. <a
+href="https://CRAN.R-project.org/package=nlme">https://CRAN.R-project.org/package=nlme</a>.
+</div>
 <div id="ref-R" class="csl-entry">
 R Core Team. 2022. <em>R: A Language and Environment for Statistical
 Computing</em>. Vienna, Austria: R Foundation for Statistical Computing.
 <a href="https://www.R-project.org/">https://www.R-project.org/</a>.
+</div>
+<div id="ref-lattice" class="csl-entry">
+Sarkar, Deepayan. 2008. <em>Lattice: Multivariate Data Visualization
+with r</em>. New York: Springer. <a
+href="http://lmdvr.r-forge.r-project.org">http://lmdvr.r-forge.r-project.org</a>.
+</div>
+<div id="ref-senn" class="csl-entry">
+Senn, Stephen. 2006. <span>“Change from Baseline and Analysis of
+Covariance Revisited,”</span> 4334–44.
 </div>
 <div id="ref-west2015" class="csl-entry">
 West, Brady T., Kathleen B. Welch, and Andrzej T. Galecki. 2015.

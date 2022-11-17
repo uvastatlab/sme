@@ -113,7 +113,10 @@ head(rats)
 
 ### Longitudinal model
 
-The text _Statistical Methods for the Analysis of Repeated Measurements_ [@davis] presents data on plasma inorganic phosphate measurements for 33 subjects (13 controls, 20 obese) after an [oral glucose challenge](https://www.mayoclinic.org/tests-procedures/glucose-challenge-test/about/pac-20394277). Measurements were taken at baseline (t0), 0.5, 1, 1.5, 2, and 3 hours. Of interest is how the plasma inorganic phosphate levels differ over time and between the two groups. Fit a sensible linear mixed-effect model to investigate these questions. 
+The text _Statistical Methods for the Analysis of Repeated Measurements_ [@davis] presents data on plasma inorganic phosphate measurements for 33 subjects (13 controls, 20 obese) after an [oral glucose challenge](https://www.mayoclinic.org/tests-procedures/glucose-challenge-test/about/pac-20394277). Measurements were taken at baseline, 0.5, 1, 1.5, 2, and 3 hours. Of interest is how the plasma inorganic phosphate levels differ over time and between the two groups. We present two models to investigate these questions: 
+
+- a linear mixed-effect model
+- a generalized least squares model
 
 Below we read in the data, provide columns names, and format the group column as a factor. Notice the data is in "wide" format, with one record per subject.
 
@@ -139,7 +142,7 @@ phosphateL <- pivot_longer(phosphate, cols = t0:t3,
                            names_prefix = "t",
                            names_transform = list(time = as.numeric),
                            values_to = "level")
-head(phosphateL, n = 10)
+head(phosphateL)
 ```
 
 Now we can use the ggplot2 package [@ggplot2] to visualize the data. Below we plot the phosphate trajectories over time for each subject, with the plots broken out by group. In addition we add a smooth trend line to each plot to visualize the "average" trend for each group. There appears to be a great deal of variability between the subjects within each group. It also looks like the phosphate levels drop quickly within the first hour for the control group compared to the obese group.
@@ -165,21 +168,52 @@ aggregate(level ~ time + group, data = phosphateL, mean) |>
 
 In both plots it appears the effect of time differs between groups. Therefore it seems reasonable to allow these terms to interact in our mixed-effect model. 
 
-To fit our models we will use the `lmer()` function in the lme4 package [@lme4]. Below we model level as a function of time, group, and their interaction. We also fit a random intercept for each subject using the syntax `(1|id:group)`. The reason we use `id:group` is because the id numbers are nested within each group. This creates 33 separate id groups. The summary output shows a fairly large t value for the interaction, which provides good evidence that the interaction is reliably negative. (The summary output for lmer models does not display p values since the null distributions for the t values are unknown for unbalanced data.)
+Before we begin modeling, we make the baseline phosphate measure a predictor since a baseline is technically not a response to any treatment or condition. [@senn] To do this we use `pivot_longer()` again but this time without selecting column t0. When finished we rename the column as "baseline". We now have a column called "baseline" in our long data frame that we will use as a predictor in our models.
+
+```{r}
+phosphateL <- pivot_longer(phosphate, cols = t0.5:t3, 
+                           names_to = "time", 
+                           names_prefix = "t",
+                           names_transform = list(time = as.numeric),
+                           values_to = "level")
+names(phosphateL)[3] <- "baseline"
+head(phosphateL)
+```
+
+Finally we renumber group ids in the obese group to pick up where the control group id numbering leaves off at 13.
+
+```{r}
+phosphateL$id <- ifelse(phosphateL$group == "obese", 
+                        phosphateL$id + 13, 
+                        phosphateL$id)
+```
+
+
+#### Linear Mixed-Effect Model
+
+To fit our mixed-effect models we will use the `lmer()` function in the lme4 package [@lme4]. A mixed-effect model essentially allows us to fit separate models to each subject. We assume each subject exerts some _random effect_ on certain model parameters. The most basic mixed-effect model is the random intercept model, where each subject receives their own intercept. This is the model we will fit.
+
+Below we model level as a function of baseline (t0), time, group, and the time:group interaction. We also fit a random intercept for each subject using the syntax `(1|id)`. The summary output shows a fairly large t value for the interaction, which provides good evidence that the interaction is reliably negative. (The summary output for lmer models does not display p values since the null distributions for the t values are unknown for unbalanced data in mixed-effect model framework.)
 
 ```{r}
 library(lme4)
-m <- lmer(level ~ time * group + (1|id:group), data = phosphateL)
+m <- lmer(level ~ baseline + time * group + (1|id), data = phosphateL)
 summary(m, corr = FALSE)
 ```
 
-Before we use or interpret this model we should assess the residuals vs fitted value plot. We can create this plot by simply calling `plot()` on the model object. We would like to see a uniform distribution of residuals hovering closely around 0. This plot looks OK until our fitted values exceed 4.0, at which point we begin to under-predict. Most of the residuals are positive in this range, indicating our model-fitted values are systematically smaller than what we observed.
+If we view the coefficients we see each subject has their own model, but only the intercept varies between the subjects. Hence the reason we call this a random-intercept model.
+
+```{r}
+head(coef(m)$id)
+```
+
+Before we use or interpret this model, we should assess the residuals vs fitted value plot. We can create this plot by simply calling `plot()` on the model object. We would like to see a uniform distribution of residuals hovering closely around 0. This plot looks OK for the most part.
 
 ```{r}
 plot(m)
 ```
 
-The model we fit assumes the effect of time is _linear_, and that the linear effect of time changes for each group. We can visualize the model using the ggeffects package [@ggeffects]. With the data added we can see that linear effects seem to simplistic.
+The model we fit assumes the effect of time is _linear_, and that the linear effect of time changes for each group. We can visualize the model using the ggeffects package [@ggeffects]. With the data added it seems like the linear effects may be too simplistic.
 
 ```{r}
 library(ggeffects)
@@ -187,23 +221,34 @@ ggeffect(m, terms = c("time", "group")) |>
   plot(add.data = TRUE, jitter = 0)
 ```
 
-Given our exploratory plots we may want to entertain a _non-linear_ effect of time. One way to do this is with natural cubic splines. Using the splines package [@R], we can specify that we want to allow the trajectory of time to change directions twice using the syntax `ns(time, df = 2)`. We skip summarizing the model and look at the residuals vs fitted value plot. This looks better than the previous plot, though it still exhibits some under-predicting in the higher end of the fitted values.
-
+Given our exploratory plots we may want to entertain a _non-linear_ effect of time. One way to do this is with natural cubic splines. Using the splines package [@R], we can specify that we want to allow the trajectory of time to change directions up to 3 times using the syntax `ns(time, df = 3)`. We skip summarizing the model and look at the residuals vs fitted value plot. This looks about the same as the previous plot but a careful look at the y axis reveals we have slightly smaller residuals.
 
 ```{r}
 library(splines)
-m2 <- lmer(level ~ ns(time, df = 2) * group + (1|group:id), 
+m2 <- lmer(level ~ baseline + ns(time, df = 3) * group + (1|id), 
            data = phosphateL)
 plot(m2)
 ```
 
-We can compare the models' AIC values to assess whether the more complicated model is better. Recall that lower AIC values suggest a model will perform better on out-of-sample data. It appears the model with non-linear effects is a good deal better than the model with linear effects. The df column refers to the number of parameters in the model.
+We can also examine the distribution of residuals by time within each group using the syntax below. The plot looks pretty good. The residuals look evenly distributed and not too far from 0.
+
+```{r}
+plot(m2, resid(.) ~ time | group)
+```
+
+Just as with linear models, we assume errors for a mixed-effect model are drawn from a Normal distribution. A QQ plot helps us assess this assumption. For models fit with lme4 we need to use the `qqmath()` function from the lattice package [@lattice] to create a QQ plot. The plot below provides no reason for us to question this assumption.
+
+```{r}
+lattice::qqmath(m2)
+```
+
+We can compare the models' AIC values to assess whether the more complicated noon-linear model is better. Recall that lower AIC values suggest a model will perform better on out-of-sample data. It appears the model with non-linear effects is a good deal better than the model with linear effects. The df column refers to the number of parameters in the model.
 
 ```{r}
 AIC(m, m2)
 ```
 
-The non-linear model is better than the original linear model. But is the non-linear model a _good_ model? One way to assess this is to simulate data using the model and see how it compares to the original data. Below we use the `simulate()` function to simulate 50 sets of phosphate values from our non-linear model. Next we plot a smooth histogram of the observed data. Then we loop through the simulated data and plot a smooth histogram for each simulation. What we see is that our model is generating data that looks pretty similar to our original data. It's not perfect, and we wouldn't want it to be, but it looks good enough. 
+The non-linear model seems to better than the original linear model. But is the non-linear model a _good_ model? One way to assess this is to simulate data using the model and see how it compares to the original data. Below we use the `simulate()` function to simulate 50 sets of phosphate values from our non-linear model. Next we plot a smooth histogram of the observed data. Then we loop through the simulated data and plot a smooth histogram for each simulation. What we see is that our model is generating data that looks pretty similar to our original data, though it seems to be a little off in the 3 - 4 range. It's not perfect, and we wouldn't want it to be, but it looks good enough. 
 
 ```{r}
 sim1 <- simulate(m2, nsim = 50)
@@ -218,7 +263,7 @@ ggeffect(m2, terms = c("time", "group")) |>
   plot(add.data = TRUE, jitter = 0)
 ```
 
-Looking at the summary for model m2 reveals coefficients that are impossible to interpret. This is one of the drawbacks of models with non-linear effects. However we see under the Random effects section that there is more variation between subjects (0.54) than within subjects (0.42). This probably makes biological sense. 
+Looking at the summary for model m2 reveals coefficients that are impossible to interpret. This is one of the drawbacks of models with non-linear effects. However we see under the Random effects section that there is more variation within subjects (0.435) than between subjects (0.258).  
 
 ```{r}
 summary(m2, corr = FALSE)
@@ -231,12 +276,106 @@ library(car)
 Anova(m2)
 ```
 
-Since we have both non-linear effects and interactions, there is no convenient interpretation of our model parameters. However we can use our model to make predictions at levels of interest and then compare the expected values. For example, what is the expected difference in phosphate values between control and obese subjects at 1 hour post glucose challenge? We can answer this using the emmeams package [@emmeans]. Below we specify we want to use m2 and compare groups at time = 1, and then pipe into the `confint()` function for a 95% confidence interval on the difference. (We can disregard the note about interactions since we specified the time.) The output indicates an estimated difference of about -0.83 with a 95% CI of [-1.26, -0.40].
+Since we have both non-linear effects and interactions, there is no convenient interpretation of our model parameters. However we can use our model to make predictions at levels of interest and then compare the expected values. For example, what is the expected difference in phosphate values between control and obese subjects at 1 hour post glucose challenge assuming a baseline value of 4? We can answer this using the emmeans package [@emmeans]. Below we specify we want to use model m2 and compare groups at time = 1 and baseline = 4, and then pipe into the `confint()` function for a 95% confidence interval on the difference. (We can disregard the note about interactions since we specified the time.) The output indicates an estimated difference of about -0.825 with a 95% CI of [-1.15, -0.502].
 
 ```{r}
 library(emmeans)
-emmeans(m2, specs = pairwise ~ group, at = list(time = 1)) |>
+emmeans(m2, specs = pairwise ~ group, 
+        at = list(time = 1, baseline = 4)) |>
   confint()
+```
+
+
+#### Generalized Least Squares Model
+
+Another approach to analyzing longitudinal data is via Generalized Least Squares [@nlmebook]. In this framework we do away with random effects and model _correlated_ errors. The nlme package that comes with R [@nlme] provides the `gls()` function for this task along with a family of Correlation Structure Classes that allow us to model various correlation structures.
+
+To motivate the Generalized Least Squares approach, let's ignore the grouping structure and fit a simple linear model using the `gls()` function.
+
+```{r}
+library(nlme)
+m0 <- gls(level ~ baseline + ns(time, df = 3) * group,
+          data = phosphateL)
+```
+
+A tool for investigating correlation of errors is the _semivariogram_. Below we use the `Variogram()` function from the nlme package and pipe the result into the `plot()` function. The arguments `form = ~ time | id` and `resType = "n"` says to look at the "normalized" residuals over time by id. In addition we specify `robust = TRUE` to reduce the influence of outliers. The increase in the semivariogram values over "distance" (ie, the positive slope) indicate the errors are correlated.
+
+```{r}
+Variogram(m0, form = ~ time | id, resType = "n", robust = TRUE) |>
+  plot(span = 0.8)
+```
+
+To help understand this, let's extract the residuals from our simple linear model, and then apply the `acf()` function to the residuals by subject id. The `acf()` calculates autocorrelation at all possible lags. We then extract the autocorrelation at lag 1 and sort by absolute value. Notice that more than half the subjects have an autocorrelation at lag 1 greater than 0.2 in absolute value.
+
+```{r}
+r <- residuals(m0)
+acf_out <- tapply(r, phosphateL$id, acf, plot = FALSE)
+lag1 <- sapply(acf_out, function(x)x[1,1][["acf"]])
+sort(abs(lag1), decreasing = TRUE)
+```
+
+Now we model this correlation using the `corCAR1()` correlation structure. This will estimate a single correlation parameter for the errors that will decrease exponentially with each lag. Notice the model has not changed. We've simply added the argument `correlation = corCAR1(form = ~ time | id)`. 
+
+```{r}
+m3 <- gls(level ~ baseline + ns(time, df = 3) * group,
+          data = phosphateL,
+          correlation = corCAR1(form = ~ time | id))
+```
+
+Now the semivariogram shows no pattern, suggesting the model with the correlation structure is adequate.
+
+```{r}
+Variogram(m3, form = ~ time | id, resType = "n", robust = TRUE) |>
+  plot(span = 0.8)
+```
+
+In addition we can formally compare the models using the `anova()` function. The large test statistic and difference in AIC/BIC values provides strong evidence against the assumption of independent errors.
+
+```{r}
+anova(m0, m3)
+```
+
+Let's look at a summary of the model.
+
+```{r}
+m3_summary <- summary(m3)
+m3_summary$modelStruct$corStruct
+```
+
+```{r}
+coef(m3_summary)
+```
+
+Compare to mixed-effect model coefficients.
+
+```{r}
+coef(summary(m2))
+```
+
+
+As with the mixed-effect model we should assess model fit, the constant variance assumption, and normality of residuals. No pattern in the residuals is evident and just about all the standardized residuals are within 2 units of 0.
+
+```{r}
+plot(m3)
+```
+
+The constant variance appears to hold at the 5 time points as well.
+
+```{r}
+plot(m3, resid(.) ~ time | group)
+```
+
+And the QQ plot of residuals gives no reason to doubt the assumption of normality.
+
+```{r}
+qqnorm(m3)
+```
+
+Once again we can use the ggeffects package to visualize our model. 
+
+```{r}
+ggeffect(m3, terms = c("time", "group")) |>
+  plot(add.data = TRUE, jitter = 0)
 ```
 
 
