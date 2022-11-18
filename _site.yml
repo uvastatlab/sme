@@ -21,3 +21,4 @@ output:
   html_document:
     theme: readable
     highlight: textmate
+    toc_depth: 4

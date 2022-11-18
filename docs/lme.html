@@ -682,7 +682,7 @@ by hour 3 they seem about the same.</p>
 Therefore it seems reasonable to allow these terms to interact in our
 mixed-effect model.</p>
 <p>Before we begin modeling, we make the baseline phosphate measure a
-predictor since a baseline is technically not a response to any
+predictor since a baseline measure is technically not a response to any
 treatment or condition. <span class="citation">(Senn 2006)</span> To do
 this we use <code>pivot_longer()</code> again but this time without
 selecting column t0. When finished we rename the column as “baseline”.
@@ -724,13 +724,12 @@ subject using the syntax <code>(1|id)</code>. The summary output shows a
 fairly large t value for the interaction, which provides good evidence
 that the interaction is reliably negative. (The summary output for lmer
 models does not display p values since the null distributions for the t
-values are unknown for unbalanced data in mixed-effect model
+values are unknown for unbalanced data in the mixed-effect model
 framework.)</p>
 <pre class="r"><code>library(lme4)
 m &lt;- lmer(level ~ baseline + time * group + (1|id), data = phosphateL)
 summary(m, corr = FALSE)</code></pre>
-<pre><code>## Linear mixed model fit by REML. t-tests use Satterthwaite&#39;s method [
-## lmerModLmerTest]
+<pre><code>## Linear mixed model fit by REML [&#39;lmerMod&#39;]
 ## Formula: level ~ baseline + time * group + (1 | id)
 ##    Data: phosphateL
 ## 
@@ -747,14 +746,12 @@ summary(m, corr = FALSE)</code></pre>
 ## Number of obs: 165, groups:  id, 33
 ## 
 ## Fixed effects:
-##                  Estimate Std. Error        df t value Pr(&gt;|t|)    
-## (Intercept)       0.02284    0.37509  36.14284   0.061    0.952    
-## baseline          0.68366    0.08465  30.00000   8.076 5.15e-09 ***
-## time              0.11310    0.07031 130.00000   1.608    0.110    
-## groupobese        0.97883    0.18844 120.25872   5.194 8.49e-07 ***
-## time:groupobese  -0.42850    0.09032 130.00000  -4.744 5.43e-06 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+##                 Estimate Std. Error t value
+## (Intercept)      0.02284    0.37509   0.061
+## baseline         0.68366    0.08465   8.076
+## time             0.11310    0.07031   1.608
+## groupobese       0.97883    0.18844   5.194
+## time:groupobese -0.42850    0.09032  -4.744</code></pre>
 <p>If we view the coefficients we see each subject has their own model,
 but only the intercept varies between the subjects. Hence the reason we
 call this a random-intercept model.</p>
@@ -772,7 +769,7 @@ vs fitted value plot. We can create this plot by simply calling
 distribution of residuals hovering closely around 0. This plot looks OK
 for the most part.</p>
 <pre class="r"><code>plot(m)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-19-1.png" width="672" /></p>
 <p>The model we fit assumes the effect of time is <em>linear</em>, and
 that the linear effect of time changes for each group. We can visualize
 the model using the ggeffects package <span class="citation">(Lüdecke
@@ -781,7 +778,7 @@ be too simplistic.</p>
 <pre class="r"><code>library(ggeffects)
 ggeffect(m, terms = c(&quot;time&quot;, &quot;group&quot;)) |&gt;
   plot(add.data = TRUE, jitter = 0)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-19-1.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-20-1.png" width="672" /></p>
 <p>Given our exploratory plots we may want to entertain a
 <em>non-linear</em> effect of time. One way to do this is with natural
 cubic splines. Using the splines package <span class="citation">(R Core
@@ -795,12 +792,12 @@ smaller residuals.</p>
 m2 &lt;- lmer(level ~ baseline + ns(time, df = 3) * group + (1|id), 
            data = phosphateL)
 plot(m2)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-20-1.png" width="672" /></p>
-<p>We can also examine the distribution of residuals by time within each
-group using the syntax below. The plot looks pretty good. The residuals
-look evenly distributed and not too far from 0.</p>
-<pre class="r"><code>plot(m2, resid(.) ~ time | group)</code></pre>
 <p><img src="lme_files/figure-html/unnamed-chunk-21-1.png" width="672" /></p>
+<p>We can also examine the distribution of residuals by time within each
+group using the syntax below. The plot shows residuals evenly
+distributed and not too far from 0, which is good.</p>
+<pre class="r"><code>plot(m2, resid(.) ~ time | group)</code></pre>
+<p><img src="lme_files/figure-html/unnamed-chunk-22-1.png" width="672" /></p>
 <p>Just as with linear models, we assume errors for a mixed-effect model
 are drawn from a Normal distribution. A QQ plot helps us assess this
 assumption. For models fit with lme4 we need to use the
@@ -808,9 +805,9 @@ assumption. For models fit with lme4 we need to use the
 class="citation">(Sarkar 2008)</span> to create a QQ plot. The plot
 below provides no reason for us to question this assumption.</p>
 <pre class="r"><code>lattice::qqmath(m2)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-22-1.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-23-1.png" width="672" /></p>
 <p>We can compare the models’ AIC values to assess whether the more
-complicated noon-linear model is better. Recall that lower AIC values
+complicated non-linear model is better. Recall that lower AIC values
 suggest a model will perform better on out-of-sample data. It appears
 the model with non-linear effects is a good deal better than the model
 with linear effects. The df column refers to the number of parameters in
@@ -833,20 +830,19 @@ good enough.</p>
 <pre class="r"><code>sim1 &lt;- simulate(m2, nsim = 50)
 plot(density(phosphateL$level), ylim = c(0, 0.6))
 for(i in 1:50)lines(density(sim1[[i]]), col = &quot;grey90&quot;)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-24-1.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-25-1.png" width="672" /></p>
 <p>As before, let’s use ggeffects to visualize our model. We see the
-bend in our fitted lines due to our non-linear model.</p>
+bend in our fitted lines due to the non-linear effects.</p>
 <pre class="r"><code>ggeffect(m2, terms = c(&quot;time&quot;, &quot;group&quot;)) |&gt;
   plot(add.data = TRUE, jitter = 0)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-25-1.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-26-1.png" width="672" /></p>
 <p>Looking at the summary for model m2 reveals coefficients that are
 impossible to interpret. This is one of the drawbacks of models with
 non-linear effects. However we see under the Random effects section that
-there is more variation within subjects (0.435) than between subjects
-(0.258).</p>
+there is more variation within subjects (0.4246) than between subjects
+(0.2615).</p>
 <pre class="r"><code>summary(m2, corr = FALSE)</code></pre>
-<pre><code>## Linear mixed model fit by REML. t-tests use Satterthwaite&#39;s method [
-## lmerModLmerTest]
+<pre><code>## Linear mixed model fit by REML [&#39;lmerMod&#39;]
 ## Formula: level ~ baseline + ns(time, df = 3) * group + (1 | id)
 ##    Data: phosphateL
 ## 
@@ -863,33 +859,21 @@ there is more variation within subjects (0.435) than between subjects
 ## Number of obs: 165, groups:  id, 33
 ## 
 ## Fixed effects:
-##                               Estimate Std. Error        df t value Pr(&gt;|t|)
-## (Intercept)                    0.47602    0.37259  35.20730   1.278 0.209744
-## baseline                       0.68366    0.08465  30.00000   8.076 5.15e-09
-## ns(time, df = 3)1              0.14832    0.23792 126.00000   0.623 0.534155
-## ns(time, df = 3)2             -0.79764    0.28400 126.00000  -2.809 0.005770
-## ns(time, df = 3)3              0.61529    0.15111 126.00000   4.072 8.19e-05
-## groupobese                     0.56063    0.18006 108.99651   3.114 0.002361
-## ns(time, df = 3)1:groupobese  -1.15172    0.30561 126.00000  -3.769 0.000251
-## ns(time, df = 3)2:groupobese  -0.43565    0.36481 126.00000  -1.194 0.234648
-## ns(time, df = 3)3:groupobese  -1.14106    0.19411 126.00000  -5.878 3.48e-08
-##                                 
-## (Intercept)                     
-## baseline                     ***
-## ns(time, df = 3)1               
-## ns(time, df = 3)2            ** 
-## ns(time, df = 3)3            ***
-## groupobese                   ** 
-## ns(time, df = 3)1:groupobese ***
-## ns(time, df = 3)2:groupobese    
-## ns(time, df = 3)3:groupobese ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+##                              Estimate Std. Error t value
+## (Intercept)                   0.47602    0.37259   1.278
+## baseline                      0.68366    0.08465   8.076
+## ns(time, df = 3)1             0.14832    0.23792   0.623
+## ns(time, df = 3)2            -0.79764    0.28400  -2.809
+## ns(time, df = 3)3             0.61529    0.15111   4.072
+## groupobese                    0.56063    0.18006   3.114
+## ns(time, df = 3)1:groupobese -1.15172    0.30561  -3.769
+## ns(time, df = 3)2:groupobese -0.43565    0.36481  -1.194
+## ns(time, df = 3)3:groupobese -1.14106    0.19411  -5.878</code></pre>
 <p>Judging from the effect display the interaction in the model is
 warranted, but we can formally test and verify this using the
 <code>Anova()</code> function in the car package <span
 class="citation">(Fox and Weisberg 2019)</span>. The large chi-square
-statistic and small p-value confirm this.</p>
+statistic (37.6901) and small p-value confirm this.</p>
 <pre class="r"><code>library(car)
 Anova(m2)</code></pre>
 <pre><code>## Analysis of Deviance Table (Type II Wald chisquare tests)
@@ -937,7 +921,7 @@ emmeans(m2, specs = pairwise ~ group,
 <div id="generalized-least-squares-model" class="section level4">
 <h4>Generalized Least Squares Model</h4>
 <p>Another approach to analyzing longitudinal data is via Generalized
-Least Squares <span class="citation">(J. C. Pinheiro and Bates
+Least Squares (GLS) <span class="citation">(J. C. Pinheiro and Bates
 2000)</span>. In this framework we do away with random effects and model
 <em>correlated</em> errors. The nlme package that comes with R <span
 class="citation">(J. Pinheiro, Bates, and R Core Team 2022)</span>
@@ -945,30 +929,29 @@ provides the <code>gls()</code> function for this task along with a
 family of Correlation Structure Classes that allow us to model various
 correlation structures.</p>
 <p>To motivate the Generalized Least Squares approach, let’s ignore the
-grouping structure and fit a simple linear model using the
+subject-level grouping structure and fit a linear model using the
 <code>gls()</code> function.</p>
 <pre class="r"><code>library(nlme)
 m0 &lt;- gls(level ~ baseline + ns(time, df = 3) * group,
           data = phosphateL)</code></pre>
-<p>A tool for investigating correlation of errors is the
+<p>Next we’ll investigate correlation of errors using a
 <em>semivariogram</em>. Below we use the <code>Variogram()</code>
 function from the nlme package and pipe the result into the
 <code>plot()</code> function. The arguments
 <code>form = ~ time | id</code> and <code>resType = "n"</code> says to
 look at the “normalized” residuals over time by id. In addition we
 specify <code>robust = TRUE</code> to reduce the influence of outliers.
-The increase in the semivariogram values over “distance” (ie, the
-positive slope) indicate the errors are correlated.</p>
+The positive trend in the semivariogram values over “distance” indicate
+the errors are correlated.</p>
 <pre class="r"><code>Variogram(m0, form = ~ time | id, resType = &quot;n&quot;, robust = TRUE) |&gt;
   plot(span = 0.8)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-30-1.png" width="672" /></p>
-<p>To help understand this, let’s extract the residuals from our simple
-linear model, and then apply the <code>acf()</code> function to the
-residuals by subject id. The <code>acf()</code> calculates
-autocorrelation at all possible lags. We then extract the
-autocorrelation at lag 1 and sort by absolute value. Notice that more
-than half the subjects have an autocorrelation at lag 1 greater than 0.2
-in absolute value.</p>
+<p><img src="lme_files/figure-html/unnamed-chunk-31-1.png" width="672" /></p>
+<p>To help understand this, let’s extract the residuals from our linear
+model, and then apply the <code>acf()</code> function to the residuals
+by subject id. The <code>acf()</code> calculates autocorrelation at all
+possible lags. We then extract the autocorrelation at lag 1 and sort by
+absolute value. Notice that more than half the subjects have an
+autocorrelation at lag 1 greater than 0.2 in absolute value.</p>
 <pre class="r"><code>r &lt;- residuals(m0)
 acf_out &lt;- tapply(r, phosphateL$id, acf, plot = FALSE)
 lag1 &lt;- sapply(acf_out, function(x)x[1,1][[&quot;acf&quot;]])
@@ -988,30 +971,53 @@ sort(abs(lag1), decreasing = TRUE)</code></pre>
 <p>Now we model this correlation using the <code>corCAR1()</code>
 correlation structure. This will estimate a single correlation parameter
 for the errors that will decrease exponentially with each lag. Notice
-the model has not changed. We’ve simply added the argument
-<code>correlation = corCAR1(form = ~ time | id)</code>.</p>
+the model specification itself has not changed. We’ve simply added the
+argument <code>correlation = corCAR1(form = ~ time | id)</code>.</p>
 <pre class="r"><code>m3 &lt;- gls(level ~ baseline + ns(time, df = 3) * group,
           data = phosphateL,
           correlation = corCAR1(form = ~ time | id))</code></pre>
-<p>Now the semivariogram shows no pattern, suggesting the model with the
-correlation structure is adequate.</p>
+<p>Now the semivariogram shows no major patterns, suggesting the model
+with the correlation structure is adequate.</p>
 <pre class="r"><code>Variogram(m3, form = ~ time | id, resType = &quot;n&quot;, robust = TRUE) |&gt;
   plot(span = 0.8)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-33-1.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-34-1.png" width="672" /></p>
 <p>In addition we can formally compare the models using the
-<code>anova()</code> function. The large test statistic and difference
-in AIC/BIC values provides strong evidence against the assumption of
-independent errors.</p>
+<code>anova()</code> function. The large Likelihood Ratio test statistic
+and difference in AIC/BIC values provides strong evidence against the
+assumption of independent errors.</p>
 <pre class="r"><code>anova(m0, m3)</code></pre>
 <pre><code>##    Model df      AIC      BIC    logLik   Test  L.Ratio p-value
 ## m0     1 10 266.7059 297.2045 -123.3530                        
 ## m3     2 11 241.0958 274.6442 -109.5479 1 vs 2 27.61011  &lt;.0001</code></pre>
-<p>Let’s look at a summary of the model.</p>
+<p>Does our GLS model simulate data that is similar to our observed
+data? To assess this we use the <code>simulate_lme()</code> function
+from the nlraa package <span class="citation">(Miguez 2022)</span>.
+(There is no simulate method included with the nlme package.) The
+argument <code>psim = 2</code> specifies that the simulation use the
+residual standard error and correlation pattern to generate uncertainty.
+The result is encouraging.</p>
+<pre class="r"><code>library(nlraa)
+sim2 &lt;- simulate_lme(m3, psim = 2, nsim = 50)
+plot(density(phosphateL$level), ylim = c(0, 0.6))
+for(i in 1:50)lines(density(sim2[,i]), col = &quot;grey90&quot;)</code></pre>
+<p><img src="lme_files/figure-html/unnamed-chunk-36-1.png" width="672" /></p>
+<p>Let’s look at a summary of the model. We save the summary so we can
+easily extract the estimated correlation parameter, called “Phi”. The
+summary object is a list. The correlation parameter is contained within
+the modelStruct element.</p>
 <pre class="r"><code>m3_summary &lt;- summary(m3)
 m3_summary$modelStruct$corStruct</code></pre>
 <pre><code>## Correlation structure of class corCAR1 representing
 ##       Phi 
 ## 0.3026456</code></pre>
+<p>The estimate of the correlation between two phosphate measurements
+taken one hour apart on the same subject is about 0.302. The estimated
+correlation for measurements two hours apart is <span
+class="math inline">\(0.30265^2 = 0.0915\)</span>.</p>
+<p>Calling <code>coef()</code> on the summary object returns the
+coefficient table. Unlike the <code>lmer()</code> model, the
+<code>gls()</code> model returns p-values for the marginal hypothesis
+tests of the coefficients.</p>
 <pre class="r"><code>coef(m3_summary)</code></pre>
 <pre><code>##                                   Value  Std.Error   t-value      p-value
 ## (Intercept)                   0.4091347 0.38361051  1.066537 2.878289e-01
@@ -1023,47 +1029,110 @@ m3_summary$modelStruct$corStruct</code></pre>
 ## ns(time, df = 3)1:groupobese -1.1653201 0.32112822 -3.628831 3.853622e-04
 ## ns(time, df = 3)2:groupobese -0.4752147 0.36464363 -1.303230 1.944163e-01
 ## ns(time, df = 3)3:groupobese -1.1375232 0.24452357 -4.651998 6.969175e-06</code></pre>
-<p>Compare to mixed-effect model coefficients.</p>
-<pre class="r"><code>coef(summary(m2))</code></pre>
-<pre><code>##                                Estimate Std. Error       df    t value
-## (Intercept)                   0.4760242 0.37258684  35.2073  1.2776195
-## baseline                      0.6836591 0.08465065  30.0000  8.0762412
-## ns(time, df = 3)1             0.1483164 0.23791902 126.0000  0.6233903
-## ns(time, df = 3)2            -0.7976376 0.28400303 126.0000 -2.8085533
-## ns(time, df = 3)3             0.6152937 0.15111466 126.0000  4.0717009
-## groupobese                    0.5606301 0.18005581 108.9965  3.1136460
-## ns(time, df = 3)1:groupobese -1.1517234 0.30561251 126.0000 -3.7685740
-## ns(time, df = 3)2:groupobese -0.4356495 0.36480850 126.0000 -1.1941868
-## ns(time, df = 3)3:groupobese -1.1410573 0.19411030 126.0000 -5.8783965
-##                                  Pr(&gt;|t|)
-## (Intercept)                  2.097442e-01
-## baseline                     5.145071e-09
-## ns(time, df = 3)1            5.341549e-01
-## ns(time, df = 3)2            5.770005e-03
-## ns(time, df = 3)3            8.189057e-05
-## groupobese                   2.360871e-03
-## ns(time, df = 3)1:groupobese 2.510336e-04
-## ns(time, df = 3)2:groupobese 2.346482e-01
-## ns(time, df = 3)3:groupobese 3.481695e-08</code></pre>
+<p>Notice the GLS coefficients are not terribly different from the
+mixed-effect model coefficients.</p>
+<pre class="r"><code># mixed-effect model coefficients
+coef(summary(m2))</code></pre>
+<pre><code>##                                Estimate Std. Error    t value
+## (Intercept)                   0.4760242 0.37258684  1.2776195
+## baseline                      0.6836591 0.08465065  8.0762412
+## ns(time, df = 3)1             0.1483164 0.23791902  0.6233903
+## ns(time, df = 3)2            -0.7976376 0.28400303 -2.8085533
+## ns(time, df = 3)3             0.6152937 0.15111466  4.0717009
+## groupobese                    0.5606301 0.18005581  3.1136460
+## ns(time, df = 3)1:groupobese -1.1517234 0.30561251 -3.7685740
+## ns(time, df = 3)2:groupobese -0.4356495 0.36480850 -1.1941868
+## ns(time, df = 3)3:groupobese -1.1410573 0.19411030 -5.8783965</code></pre>
+<p>Major differences between our mixed-effect model and GLS model are as
+follows:</p>
+<ul>
+<li>The GLS model does not allow for subjects to have distinct
+trajectories while the mixed-effect model does.</li>
+<li>The GLS model does not estimate between-subject variability while
+the mixed-effect model does.</li>
+<li>The mixed-effect model assumes within-subject errors are independent
+while the GLS model assumes they’re correlated.</li>
+</ul>
+<p>The within-subject errors for the mixed-effect model are assumed to
+be drawn from a Normal distribution with mean 0 and standard deviation
+of 0.42. The subject-specific random effects for the intercept are
+assumed to be drawn from a Normal distribution with mean 0 and a
+standard deviation of 0.26. We can extract these values using the
+<code>VarCorr()</code> function.</p>
+<pre class="r"><code>VarCorr(m2)</code></pre>
+<pre><code>##  Groups   Name        Std.Dev.
+##  id       (Intercept) 0.26145 
+##  Residual             0.42459</code></pre>
+<p>The within-subject errors for the GLS model are assumed to be drawn
+from a multivariate Normal distribution with mean 0 and a
+variance-covariance matrix with the specified correlation pattern. We
+can extract this matrix using the <code>getVarCov()</code> function. The
+standard deviations listed is the estimated residual standard error.</p>
+<pre class="r"><code>getVarCov(m3)</code></pre>
+<pre><code>## Marginal variance covariance matrix
+##          [,1]     [,2]     [,3]     [,4]     [,5]
+## [1,] 0.265340 0.145970 0.080305 0.044179 0.013370
+## [2,] 0.145970 0.265340 0.145970 0.080305 0.024304
+## [3,] 0.080305 0.145970 0.265340 0.145970 0.044179
+## [4,] 0.044179 0.080305 0.145970 0.265340 0.080305
+## [5,] 0.013370 0.024304 0.044179 0.080305 0.265340
+##   Standard Deviations: 0.51512 0.51512 0.51512 0.51512 0.51512</code></pre>
+<p>Using the <code>cov2cor()</code> function we can see the estimated
+correlation pattern for the errors. Notice our Phi estimate, 0.30265,
+appears two spots over from the diagonal. That’s because some of our
+time measures are in half-hour increments.</p>
+<pre class="r"><code>cov2cor(getVarCov(m3))</code></pre>
+<pre><code>## Marginal variance covariance matrix
+##          [,1]     [,2]    [,3]    [,4]     [,5]
+## [1,] 1.000000 0.550130 0.30265 0.16650 0.050389
+## [2,] 0.550130 1.000000 0.55013 0.30265 0.091594
+## [3,] 0.302650 0.550130 1.00000 0.55013 0.166500
+## [4,] 0.166500 0.302650 0.55013 1.00000 0.302650
+## [5,] 0.050389 0.091594 0.16650 0.30265 1.000000
+##   Standard Deviations: 1 1 1 1 1</code></pre>
 <p>As with the mixed-effect model we should assess model fit, the
 constant variance assumption, and normality of residuals. No pattern in
 the residuals is evident and just about all the standardized residuals
 are within 2 units of 0.</p>
 <pre class="r"><code>plot(m3)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-38-1.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-43-1.png" width="672" /></p>
 <p>The constant variance appears to hold at the 5 time points as
 well.</p>
 <pre class="r"><code>plot(m3, resid(.) ~ time | group)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-39-1.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-44-1.png" width="672" /></p>
 <p>And the QQ plot of residuals gives no reason to doubt the assumption
 of normality.</p>
 <pre class="r"><code>qqnorm(m3)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-40-1.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-45-1.png" width="672" /></p>
 <p>Once again we can use the ggeffects package to visualize our
 model.</p>
 <pre class="r"><code>ggeffect(m3, terms = c(&quot;time&quot;, &quot;group&quot;)) |&gt;
   plot(add.data = TRUE, jitter = 0)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-41-1.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-46-1.png" width="672" /></p>
+<p>And using the emmeans package we can make comparisons at levels of
+interest. For example, what is the expected difference in phosphate
+values between control and obese subjects at 1 hour post glucose
+challenge assuming a baseline value of 4? (We can disregard the note
+about interactions since we specified the time.) The output indicates an
+estimated difference of about -0.814 with a 95% CI of [-1.17, -0.457].
+This is similar to what we obtained with the mixed-effect model.</p>
+<pre class="r"><code>emmeans(m3, specs = pairwise ~ group, 
+        at = list(time = 1, baseline = 4)) |&gt;
+  confint()</code></pre>
+<pre><code>## $emmeans
+##  group   emmean    SE   df lower.CL upper.CL
+##  control   2.62 0.137 86.2     2.35     2.89
+##  obese     3.43 0.119 76.4     3.19     3.67
+## 
+## Degrees-of-freedom method: satterthwaite 
+## Confidence level used: 0.95 
+## 
+## $contrasts
+##  contrast        estimate   SE   df lower.CL upper.CL
+##  control - obese   -0.814 0.18 83.2    -1.17   -0.457
+## 
+## Degrees-of-freedom method: satterthwaite 
+## Confidence level used: 0.95</code></pre>
 </div>
 </div>
 <div id="references" class="section level3 unnumbered">
@@ -1106,6 +1175,11 @@ Lüdecke, Daniel. 2018. <span>“Ggeffects: Tidy Data Frames of Marginal
 Effects from Regression Models.”</span> <em>Journal of Open Source
 Software</em> 3 (26): 772. <a
 href="https://doi.org/10.21105/joss.00772">https://doi.org/10.21105/joss.00772</a>.
+</div>
+<div id="ref-nlraa" class="csl-entry">
+Miguez, Fernando. 2022. <em>Nlraa: Nonlinear Regression for Agricultural
+Applications</em>. <a
+href="https://CRAN.R-project.org/package=nlraa">https://CRAN.R-project.org/package=nlraa</a>.
 </div>
 <div id="ref-nlmebook" class="csl-entry">
 Pinheiro, José C., and Douglas M. Bates. 2000. <em>Mixed-Effects Models
@@ -1198,7 +1272,7 @@ $(document).ready(function ()  {
 
     // establish options
     var options = {
-      selectors: "h1,h2,h3",
+      selectors: "h1,h2,h3,h4",
       theme: "bootstrap3",
       context: '.toc-content',
       hashGenerator: function (text) {

@@ -168,7 +168,7 @@ aggregate(level ~ time + group, data = phosphateL, mean) |>
 
 In both plots it appears the effect of time differs between groups. Therefore it seems reasonable to allow these terms to interact in our mixed-effect model. 
 
-Before we begin modeling, we make the baseline phosphate measure a predictor since a baseline is technically not a response to any treatment or condition. [@senn] To do this we use `pivot_longer()` again but this time without selecting column t0. When finished we rename the column as "baseline". We now have a column called "baseline" in our long data frame that we will use as a predictor in our models.
+Before we begin modeling, we make the baseline phosphate measure a predictor since a baseline measure is technically not a response to any treatment or condition. [@senn] To do this we use `pivot_longer()` again but this time without selecting column t0. When finished we rename the column as "baseline". We now have a column called "baseline" in our long data frame that we will use as a predictor in our models.
 
 ```{r}
 phosphateL <- pivot_longer(phosphate, cols = t0.5:t3, 
@@ -191,9 +191,14 @@ phosphateL$id <- ifelse(phosphateL$group == "obese",
 
 #### Linear Mixed-Effect Model
 
+```{r echo=FALSE}
+detach("package:lmerTest", unload = TRUE)
+```
+
+
 To fit our mixed-effect models we will use the `lmer()` function in the lme4 package [@lme4]. A mixed-effect model essentially allows us to fit separate models to each subject. We assume each subject exerts some _random effect_ on certain model parameters. The most basic mixed-effect model is the random intercept model, where each subject receives their own intercept. This is the model we will fit.
 
-Below we model level as a function of baseline (t0), time, group, and the time:group interaction. We also fit a random intercept for each subject using the syntax `(1|id)`. The summary output shows a fairly large t value for the interaction, which provides good evidence that the interaction is reliably negative. (The summary output for lmer models does not display p values since the null distributions for the t values are unknown for unbalanced data in mixed-effect model framework.)
+Below we model level as a function of baseline (t0), time, group, and the time:group interaction. We also fit a random intercept for each subject using the syntax `(1|id)`. The summary output shows a fairly large t value for the interaction, which provides good evidence that the interaction is reliably negative. (The summary output for lmer models does not display p values since the null distributions for the t values are unknown for unbalanced data in the mixed-effect model framework.)
 
 ```{r}
 library(lme4)
@@ -230,7 +235,7 @@ m2 <- lmer(level ~ baseline + ns(time, df = 3) * group + (1|id),
 plot(m2)
 ```
 
-We can also examine the distribution of residuals by time within each group using the syntax below. The plot looks pretty good. The residuals look evenly distributed and not too far from 0.
+We can also examine the distribution of residuals by time within each group using the syntax below. The plot shows residuals evenly distributed and not too far from 0, which is good.
 
 ```{r}
 plot(m2, resid(.) ~ time | group)
@@ -242,7 +247,7 @@ Just as with linear models, we assume errors for a mixed-effect model are drawn 
 lattice::qqmath(m2)
 ```
 
-We can compare the models' AIC values to assess whether the more complicated noon-linear model is better. Recall that lower AIC values suggest a model will perform better on out-of-sample data. It appears the model with non-linear effects is a good deal better than the model with linear effects. The df column refers to the number of parameters in the model.
+We can compare the models' AIC values to assess whether the more complicated non-linear model is better. Recall that lower AIC values suggest a model will perform better on out-of-sample data. It appears the model with non-linear effects is a good deal better than the model with linear effects. The df column refers to the number of parameters in the model.
 
 ```{r}
 AIC(m, m2)
@@ -256,20 +261,20 @@ plot(density(phosphateL$level), ylim = c(0, 0.6))
 for(i in 1:50)lines(density(sim1[[i]]), col = "grey90")
 ```
 
-As before, let's use ggeffects to visualize our model. We see the bend in our fitted lines due to our non-linear model. 
+As before, let's use ggeffects to visualize our model. We see the bend in our fitted lines due to the non-linear effects. 
 
 ```{r}
 ggeffect(m2, terms = c("time", "group")) |>
   plot(add.data = TRUE, jitter = 0)
 ```
 
-Looking at the summary for model m2 reveals coefficients that are impossible to interpret. This is one of the drawbacks of models with non-linear effects. However we see under the Random effects section that there is more variation within subjects (0.435) than between subjects (0.258).  
+Looking at the summary for model m2 reveals coefficients that are impossible to interpret. This is one of the drawbacks of models with non-linear effects. However we see under the Random effects section that there is more variation within subjects (0.4246) than between subjects (0.2615).  
 
 ```{r}
 summary(m2, corr = FALSE)
 ```
 
-Judging from the effect display the interaction in the model is warranted, but we can formally test and verify this using the `Anova()` function in the car package [@car]. The large chi-square statistic and small p-value confirm this.
+Judging from the effect display the interaction in the model is warranted, but we can formally test and verify this using the `Anova()` function in the car package [@car]. The large chi-square statistic (37.6901) and small p-value confirm this.
 
 ```{r}
 library(car)
@@ -288,9 +293,9 @@ emmeans(m2, specs = pairwise ~ group,
 
 #### Generalized Least Squares Model
 
-Another approach to analyzing longitudinal data is via Generalized Least Squares [@nlmebook]. In this framework we do away with random effects and model _correlated_ errors. The nlme package that comes with R [@nlme] provides the `gls()` function for this task along with a family of Correlation Structure Classes that allow us to model various correlation structures.
+Another approach to analyzing longitudinal data is via Generalized Least Squares (GLS) [@nlmebook]. In this framework we do away with random effects and model _correlated_ errors. The nlme package that comes with R [@nlme] provides the `gls()` function for this task along with a family of Correlation Structure Classes that allow us to model various correlation structures.
 
-To motivate the Generalized Least Squares approach, let's ignore the grouping structure and fit a simple linear model using the `gls()` function.
+To motivate the Generalized Least Squares approach, let's ignore the subject-level grouping structure and fit a linear model using the `gls()` function.
 
 ```{r}
 library(nlme)
@@ -298,14 +303,14 @@ m0 <- gls(level ~ baseline + ns(time, df = 3) * group,
           data = phosphateL)
 ```
 
-A tool for investigating correlation of errors is the _semivariogram_. Below we use the `Variogram()` function from the nlme package and pipe the result into the `plot()` function. The arguments `form = ~ time | id` and `resType = "n"` says to look at the "normalized" residuals over time by id. In addition we specify `robust = TRUE` to reduce the influence of outliers. The increase in the semivariogram values over "distance" (ie, the positive slope) indicate the errors are correlated.
+Next we'll investigate correlation of errors using a _semivariogram_. Below we use the `Variogram()` function from the nlme package and pipe the result into the `plot()` function. The arguments `form = ~ time | id` and `resType = "n"` says to look at the "normalized" residuals over time by id. In addition we specify `robust = TRUE` to reduce the influence of outliers. The positive trend in the semivariogram values over "distance" indicate the errors are correlated.
 
 ```{r}
 Variogram(m0, form = ~ time | id, resType = "n", robust = TRUE) |>
   plot(span = 0.8)
 ```
 
-To help understand this, let's extract the residuals from our simple linear model, and then apply the `acf()` function to the residuals by subject id. The `acf()` calculates autocorrelation at all possible lags. We then extract the autocorrelation at lag 1 and sort by absolute value. Notice that more than half the subjects have an autocorrelation at lag 1 greater than 0.2 in absolute value.
+To help understand this, let's extract the residuals from our linear model, and then apply the `acf()` function to the residuals by subject id. The `acf()` calculates autocorrelation at all possible lags. We then extract the autocorrelation at lag 1 and sort by absolute value. Notice that more than half the subjects have an autocorrelation at lag 1 greater than 0.2 in absolute value.
 
 ```{r}
 r <- residuals(m0)
@@ -314,7 +319,7 @@ lag1 <- sapply(acf_out, function(x)x[1,1][["acf"]])
 sort(abs(lag1), decreasing = TRUE)
 ```
 
-Now we model this correlation using the `corCAR1()` correlation structure. This will estimate a single correlation parameter for the errors that will decrease exponentially with each lag. Notice the model has not changed. We've simply added the argument `correlation = corCAR1(form = ~ time | id)`. 
+Now we model this correlation using the `corCAR1()` correlation structure. This will estimate a single correlation parameter for the errors that will decrease exponentially with each lag. Notice the model specification itself has not changed. We've simply added the argument `correlation = corCAR1(form = ~ time | id)`. 
 
 ```{r}
 m3 <- gls(level ~ baseline + ns(time, df = 3) * group,
@@ -322,36 +327,73 @@ m3 <- gls(level ~ baseline + ns(time, df = 3) * group,
           correlation = corCAR1(form = ~ time | id))
 ```
 
-Now the semivariogram shows no pattern, suggesting the model with the correlation structure is adequate.
+Now the semivariogram shows no major patterns, suggesting the model with the correlation structure is adequate.
 
 ```{r}
 Variogram(m3, form = ~ time | id, resType = "n", robust = TRUE) |>
   plot(span = 0.8)
 ```
 
-In addition we can formally compare the models using the `anova()` function. The large test statistic and difference in AIC/BIC values provides strong evidence against the assumption of independent errors.
+In addition we can formally compare the models using the `anova()` function. The large Likelihood Ratio test statistic and difference in AIC/BIC values provides strong evidence against the assumption of independent errors.
 
 ```{r}
 anova(m0, m3)
 ```
 
-Let's look at a summary of the model.
+Does our GLS model simulate data that is similar to our observed data? To assess this we use the `simulate_lme()` function from the nlraa package [@nlraa]. (There is no simulate method included with the nlme package.) The argument `psim = 2` specifies that the simulation use the residual standard error and correlation pattern to generate uncertainty. The result is encouraging. 
+
+```{r}
+library(nlraa)
+sim2 <- simulate_lme(m3, psim = 2, nsim = 50)
+plot(density(phosphateL$level), ylim = c(0, 0.6))
+for(i in 1:50)lines(density(sim2[,i]), col = "grey90")
+```
+
+Let's look at a summary of the model. We save the summary so we can easily extract the estimated correlation parameter, called "Phi". The summary object is a list. The correlation parameter is contained within the modelStruct element.
 
 ```{r}
 m3_summary <- summary(m3)
 m3_summary$modelStruct$corStruct
 ```
 
+The estimate of the correlation between two phosphate measurements taken one hour apart on the same subject is about 0.302. The estimated correlation for measurements two hours apart is $0.30265^2 = 0.0915$.
+
+Calling `coef()` on the summary object returns the coefficient table. Unlike the `lmer()` model, the `gls()` model returns p-values for the marginal hypothesis tests of the coefficients. 
+
 ```{r}
 coef(m3_summary)
 ```
 
-Compare to mixed-effect model coefficients.
+Notice the GLS coefficients are not terribly different from the mixed-effect model coefficients.
 
 ```{r}
+# mixed-effect model coefficients
 coef(summary(m2))
 ```
 
+Major differences between our mixed-effect model and GLS model are as follows:
+
+- The GLS model does not allow for subjects to have distinct trajectories while the mixed-effect model does.
+- The GLS model does not estimate between-subject variability while the mixed-effect model does.
+- The mixed-effect model assumes within-subject errors are independent while the GLS model assumes they're correlated.
+
+The within-subject errors for the mixed-effect model are assumed to be drawn from a Normal distribution with mean 0 and standard deviation of 0.42. The subject-specific random effects for the intercept are assumed to be drawn from a Normal distribution with mean 0 and a standard deviation of 0.26. We can extract these values using the `VarCorr()` function.
+
+```{r}
+VarCorr(m2)
+```
+
+The within-subject errors for the GLS model are assumed to be drawn from a multivariate Normal distribution with mean 0 and a variance-covariance matrix with the specified correlation pattern. We can extract this matrix using the `getVarCov()` function. The standard deviations listed is the estimated residual standard error.
+
+```{r}
+getVarCov(m3)
+```
+
+Using the `cov2cor()` function we can see the estimated correlation pattern for the errors. Notice our Phi estimate, 0.30265, appears two spots over from the diagonal. That's because some of our time measures are in half-hour increments.
+
+```{r}
+cov2cor(getVarCov(m3))
+```
 
 As with the mixed-effect model we should assess model fit, the constant variance assumption, and normality of residuals. No pattern in the residuals is evident and just about all the standardized residuals are within 2 units of 0.
 
@@ -378,6 +420,13 @@ ggeffect(m3, terms = c("time", "group")) |>
   plot(add.data = TRUE, jitter = 0)
 ```
 
+And using the emmeans package we can make comparisons at levels of interest. For example, what is the expected difference in phosphate values between control and obese subjects at 1 hour post glucose challenge assuming a baseline value of 4? (We can disregard the note about interactions since we specified the time.) The output indicates an estimated difference of about -0.814 with a 95% CI of [-1.17, -0.457]. This is similar to what we obtained with the mixed-effect model.
+
+```{r}
+emmeans(m3, specs = pairwise ~ group, 
+        at = list(time = 1, baseline = 4)) |>
+  confint()
+```
 
 
 ### References

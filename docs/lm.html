@@ -931,7 +931,7 @@ against the null.</p>
 <pre class="r"><code>library(car)
 durbinWatsonTest(m)</code></pre>
 <pre><code>##  lag Autocorrelation D-W Statistic p-value
-##    1     -0.05006007      2.079992   0.946
+##    1     -0.05006007      2.079992   0.936
 ##  Alternative hypothesis: rho != 0</code></pre>
 <p>Based on our residual versus time plot and the result of the
 Durbin-Watson test, we decide to assume our residual errors are
@@ -1098,7 +1098,7 @@ $(document).ready(function ()  {
 
     // establish options
     var options = {
-      selectors: "h1,h2,h3",
+      selectors: "h1,h2,h3,h4",
       theme: "bootstrap3",
       context: '.toc-content',
       hashGenerator: function (text) {
