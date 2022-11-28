@@ -225,9 +225,32 @@ Since raterisk is a categorical variable, let's format as a factor with descript
 glow$raterisk <- factor(glow$raterisk, labels = c("less", "same", "greater"))
 ```
 
-Model fracture as a function of the other variables. (Hosmer and Lemeshow 2013, Chapter 2)
+We can now model fracture as a function of the other variables. (Hosmer and Lemeshow 2013, Chapter 2). We use the syntax `fracture ~ .` where the `.` indicates to the `glm` function that we are predicting `fracture` using all other variables int he `glow` dataframe.
 
+```{r}
+m <- glm(fracture ~  ., data = glow, family = binomial)
+```
 
+Similar to above, we can assess the fit of this model using the `LRstats()` function.
+
+```{r}
+vcdExtra::LRstats(m)
+```
+
+The null hypothesis of this test is that the model is no different from the saturated model. A low p-value rejects the null. Here the p-value is pretty high, so we might have some confidence in using this model to predict the probability of a fracture in the last year.
+
+The fast and easy way to get started with the `effects` package is to simply use the `allEffects()` function in combination with `plot()`:
+
+```{r}
+library(effects)
+plot(allEffects(m))
+```
+
+This has produced 5 plots, one for each independent variable in the model. On the y-axis is the probability of fracture and on the x-axis is the value for each independent variable, the light blue bars indicatet the 95% confidence intervals. We can see where these estimates came from by looking at the object produced by `allEffects()`.
+
+```{r}
+allEffects(m)
+```
 
 ### Ordered logistic regression
 
