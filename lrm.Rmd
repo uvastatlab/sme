@@ -246,7 +246,9 @@ library(effects)
 plot(allEffects(m))
 ```
 
-This has produced 5 plots, one for each independent variable in the model. On the y-axis is the probability of fracture and on the x-axis is the value for each independent variable, the light blue bars indicatet the 95% confidence intervals. We can see where these estimates came from by looking at the object produced by `allEffects()`.
+This has produced 5 plots, one for each independent variable in the model. On the y-axis is the probability of fracture and on the x-axis is the value for each independent variable, the light blue bars indicatet the 95% confidence intervals. There is a positive linear relationship between each independent variable the probability of fracture. Notice that raterisk, since it is a factor, produced a slightly different plot. It shows the point estimate at each level of the factor and the 95% confidence interval for each level.
+
+We can see where these estimates came from by looking at the object produced by `allEffects()`. 
 
 ```{r}
 allEffects(m)
