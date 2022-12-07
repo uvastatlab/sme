@@ -36,15 +36,20 @@ ggplot(eggprod, aes(x=block, y=eggs, color = block)) + # Plotting eggs~treat, co
 
 This shows visually that treatment O may have produced fewer eggs than treatment F or E whose distributions are more similar and closer to one another. The distributions of eggs produced by each block seem to overlap and are very similar to one another. 
 
-Now, we  model the number of eggs produced with `treat` as a fixed effect and `block` as a random effect. [@faraway_book] Does `treat` appear to affect the number of eggs, and if so, which treatment seems superior?
+Now, we  model the number of eggs produced with `treat` as a fixed effect and `block` as a random effect using the `lmer()` function.
 
 ```{r}
 library(lme4)
 m <- lmer(eggs ~ treat + (1|block), data = eggprod)
+```
+
+We specified the formula within the `lmer()` function as `outcome ~ fixed effect + (random slope | random intercept)`. Since we have set the random slope to 1, we have a fixed slope. In other words, all cases will have the same slope estimated. We specified the random intercept as `block` which means that the intercept will be allowed to vary by `block`. We can now inspect the model estimates and its overall fit. [@faraway_book] Does `treat` appear to affect the number of eggs, and if so, which treatment seems superior?
+
+```{r}
 summary(m)
 
-library(performance)
-icc(m)
+library(mlmtools)
+ICCm(m)
 
 VarCorr(m)
 ```
@@ -57,7 +62,9 @@ This is further substantiated by looking at the means by treatment. Observed mea
 tapply(eggprod$eggs, eggprod$treat, mean)
 ```
 
-Pairwise comparisons, adjusted p-values and confidence intervals:
+We see that the means of treatment `E` and `F` are closer to each other than either of them are to treatment `O`.
+
+We can confirm this using pairwise comparisons, adjusted p-values and confidence intervals:
 
 ```{r}
 library(emmeans)
@@ -65,20 +72,31 @@ emmeans(m, pairwise ~ treat)
 emmeans(m, pairwise ~ treat) |> confint()
 ```
 
-An effect plot:
+We see that none of the mean differences are significant by treatment group. However, the `t.ratio` is higher for `E-O` and `F-O` than `E-F`. Visually we can also see this using an effect plot:
 
 ```{r}
 library(ggeffects)
 ggpredict(m, terms = ~ treat) |> plot(add.data = TRUE)
 ```
 
-We can now assess model fit and significance of predictors.
+This plot shows us the spread of predicted egg values based on their treatment group. We can see the same trend as indicated by their means, `E` and `F` are more similar to one another than either is to `O`, and we can also see that the spread of predicted values for `O` overlaps with `E` and `F`'s spreads. We can now assess model fit and significance of predictors.
 
 ```{r}
 car::Anova(m)
 
 library(lmerTest)
 summary(m)
+```
+
+```{r}
+caterpillarPlot(m, grouping = "block")
+m_assum <- mlm_assumptions(m)
+m_assum$linearity.plots
+m_assum$homo.test
+m_assum$fitted.residual.plot
+m_assum$outliers
+m_assum$resid.normality.plot
+rsqmlm(m)
 ```
 
 Running a $\chi^2$ test on the model, we see that the model including treat is a better fit ($\chi^2(2,N = 12) = 10.887, p < .01$) than the null model (intercept only). By loading the `lmerTest` package, we can see in the summary that specifically, treatment O is significant less than treatment E.
@@ -107,6 +125,20 @@ The animal column contains the id for each rat. Below we use the `head()` functi
 
 ```{r}
 head(rats)
+library(lattice)
+stripplot(activate ~ animal, data=rats, scales=list(tck=0.5))
+m <- lmer(activate ~ 1 + (1 | animal), data = rats)
+summary(m)
+ICCm(m)
+m2 <- lmer(activate ~ treatment + (1 | animal), data = rats)
+summary(m2)
+ICCm(m2)
+m3 <- lmer(activate ~ treatment + region + (1 | animal), data = rats)
+summary(m3)
+ICCm(m3)
+anova(m,m2,m3)
+varCompare(m,m2)
+varCompare(m2,m3)
 ```
 
 
@@ -154,6 +186,8 @@ ggplot(phosphateL) +
   geom_line() +
   geom_smooth(aes(group = group), se = FALSE, linewidth = 2) +
   facet_wrap(~group)
+
+qplot(time,level, data=phosphateL, geom=c("line","point"), facets=~id)
 ```
 
 We can also compute simple means by time and group and compare visually. Below we use `aggregate()` to compute the means and then pipe into the ggplot code. Again it appears the phosphate levels for the control group drop faster and lower than the obese group, though by hour 3 they seem about the same. 
@@ -426,6 +460,25 @@ And using the emmeans package we can make comparisons at levels of interest. For
 emmeans(m3, specs = pairwise ~ group, 
         at = list(time = 1, baseline = 4)) |>
   confint()
+```
+
+```{r}
+# Null model with random effects for intercept and slope
+m <- lmer(level ~ 1 + (time | id), data = phosphateL)
+# Adding in a predictor
+m2 <- lmer(level ~ group + (time | id), data = phosphateL)
+
+m3 <- lmer(level ~ group + time + (time | id), data = phosphateL)
+m4<-lmer(level ~ group*time + (time| id), data=phosphateL)
+
+anova(m, m2, m3, m4)
+
+summary(m4)
+
+qqmath(ranef(m4, condVar=TRUE))  
+randoms <- merTools::REsim(m4, n.sims = 500)
+merTools::plotREsim(randoms)
+
 ```
 
 
