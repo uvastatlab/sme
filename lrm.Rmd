@@ -198,6 +198,92 @@ data("pima")
 ```
 
 
+```{r}
+summary(pima)
+```
+
+From the summary we can see that test is the dependent variable and there are eight independent variables. Pregnant indicates the number of times a subject was pregnant, glucose indicates the plasma glucose concentration, diastolic indicates the diastolic blood pressure, triceps indicates the triceps skin fold thickness, insulin indicates the 2-hour serum insulin in units of $\mu U/ml$, bmi indicates the body mass index, diabetes indicates a diabetes pedigree function, and age is the subject's age.
+
+Looking at test, we can see that it ranges from 0 to 1. The mean of test is 0.349 which indicates that 34.9% of the data entries in test take the value of 1. In the context of this data set, this means that 34.9% of people in this study showed signs of diabetes. 
+
+From the summary we can see that insulin is right-skewed. Insulin ranges from 0 to 846.0, and its median of 30.5 is much less than its mean of 79.8. The 3rd quartile of insulin is 127.2, meaning that 75% of the data is below 127.2. The maximum value of 846.0 may be an outlier.
+
+Like our previous example, we can look at a box plot to see this skewness. 
+
+```{r}
+boxplot(insulin ~ test, data = pima)
+```
+
+Now let's build our logistic regression model using the `glm()` function. Setting `family = binomial(link = "logit")` in the argument specifies logistic regression. We can call `summary()` on our model to get a model summary.
+
+```{r}
+pima_model = glm(test ~ ., family = binomial(link = "logit"), data = pima)
+summary(pima_model)
+```
+
+We can then assess the model fit using the `anova()` function and specify a Chi-Squared test in the argument.
+
+```{r}
+anova(pima_model, test = "Chisq")
+```
+
+To reiterate, this test helps us determine if a particular predictor helps to reduce the model deviance. The first line shows the null model containing only the intercept – it uses just the observed proportion of subjects with a positive diabetes test result. The second line shows the model including pregnant. We can see this second model reduced the residual deviance from 993.48 to 956.21. This indicates to us that pregnant is an important contributor to the model because it reduced the deviance by more than 1 or 2 units. We can see that including glucose gives a better fit ($\chi^2 = 171.260, p < .001$), and the deviance is reduced to 784.95.
+
+Like we did in the above example, we can evaluate the model fit by comparing it to a saturated model. 
+
+```{r}
+vcdExtra::LRstats(pima_model)
+```
+
+Here, we see that the p-value is fairly large. This indicates that this model is likely good at predicting if a subject has diabetes given the predictors. 
+
+We can also assess the model error by looking at a plot of residuals vs. “Hat-values”.
+
+```{r}
+car::influencePlot(pima_model)
+```
+
+Here we can see the 6 most extreme values labelled. We can take a look at them like this:
+
+```{r}
+pima[c(14, 229, 350, 454, 503, 707),]
+```
+We can see here that these 6 subjects all have either very high or very low values for the insulin predictor, 0, 744, and 846, and very high/low values for glucose as well. 
+
+Further we can evaluate the model coefficients and confidence intervals:
+
+```{r}
+pima_model$coefficients 
+```
+
+```{r}
+confint(pima_model)
+```
+
+The confidence intervals give us an idea of what we can expect as a reasonable range of values for each predictor. For example we can see that the reasonable range of values for diabetes is from about 0.365 to about 1.539. This range is somewhat large and entirely positive, which indicates to us that diabetes has a positive effect on test. 
+
+
+The interval for insulin, on the other hand, includes negative and positive values which means we can't tell if the effect is negative or positive. The range is small so we know the effect of insulin is small compared to diabetes. 
+
+To get odds ratios of showing signs of diabetes to the odds of not showing signs of diabetes by exponentiating the confidence intervals. For example, 
+
+```{r}
+exp(confint(pima_model)["glucose",])
+```
+
+The odds ratios here are larger than one, which indicates that as the glucose predictor increases, the odds of having a positive diabetes result (test = 1) increases. For every unit increase in glucose, the odds of having diabetes increases anywhere from 2.85% to 4.37%. 
+
+We can create an effect plot for glucose using `ggpredict()` from the `ggeffects` package:
+
+```{r}
+library(ggeffects)
+plot(ggpredict(model = pima_model, terms = "glucose [all]"))
+```
+
+This plot shows the predicted probabilities of having diabetes (test) over the range of observed glucose values. It holds the remaining predictors at their mean values. 
+
+We can see that the probability of having diabetes (test = 1) increases more quickly when the glucose levels is around 75 and above. The grey ribbon surrounding the solid black line is the 95% confidence ribbon and gives us an idea about the uncertainty of the model predictions -- a wider ribbon indicates more uncertainty. We can see that we have more uncertainty with larger glucose values. 
+
 ### Logistic regression with numeric and categorical predictors
 
 The text _Applied Logistic Regression (3rd Ed)_ [@hosmer2013] presents data on women who were tracked as part of the Global Longitudinal Study of Osteoporosis in Women (GLOW). The GLOW data has information on 500 women, 125 of whom had a fracture during the first year of follow-up. One goal of this study was to evaluate risk factors for fractures.
