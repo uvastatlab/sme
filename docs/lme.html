@@ -396,30 +396,92 @@ distribution of eggs produced split by blocks and treatment.</p>
 data(&quot;eggprod&quot;)
 
 library(ggplot2)
-# Plotting eggs ~ treat
-ggplot(eggprod, aes(x=treat, y=eggs, color = treat)) + # Plotting eggs~treat, color by treat
-  geom_jitter(position=position_jitter(0.2)) + # Creating a jitter plot,  staggering groups
+# Plotting eggs by treat
+ggplot(eggprod, aes(x=treat, y=eggs, color = treat)) +
+  geom_point() +
   coord_flip() + # Flipping x and y coordinates to mimic Base R plotting
   theme_classic() # Using classic theme</code></pre>
 <p><img src="lme_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
-<pre class="r"><code># Plotting eggs ~ block
-ggplot(eggprod, aes(x=block, y=eggs, color = block)) + # Plotting eggs~treat, color by treat
-  geom_jitter(position=position_jitter(0.2)) + # Creating a jitter plot,  staggering groups
-  coord_flip() + # Flipping x and y coordinates to mimic Base R plotting
-  theme_classic() # Using classic theme</code></pre>
+<pre class="r"><code># Plotting eggs by block
+ggplot(eggprod, aes(x=block, y=eggs, color = block)) + 
+  geom_point() + 
+  coord_flip() +
+  theme_classic() </code></pre>
 <p><img src="lme_files/figure-html/unnamed-chunk-1-2.png" width="672" /></p>
 <p>This shows visually that treatment O may have produced fewer eggs
 than treatment F or E whose distributions are more similar and closer to
 one another. The distributions of eggs produced by each block seem to
 overlap and are very similar to one another.</p>
 <p>Now, we model the number of eggs produced with <code>treat</code> as
-a fixed effect and <code>block</code> as a random effect. <span
-class="citation">(Faraway 2006)</span> Does <code>treat</code> appear to
-affect the number of eggs, and if so, which treatment seems
-superior?</p>
+a fixed effect and <code>block</code> as a random effect using the
+<code>lmer()</code> function.</p>
 <pre class="r"><code>library(lme4)
-m &lt;- lmer(eggs ~ treat + (1|block), data = eggprod)
-summary(m)</code></pre>
+m &lt;- lmer(eggs ~ treat + (1|block), data = eggprod)</code></pre>
+<p>We specified the formula within the <code>lmer()</code> function
+following the format
+<code>outcome ~ fixed effect + (random slope | random intercept)</code>.
+The random slope is set to 1, therefore it is a fixed slope. In other
+words, all cases will have the same slope estimated. The random
+intercept is set as <code>block</code> which means that the intercept
+will be allowed to vary by <code>block</code>. Before analyzing any
+statistics on this model, we first need to confirm we have met all the
+necessary assumptions. The mlmtools package <span
+class="citation">(Laura Jamison, Jessica Mazen, and Erik Ruzek
+2022)</span> offers a function called <code>mlm_assumptions()</code>
+which will test all the appropriate assumptions for a multilevel
+model.</p>
+<pre class="r"><code>library(mlmtools)
+m_assum &lt;- mlm_assumptions(m)
+# Homogeneity of variance
+m_assum$homo.test</code></pre>
+<pre><code>## Analysis of Variance Table
+## 
+## Response: model.Res2
+##           Df  Sum Sq Mean Sq F value Pr(&gt;F)
+## group      3  295471   98490  0.7357 0.5595
+## Residuals  8 1070935  133867</code></pre>
+<p>The output from the test of homogeneity of variance indicates that
+this assumption has been met. <span class="math inline">\(p =
+0.56\)</span> which is greater than .05, indicating that the residual
+variation across clusters is not significantly different.</p>
+<pre class="r"><code># Outliers
+m_assum$outliers</code></pre>
+<pre><code>## [1] &quot;No outliers detected.&quot;</code></pre>
+<pre class="r"><code># Multicollinearity
+m_assum$multicollinearity</code></pre>
+<pre><code>## [1] &quot;Model contains fewer than 2 terms, multicollinearity cannot be assessed.\n&quot;</code></pre>
+<p>No outliers were detected in the model and since we only have one
+predictor multicollinearity is not necessary to test. The remaining
+tests included in <code>m_assum</code> are plots we need to visually
+inspect.</p>
+<pre class="r"><code>m_assum$fitted.residual.plot</code></pre>
+<p><img src="lme_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>The first plot to investigate is the above Fitted vs. Residuals plot.
+On the x-axis are the fitted (predicted) values and on the y-axis are
+the residuals (error). A dashed line appears at Residuals = 0 to
+represent where the model is perfectly predicting a value. What we look
+for here is whether the residuals lie randomly around the 0 line or if a
+pattern appears in relation to the predicted values. We would want this
+distribution to appear rather parallel to the 0 line, indicating that
+residuals are fairly comparable to one another. Lastly, no one point
+should stand out from the rest. If one does, it means there is an
+outlier and that one point is be drastically misestimated. All 3 of
+these criteria are met in the above plot.</p>
+<p>Lastly, we can investigate the assumption of residual normality.</p>
+<pre class="r"><code>m_assum$resid.normality.plot</code></pre>
+<p><img src="lme_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>The above QQ-plot compares the model residuals to a normal
+distribution. Ideally, all points should be as close as possible to the
+line and be evenly distributed around it (e.g., not all points are above
+the line; points don’t form a curve below the line). We can see that the
+points are randomly and evenly distributed around the line and can
+assume we meet this assumption.</p>
+<p>Now, we can inspect the model estimates and its overall fit. <span
+class="citation">(Faraway 2006)</span> Does <code>treat</code> appear to
+affect the number of eggs, and if so, which treatment seems superior? We
+can look into this assessing both model fit and significance of
+predictors. First, a summary of the model is useful to look at.</p>
+<pre class="r"><code>summary(m)</code></pre>
 <pre><code>## Linear mixed model fit by REML [&#39;lmerMod&#39;]
 ## Formula: eggs ~ treat + (1 | block)
 ##    Data: eggprod
@@ -446,29 +508,76 @@ summary(m)</code></pre>
 ##        (Intr) treatF
 ## treatF -0.612       
 ## treatO -0.612  0.500</code></pre>
-<pre class="r"><code>library(performance)
-icc(m)</code></pre>
-<pre><code>## # Intraclass Correlation Coefficient
-## 
-##     Adjusted ICC: 0.251
-##   Unadjusted ICC: 0.144</code></pre>
-<pre class="r"><code>VarCorr(m)</code></pre>
-<pre><code>##  Groups   Name        Std.Dev.
-##  block    (Intercept) 11.399  
-##  Residual             19.670</code></pre>
-<p>The likeness of egg production in the same block is .25. The
-variation around the intercept is 11.40 across blocks. The intercept
-fixed effect is the grand mean of eggs across the entire sample when
-treat = “E”. The treatF and treatO fixed effects can be interpreted as
-the difference in means (e.g., treatE - treatF). Therefore, treatF
-produces 6.25 less mean egg production and treatO produces 42.50 less
-mean egg production.</p>
+<p>Looking at the predictor, the fixed intercept, 349.00, is the mean
+eggs when the treat factor is at its lowest level (treatE). The
+intercept fixed effect is the grand mean of eggs across the entire
+sample when treat = “E” (349.00). The treatF and treatO fixed effects
+can be interpreted as the difference in means (e.g., treatE - treatF).
+Therefore, treatF produces 6.25 less mean egg production and treatO
+produces 42.50 less mean egg production.</p>
 <p>This is further substantiated by looking at the means by treatment.
 Observed means of eggs by treat:</p>
 <pre class="r"><code>tapply(eggprod$eggs, eggprod$treat, mean)</code></pre>
 <pre><code>##      E      F      O 
 ## 349.00 342.75 306.50</code></pre>
-<p>Pairwise comparisons, adjusted p-values and confidence intervals:</p>
+<p>We see that the means of treatment <code>E</code> and <code>F</code>
+are closer to each other than either of them are to treatment
+<code>O</code>. To test whether this effect is significant, there are
+two options. We can use the <code>car::Anova</code> function, or load
+the <code>lmerTest</code> package <span class="citation">(Kuznetsova,
+Brockhoff, and Christensen 2017)</span>.</p>
+<pre class="r"><code>car::Anova(m)</code></pre>
+<pre><code>## Analysis of Deviance Table (Type II Wald chisquare tests)
+## 
+## Response: eggs
+##        Chisq Df Pr(&gt;Chisq)   
+## treat 10.887  2   0.004324 **
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p>The <code>Anova()</code> function shows that the model including
+treat is a better fit (<span class="math inline">\(\chi^2(2,N = 12) =
+10.887, p &lt; .01\)</span>) than the null model (intercept only). This
+tells us that this is a better fitting model, but does not provide
+deeper information as to potential significant differences within levels
+of our predictor. To investigate this, we can load <code>lmerTest</code>
+package and rerun the model. This will add a significance marker to the
+independent variables if they are significant.</p>
+<pre class="r"><code>library(lmerTest)
+m &lt;- lmer(eggs ~ treat + (1|block), data = eggprod)
+summary(m)</code></pre>
+<pre><code>## Linear mixed model fit by REML. t-tests use Satterthwaite&#39;s method [
+## lmerModLmerTest]
+## Formula: eggs ~ treat + (1 | block)
+##    Data: eggprod
+## 
+## REML criterion at convergence: 85.4
+## 
+## Scaled residuals: 
+##      Min       1Q   Median       3Q      Max 
+## -1.71233 -0.47453 -0.02845  0.64196  1.42942 
+## 
+## Random effects:
+##  Groups   Name        Variance Std.Dev.
+##  block    (Intercept) 129.9    11.40   
+##  Residual             386.9    19.67   
+## Number of obs: 12, groups:  block, 4
+## 
+## Fixed effects:
+##             Estimate Std. Error     df t value Pr(&gt;|t|)    
+## (Intercept)   349.00      11.37   7.99  30.702  1.4e-09 ***
+## treatF         -6.25      13.91   6.00  -0.449   0.6690    
+## treatO        -42.50      13.91   6.00  -3.056   0.0224 *  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Correlation of Fixed Effects:
+##        (Intr) treatF
+## treatF -0.612       
+## treatO -0.612  0.500</code></pre>
+<p>This shows that treatE and treatO are significantly different from
+one another, but neither is significantly different from treatF. We can
+further confirm this using pairwise comparisons, adjusted p-values and
+confidence intervals:</p>
 <pre class="r"><code>library(emmeans)
 emmeans(m, pairwise ~ treat)</code></pre>
 <pre><code>## $emmeans
@@ -507,62 +616,49 @@ emmeans(m, pairwise ~ treat)</code></pre>
 ## Degrees-of-freedom method: kenward-roger 
 ## Confidence level used: 0.95 
 ## Conf-level adjustment: tukey method for comparing a family of 3 estimates</code></pre>
-<p>An effect plot:</p>
+<p>We see that none of the mean differences are significant by treatment
+group. However, the <code>t.ratio</code> is higher for <code>E-O</code>
+and <code>F-O</code> than <code>E-F</code>. Visually we can also see
+this using an effect plot:</p>
 <pre class="r"><code>library(ggeffects)
 ggpredict(m, terms = ~ treat) |&gt; plot(add.data = TRUE)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
-<p>We can now assess model fit and significance of predictors.</p>
-<pre class="r"><code>car::Anova(m)</code></pre>
-<pre><code>## Analysis of Deviance Table (Type II Wald chisquare tests)
-## 
-## Response: eggs
-##        Chisq Df Pr(&gt;Chisq)   
-## treat 10.887  2   0.004324 **
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code>library(lmerTest)
-summary(m)</code></pre>
-<pre><code>## Linear mixed model fit by REML [&#39;lmerMod&#39;]
-## Formula: eggs ~ treat + (1 | block)
-##    Data: eggprod
-## 
-## REML criterion at convergence: 85.4
-## 
-## Scaled residuals: 
-##      Min       1Q   Median       3Q      Max 
-## -1.71233 -0.47453 -0.02845  0.64196  1.42942 
-## 
-## Random effects:
-##  Groups   Name        Variance Std.Dev.
-##  block    (Intercept) 129.9    11.40   
-##  Residual             386.9    19.67   
-## Number of obs: 12, groups:  block, 4
-## 
-## Fixed effects:
-##             Estimate Std. Error t value
-## (Intercept)   349.00      11.37  30.702
-## treatF         -6.25      13.91  -0.449
-## treatO        -42.50      13.91  -3.056
-## 
-## Correlation of Fixed Effects:
-##        (Intr) treatF
-## treatF -0.612       
-## treatO -0.612  0.500</code></pre>
-<p>Running a <span class="math inline">\(\chi^2\)</span> test on the
-model, we see that the model including treat is a better fit (<span
-class="math inline">\(\chi^2(2,N = 12) = 10.887, p &lt; .01\)</span>)
-than the null model (intercept only). By loading the
-<code>lmerTest</code> package, we can see in the summary that
-specifically, treatment O is significant less than treatment E.</p>
-<pre class="r"><code># normality of residuals; looks good
-lattice::qqmath(m)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
-<pre class="r"><code># constant variance; one pretty big residual (model predicts about 335 but the observed value is closer to 300)
-plot(m)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-7-2.png" width="672" /></p>
-<pre class="r"><code># constant variance within treatment levels; TreatF has a lot more variability
-plot(m, treat ~ resid(.))</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-7-3.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<p>This plot shows us the spread of predicted egg values based on their
+treatment group. The black dot in the middle of each line represents the
+prediction and the length of the line represents its 95% confidence
+interval. The dots around each line represent the true data points. We
+can see the same trend as indicated by their predicted value,
+<code>E</code> and <code>F</code> are closer to one another than either
+is to <code>O</code>, and we can also see that the spread of predicted
+values for <code>O</code> overlaps with <code>E</code> and
+<code>F</code>’s spreads.</p>
+<p>Another statistic of interest for multilevel models is the Intraclass
+Correlation Coefficient (ICC). The ICC tells us how strongly
+observations within clusters are associated with one another. In other
+words, it represents the correlation of any two units within a cluster.
+To assess this, we can use the <code>ICCm</code> function from the
+<code>mlmtools</code> package.</p>
+<pre class="r"><code>ICCm(m)</code></pre>
+<pre><code>## Likeness of eggs values of units in the same block factor: 0.251</code></pre>
+<p>The likeness of egg production in the same block is .25, in other
+words, the correlation between any two egg production observations
+within the same block is .25. We can also look at what the variation is
+between clusters using the <code>VarCorr()</code> function.</p>
+<pre class="r"><code>VarCorr(m)</code></pre>
+<pre><code>##  Groups   Name        Std.Dev.
+##  block    (Intercept) 11.399  
+##  Residual             19.670</code></pre>
+<p>The variation around the random intercept for block is 11.40. We can
+also look at the <span class="math inline">\(R^2\)</span> values for the
+model to get an idea of how much variation in egg production is
+explained. We can use the <code>rsqmlm()</code> function from the
+<code>mlmtools</code> package to look at this.</p>
+<pre class="r"><code>rsqmlm(m)</code></pre>
+<pre><code>## 42.56% of the total variance is explained by the fixed effects.
+## 57.00% of the total variance is explained by both fixed and random effects.</code></pre>
+<p>We see that by including just the fixed effects, 42.56% of the
+variance in egg production is explained. By including both the fixed and
+random effects, the variance explained increases to 57%.</p>
 </div>
 <div id="repeated-measures-model" class="section level3">
 <h3>Repeated-Measures model</h3>
@@ -583,7 +679,10 @@ column headers.</p>
 <code>head()</code> function to view the first six rows of data. Notice
 the first rat, R111097, has one measure for each combination of
 treatment and region. This is why we refer to this as repeated-measures
-data.</p>
+data. Looking at the structure of the data, treatment and region are
+being read in as integers. This means that if we were to use the data as
+is, the model will interpret 0 as a meaningful value for each of these
+variables. To avoid this, we will convert them both to factors.</p>
 <pre class="r"><code>head(rats)</code></pre>
 <pre><code>##    animal treatment region activate
 ## 1 R111097         1      1   366.19
@@ -592,6 +691,189 @@ data.</p>
 ## 4 R111097         2      1   371.71
 ## 5 R111097         2      2   302.02
 ## 6 R111097         2      3   449.70</code></pre>
+<pre class="r"><code>str(rats)</code></pre>
+<pre><code>## &#39;data.frame&#39;:    30 obs. of  4 variables:
+##  $ animal   : chr  &quot;R111097&quot; &quot;R111097&quot; &quot;R111097&quot; &quot;R111097&quot; ...
+##  $ treatment: int  1 1 1 2 2 2 1 1 1 2 ...
+##  $ region   : int  1 2 3 1 2 3 1 2 3 1 ...
+##  $ activate : num  366 199 187 372 302 ...</code></pre>
+<pre class="r"><code>rats$treatment &lt;- as.factor(rats$treatment)
+rats$region &lt;- as.factor(rats$region)</code></pre>
+<p>We can start off plotting the data. The <code>stripplot()</code> from
+the <code>lattice</code> package <span class="citation">(Sarkar
+2008)</span> produces a one-dimensional scatterplot of the outcome
+variable (activate) by rat.</p>
+<pre class="r"><code>library(lattice)
+stripplot(activate ~ animal, data=rats, scales=list(tck=0.5))</code></pre>
+<p><img src="lme_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
+<p>We can consider and fit several models with these data. The first
+model will be the null model containing no predictors only a random
+slope by animal. Then treatment will be introduced, treatment and
+region, and then the interaction between treatment and region.</p>
+<pre class="r"><code>m &lt;- lmer(activate ~ 1 + (1 | animal), data = rats)
+m2 &lt;- lmer(activate ~ treatment + (1 | animal), data = rats)
+m3 &lt;- lmer(activate ~ treatment + region + (1 | animal), data = rats)
+m4 &lt;- lmer(activate ~ treatment*region + (1 | animal), data = rats)</code></pre>
+<p>Now we can compare model fit. We’ll start by looking at the AIC
+values for each model. Lower AIC value suggests a model will perform
+better on out-of-sample data. These AIC values indicate that the model
+containing the interaction between treatment and region is the best fit
+for these data.</p>
+<pre class="r"><code>AIC(m, m2, m3, m4)</code></pre>
+<pre><code>##    df      AIC
+## m   3 385.1023
+## m2  4 355.0961
+## m3  6 328.2485
+## m4  8 291.2822</code></pre>
+<p>We can also look to see how much more variance in activation is
+explained by the model including the interaction than the null
+model.</p>
+<pre class="r"><code>varCompare(m, m4)</code></pre>
+<pre><code>## m4 explains 70.93% more variance than m</code></pre>
+<p>We see that the model including the interaction explains 70.93% more
+variance than the null model. This is quite a large increase in variance
+explained and supports this model being a good model for these data. We
+can also look at the <span class="math inline">\(R^2\)</span> values for
+the model containing the interaction. We see that 72.09% of the variance
+is explained by the fixed effects (the interaction) and 90.63% of the
+variance is explained by both the fixed and random effects.</p>
+<pre class="r"><code>rsqmlm(m4)</code></pre>
+<pre><code>## 72.09% of the total variance is explained by the fixed effects.
+## 90.63% of the total variance is explained by both fixed and random effects.</code></pre>
+<p>Now let’s interpret the model parameter estimates.</p>
+<pre class="r"><code>summary(m4)</code></pre>
+<pre><code>## Linear mixed model fit by REML [&#39;lmerMod&#39;]
+## Formula: activate ~ treatment * region + (1 | animal)
+##    Data: rats
+## 
+## REML criterion at convergence: 275.3
+## 
+## Scaled residuals: 
+##     Min      1Q  Median      3Q     Max 
+## -1.4643 -0.5762  0.0802  0.4072  1.5509 
+## 
+## Random effects:
+##  Groups   Name        Variance Std.Dev.
+##  animal   (Intercept) 4850     69.64   
+##  Residual             2450     49.50   
+## Number of obs: 30, groups:  animal, 5
+## 
+## Fixed effects:
+##                    Estimate Std. Error t value
+## (Intercept)          428.51      38.21  11.214
+## treatment2            98.20      31.31   3.137
+## region2             -190.76      31.31  -6.093
+## region3             -216.21      31.31  -6.906
+## treatment2:region2    99.32      44.27   2.243
+## treatment2:region3   261.82      44.27   5.914
+## 
+## Correlation of Fixed Effects:
+##             (Intr) trtmn2 regin2 regin3 trt2:2
+## treatment2  -0.410                            
+## region2     -0.410  0.500                     
+## region3     -0.410  0.500  0.500              
+## trtmnt2:rg2  0.290 -0.707 -0.707 -0.354       
+## trtmnt2:rg3  0.290 -0.707 -0.354 -0.707  0.500</code></pre>
+<p>Looking first at the fixed effects, the intercept (428.51) can be
+interpreted as the grand mean of activate when treatment and region are
+both 1 (the lowest level of each factor). The treatment2 estimate
+(98.20) is the mean difference between treatment 2 and treatment 1 when
+region is 1. Similarly, the region2 estimate (-190.76) is the mean
+difference between region 2 and region 1 when treatment is 1, and
+region3 (-216.21) is the mean difference between region 3 and region 2
+when treatment is 1. The interaction terms require some calculation to
+full interpret. Since we have two categorical predictors in this
+interaction, we can interpret their coefficients in this way:</p>
+<p><span class="math inline">\(\text{intercept} + \text{factor level
+main effect 1} + \text{factor level main effect 2} + \text{interaction
+effect}\)</span></p>
+<p>For example, when looking at treatment2:region2 we will take the
+values from the Estimates column that align with the following fixed
+effects:</p>
+<p><span class="math inline">\(\text{(Intercept)} + \text{treatment2} +
+\text{region2} + \text{treatment2:region2}\)</span></p>
+<p>Which gives us:</p>
+<p><span class="math inline">\(428.51 + 98.20 - 190.76 + 99.32 =
+435.27\)</span></p>
+<p>This is also the mean of activate when treatment is 2 and region is
+2:</p>
+<pre class="r"><code>mean(rats[rats$treatment==&quot;2&quot; &amp; rats$region==&quot;2&quot;,&quot;activate&quot;])</code></pre>
+<pre><code>## [1] 435.27</code></pre>
+<p>We can do the same thing for treatment2:region3:</p>
+<p><span class="math inline">\(428.51 + 98.20 - 216.21 + 261.82 =
+572.32\)</span></p>
+<p>Which is the mean of activate when treatment is 2 and region is
+3:</p>
+<pre class="r"><code>mean(rats[rats$treatment==&quot;2&quot; &amp; rats$region==&quot;3&quot;,&quot;activate&quot;])</code></pre>
+<pre><code>## [1] 572.32</code></pre>
+<p>To get a better understanding how this interaction is functioning,
+let’s plot this model using the <code>ggeffects</code> package <span
+class="citation">(Lüdecke 2018)</span>.</p>
+<pre class="r"><code>library(ggeffects)
+ggeffect(m4, terms = c(&quot;region&quot;, &quot;treatment&quot;)) |&gt;
+         plot(add.data = TRUE, jitter = 0)</code></pre>
+<p><img src="lme_files/figure-html/unnamed-chunk-27-1.png" width="672" /></p>
+<p>This shows the relationship between treatment groups by region.
+Within region one, the estimates for activate by treatment are closer
+together, then in region 2 the estimate for treatment 1 and treatment 2
+decrease while their magnitude of difference also increases. Then in
+region 3 their magnitude of differences increases further as treatment 2
+increases and treatment 1 decreases. This provides visual evidence that
+the relationship between treatment groups changes based on the region.
+We can use the <code>Anova()</code> function from the <code>car</code>
+package <span class="citation">(Fox and Weisberg 2019)</span> to assess
+the statistical significance of the visual evidence.</p>
+<pre class="r"><code>car::Anova(m4)</code></pre>
+<pre><code>## Analysis of Deviance Table (Type II Wald chisquare tests)
+## 
+## Response: activate
+##                    Chisq Df Pr(&gt;Chisq)    
+## treatment        146.246  1  &lt; 2.2e-16 ***
+## region            41.219  2  1.121e-09 ***
+## treatment:region  35.649  2  1.815e-08 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p>This indicates that the overall interaction is indeed significant.
+However, we only know that an interaction exists, we must conduct
+further comparison tests. We want to test the difference between
+treatment levels within each region. The <code>contrast()</code>
+function from the <code>emmeans</code> package <span
+class="citation">(Lenth 2022)</span> allows us to do this. First, we
+must create an emmeans object to pass to the <code>contrast()</code>
+function. We will tell the <code>emmeans()</code> function which model
+to use (m4) and which comparisons we want to test. To do this, we use
+the <code>|</code> symbol to say test each treatment comparison by
+region. Finally, since we are testing all pairwise comparisons we set
+the adjust argument to “tukey” to use the Tukey post-hoc multiple
+comparison adjustment.</p>
+<pre class="r"><code>library(emmeans)
+m4.emm &lt;- emmeans(m4, ~ treatment | region, adjust = &quot;tukey&quot;)
+contrast(m4.emm)</code></pre>
+<pre><code>## region = 1:
+##  contrast          estimate   SE df t.ratio p.value
+##  treatment1 effect    -49.1 15.7 20  -3.137  0.0052
+##  treatment2 effect     49.1 15.7 20   3.137  0.0052
+## 
+## region = 2:
+##  contrast          estimate   SE df t.ratio p.value
+##  treatment1 effect    -98.8 15.7 20  -6.309  &lt;.0001
+##  treatment2 effect     98.8 15.7 20   6.309  &lt;.0001
+## 
+## region = 3:
+##  contrast          estimate   SE df t.ratio p.value
+##  treatment1 effect   -180.0 15.7 20 -11.500  &lt;.0001
+##  treatment2 effect    180.0 15.7 20  11.500  &lt;.0001
+## 
+## Degrees-of-freedom method: kenward-roger 
+## P value adjustment: fdr method for 2 tests</code></pre>
+<p>The output is split by each region. It tests each comparison and
+within each region, therefore each region has two lines comparing
+treatment 1 to treatment 2 and vice versa. Consequently, these lines
+will conduct equivalent tests just with opposite signs in mean
+differences. Looking at the “p.value” column, all pairwise comparisons
+were significant. As we saw in the plot, the magnitude of difference
+between treatment groups increases from region 1 (49.1) to region 2
+(98.8) and then region 3 (180.0).</p>
 </div>
 <div id="longitudinal-model" class="section level3">
 <h3>Longitudinal model</h3>
@@ -666,7 +948,7 @@ ggplot(phosphateL) +
   geom_line() +
   geom_smooth(aes(group = group), se = FALSE, linewidth = 2) +
   facet_wrap(~group)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-32-1.png" width="672" /></p>
 <p>We can also compute simple means by time and group and compare
 visually. Below we use <code>aggregate()</code> to compute the means and
 then pipe into the ggplot code. Again it appears the phosphate levels
@@ -677,7 +959,7 @@ by hour 3 they seem about the same.</p>
   aes(x = time, y = level, linetype = group) +
   geom_point() +
   geom_line()</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-33-1.png" width="672" /></p>
 <p>In both plots it appears the effect of time differs between groups.
 Therefore it seems reasonable to allow these terms to interact in our
 mixed-effect model.</p>
@@ -769,7 +1051,7 @@ vs fitted value plot. We can create this plot by simply calling
 distribution of residuals hovering closely around 0. This plot looks OK
 for the most part.</p>
 <pre class="r"><code>plot(m)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-19-1.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-38-1.png" width="672" /></p>
 <p>The model we fit assumes the effect of time is <em>linear</em>, and
 that the linear effect of time changes for each group. We can visualize
 the model using the ggeffects package <span class="citation">(Lüdecke
@@ -778,7 +1060,7 @@ be too simplistic.</p>
 <pre class="r"><code>library(ggeffects)
 ggeffect(m, terms = c(&quot;time&quot;, &quot;group&quot;)) |&gt;
   plot(add.data = TRUE, jitter = 0)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-20-1.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-39-1.png" width="672" /></p>
 <p>Given our exploratory plots we may want to entertain a
 <em>non-linear</em> effect of time. One way to do this is with natural
 cubic splines. Using the splines package <span class="citation">(R Core
@@ -792,12 +1074,12 @@ smaller residuals.</p>
 m2 &lt;- lmer(level ~ baseline + ns(time, df = 3) * group + (1|id), 
            data = phosphateL)
 plot(m2)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-21-1.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-40-1.png" width="672" /></p>
 <p>We can also examine the distribution of residuals by time within each
 group using the syntax below. The plot shows residuals evenly
 distributed and not too far from 0, which is good.</p>
 <pre class="r"><code>plot(m2, resid(.) ~ time | group)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-22-1.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-41-1.png" width="672" /></p>
 <p>Just as with linear models, we assume errors for a mixed-effect model
 are drawn from a Normal distribution. A QQ plot helps us assess this
 assumption. For models fit with lme4 we need to use the
@@ -805,7 +1087,7 @@ assumption. For models fit with lme4 we need to use the
 class="citation">(Sarkar 2008)</span> to create a QQ plot. The plot
 below provides no reason for us to question this assumption.</p>
 <pre class="r"><code>lattice::qqmath(m2)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-23-1.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-42-1.png" width="672" /></p>
 <p>We can compare the models’ AIC values to assess whether the more
 complicated non-linear model is better. Recall that lower AIC values
 suggest a model will perform better on out-of-sample data. It appears
@@ -816,12 +1098,12 @@ the model.</p>
 <pre><code>##    df      AIC
 ## m   7 283.0897
 ## m2 11 252.1101</code></pre>
-<p>The non-linear model seems to better than the original linear model.
-But is the non-linear model a <em>good</em> model? One way to assess
-this is to simulate data using the model and see how it compares to the
-original data. Below we use the <code>simulate()</code> function to
-simulate 50 sets of phosphate values from our non-linear model. Next we
-plot a smooth histogram of the observed data. Then we loop through the
+<p>The non-linear model seems better than the original linear model. But
+is the non-linear model a <em>good</em> model? One way to assess this is
+to simulate data using the model and see how it compares to the original
+data. Below we use the <code>simulate()</code> function to simulate 50
+sets of phosphate values from our non-linear model. Next we plot a
+smooth histogram of the observed data. Then we loop through the
 simulated data and plot a smooth histogram for each simulation. What we
 see is that our model is generating data that looks pretty similar to
 our original data, though it seems to be a little off in the 3 - 4
@@ -830,12 +1112,12 @@ good enough.</p>
 <pre class="r"><code>sim1 &lt;- simulate(m2, nsim = 50)
 plot(density(phosphateL$level), ylim = c(0, 0.6))
 for(i in 1:50)lines(density(sim1[[i]]), col = &quot;grey90&quot;)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-25-1.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-44-1.png" width="672" /></p>
 <p>As before, let’s use ggeffects to visualize our model. We see the
 bend in our fitted lines due to the non-linear effects.</p>
 <pre class="r"><code>ggeffect(m2, terms = c(&quot;time&quot;, &quot;group&quot;)) |&gt;
   plot(add.data = TRUE, jitter = 0)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-26-1.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-45-1.png" width="672" /></p>
 <p>Looking at the summary for model m2 reveals coefficients that are
 impossible to interpret. This is one of the drawbacks of models with
 non-linear effects. However we see under the Random effects section that
@@ -942,10 +1224,10 @@ function from the nlme package and pipe the result into the
 look at the “normalized” residuals over time by id. In addition we
 specify <code>robust = TRUE</code> to reduce the influence of outliers.
 The positive trend in the semivariogram values over “distance” indicate
-the errors are correlated.</p>
+the errors exhibit some correlation.</p>
 <pre class="r"><code>Variogram(m0, form = ~ time | id, resType = &quot;n&quot;, robust = TRUE) |&gt;
   plot(span = 0.8)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-31-1.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-50-1.png" width="672" /></p>
 <p>To help understand this, let’s extract the residuals from our linear
 model, and then apply the <code>acf()</code> function to the residuals
 by subject id. The <code>acf()</code> calculates autocorrelation at all
@@ -955,19 +1237,8 @@ autocorrelation at lag 1 greater than 0.2 in absolute value.</p>
 <pre class="r"><code>r &lt;- residuals(m0)
 acf_out &lt;- tapply(r, phosphateL$id, acf, plot = FALSE)
 lag1 &lt;- sapply(acf_out, function(x)x[1,1][[&quot;acf&quot;]])
-sort(abs(lag1), decreasing = TRUE)</code></pre>
-<pre><code>##          25          21           2          26           1           7 
-## 0.801361725 0.587725363 0.563604248 0.502440393 0.455518346 0.448095309 
-##          27           6           5          32          10           9 
-## 0.435633772 0.410840501 0.404460291 0.399772731 0.394167189 0.388756500 
-##          22          12          11          18          13           3 
-## 0.354833082 0.346049406 0.320451014 0.318464311 0.291166337 0.245451863 
-##          16          19           8          31          20          17 
-## 0.236778098 0.185909622 0.160075193 0.155537263 0.124550755 0.106523920 
-##          24          30          33          28          23          14 
-## 0.095862449 0.092427943 0.061508257 0.053936246 0.042798894 0.039474101 
-##           4          29          15 
-## 0.029565145 0.010622626 0.002470783</code></pre>
+mean(abs(lag1) &gt; 0.2)</code></pre>
+<pre><code>## [1] 0.5757576</code></pre>
 <p>Now we model this correlation using the <code>corCAR1()</code>
 correlation structure. This will estimate a single correlation parameter
 for the errors that will decrease exponentially with each lag. Notice
@@ -980,7 +1251,7 @@ argument <code>correlation = corCAR1(form = ~ time | id)</code>.</p>
 with the correlation structure is adequate.</p>
 <pre class="r"><code>Variogram(m3, form = ~ time | id, resType = &quot;n&quot;, robust = TRUE) |&gt;
   plot(span = 0.8)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-34-1.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-53-1.png" width="672" /></p>
 <p>In addition we can formally compare the models using the
 <code>anova()</code> function. The large Likelihood Ratio test statistic
 and difference in AIC/BIC values provides strong evidence against the
@@ -1000,7 +1271,7 @@ The result is encouraging.</p>
 sim2 &lt;- simulate_lme(m3, psim = 2, nsim = 50)
 plot(density(phosphateL$level), ylim = c(0, 0.6))
 for(i in 1:50)lines(density(sim2[,i]), col = &quot;grey90&quot;)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-36-1.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-55-1.png" width="672" /></p>
 <p>Let’s look at a summary of the model. We save the summary so we can
 easily extract the estimated correlation parameter, called “Phi”. The
 summary object is a list. The correlation parameter is contained within
@@ -1095,20 +1366,20 @@ constant variance assumption, and normality of residuals. No pattern in
 the residuals is evident and just about all the standardized residuals
 are within 2 units of 0.</p>
 <pre class="r"><code>plot(m3)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-43-1.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-62-1.png" width="672" /></p>
 <p>The constant variance appears to hold at the 5 time points as
 well.</p>
 <pre class="r"><code>plot(m3, resid(.) ~ time | group)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-44-1.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-63-1.png" width="672" /></p>
 <p>And the QQ plot of residuals gives no reason to doubt the assumption
 of normality.</p>
 <pre class="r"><code>qqnorm(m3)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-45-1.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-64-1.png" width="672" /></p>
 <p>Once again we can use the ggeffects package to visualize our
 model.</p>
 <pre class="r"><code>ggeffect(m3, terms = c(&quot;time&quot;, &quot;group&quot;)) |&gt;
   plot(add.data = TRUE, jitter = 0)</code></pre>
-<p><img src="lme_files/figure-html/unnamed-chunk-46-1.png" width="672" /></p>
+<p><img src="lme_files/figure-html/unnamed-chunk-65-1.png" width="672" /></p>
 <p>And using the emmeans package we can make comparisons at levels of
 interest. For example, what is the expected difference in phosphate
 values between control and obese subjects at 1 hour post glucose
@@ -1164,6 +1435,18 @@ Fox, John, and Sanford Weisberg. 2019. <em>An <span>R</span> Companion
 to Applied Regression</em>. Third. Thousand Oaks <span>CA</span>: Sage.
 <a
 href="https://socialsciences.mcmaster.ca/jfox/Books/Companion/">https://socialsciences.mcmaster.ca/jfox/Books/Companion/</a>.
+</div>
+<div id="ref-lmerTest" class="csl-entry">
+Kuznetsova, Alexandra, Per B. Brockhoff, and Rune H. B. Christensen.
+2017. <span>“<span class="nocase">lmerTest</span> Package: Tests in
+Linear Mixed Effects Models.”</span> <em>Journal of Statistical
+Software</em> 82 (13): 1–26. <a
+href="https://doi.org/10.18637/jss.v082.i13">https://doi.org/10.18637/jss.v082.i13</a>.
+</div>
+<div id="ref-mlmtools" class="csl-entry">
+Laura Jamison, Jessica Mazen, and Erik Ruzek. 2022. <em>Mlmtools:
+Multi-Level Model Assessment Kit</em>. <a
+href="https://CRAN.R-project.org/package=mlmtools">https://CRAN.R-project.org/package=mlmtools</a>.
 </div>
 <div id="ref-emmeans" class="csl-entry">
 Lenth, Russell V. 2022. <em>Emmeans: Estimated Marginal Means, Aka

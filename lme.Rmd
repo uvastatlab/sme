@@ -20,17 +20,17 @@ library(faraway)
 data("eggprod")
 
 library(ggplot2)
-# Plotting eggs ~ treat
-ggplot(eggprod, aes(x=treat, y=eggs, color = treat)) + # Plotting eggs~treat, color by treat
-  geom_jitter(position=position_jitter(0.2)) + # Creating a jitter plot,  staggering groups
+# Plotting eggs by treat
+ggplot(eggprod, aes(x=treat, y=eggs, color = treat)) +
+  geom_point() +
   coord_flip() + # Flipping x and y coordinates to mimic Base R plotting
   theme_classic() # Using classic theme
 
-# Plotting eggs ~ block
-ggplot(eggprod, aes(x=block, y=eggs, color = block)) + # Plotting eggs~treat, color by treat
-  geom_jitter(position=position_jitter(0.2)) + # Creating a jitter plot,  staggering groups
-  coord_flip() + # Flipping x and y coordinates to mimic Base R plotting
-  theme_classic() # Using classic theme
+# Plotting eggs by block
+ggplot(eggprod, aes(x=block, y=eggs, color = block)) + 
+  geom_point() + 
+  coord_flip() +
+  theme_classic() 
 ```
 
 
@@ -43,18 +43,48 @@ library(lme4)
 m <- lmer(eggs ~ treat + (1|block), data = eggprod)
 ```
 
-We specified the formula within the `lmer()` function as `outcome ~ fixed effect + (random slope | random intercept)`. Since we have set the random slope to 1, we have a fixed slope. In other words, all cases will have the same slope estimated. We specified the random intercept as `block` which means that the intercept will be allowed to vary by `block`. We can now inspect the model estimates and its overall fit. [@faraway_book] Does `treat` appear to affect the number of eggs, and if so, which treatment seems superior?
+We specified the formula within the `lmer()` function following the format `outcome ~ fixed effect + (random slope | random intercept)`. The random slope is set to 1, therefore it is a fixed slope. In other words, all cases will have the same slope estimated. The random intercept is set as `block` which means that the intercept will be allowed to vary by `block`. Before analyzing any statistics on this model, we first need to confirm we have met all the necessary assumptions. The mlmtools package [@mlmtools] offers a function called `mlm_assumptions()` which will test all the appropriate assumptions for a multilevel model.
+
+```{r}
+library(mlmtools)
+m_assum <- mlm_assumptions(m)
+# Homogeneity of variance
+m_assum$homo.test
+```
+
+The output from the test of homogeneity of variance indicates that this assumption has been met. $p = 0.56$ which is greater than .05, indicating that the residual variation across clusters is not significantly different.
+
+```{r}
+# Outliers
+m_assum$outliers
+
+# Multicollinearity
+m_assum$multicollinearity
+```
+
+No outliers were detected in the model and since we only have one predictor multicollinearity is not necessary to test. The remaining tests included in `m_assum` are plots we need to visually inspect. 
+
+```{r}
+m_assum$fitted.residual.plot
+```
+
+The first plot to investigate is the above Fitted vs. Residuals plot. On the x-axis are the fitted (predicted) values and on the y-axis are the residuals (error). A dashed line appears at Residuals = 0 to represent where the model is perfectly predicting a value. What we look for here is whether the residuals lie randomly around the 0 line or if a pattern appears in relation to the predicted values. We would want this distribution to appear rather parallel to the 0 line, indicating that residuals are fairly comparable to one another. Lastly, no one point should stand out from the rest. If one does, it means there is an outlier and that one point is be drastically misestimated. All 3 of these criteria are met in the above plot.
+
+Lastly, we can investigate the assumption of residual normality.
+
+```{r}
+m_assum$resid.normality.plot
+```
+
+The above QQ-plot compares the model residuals to a normal distribution. Ideally, all points should be as close as possible to the line and be evenly distributed around it (e.g., not all points are above the line; points don't form a curve below the line). We can see that the points are randomly and evenly distributed around the line and can assume we meet this assumption.
+
+Now, we can inspect the model estimates and its overall fit. [@faraway_book] Does `treat` appear to affect the number of eggs, and if so, which treatment seems superior? We can look into this assessing both model fit and significance of predictors. First, a summary of the model is useful to look at. 
 
 ```{r}
 summary(m)
-
-library(mlmtools)
-ICCm(m)
-
-VarCorr(m)
 ```
 
-The likeness of egg production in the same block is .25. The variation around the intercept is 11.40 across blocks. The intercept fixed effect is the grand mean of eggs across the entire sample when treat = "E". The treatF and treatO fixed effects can be interpreted as the difference in means (e.g., treatE - treatF). Therefore, treatF produces 6.25 less mean egg production and treatO produces 42.50 less mean egg production.
+Looking at the predictor, the fixed intercept, 349.00, is the mean eggs when the treat factor is at its lowest level (treatE). The intercept fixed effect is the grand mean of eggs across the entire sample when treat = "E" (349.00). The treatF and treatO fixed effects can be interpreted as the difference in means (e.g., treatE - treatF). Therefore, treatF produces 6.25 less mean egg production and treatO produces 42.50 less mean egg production.
 
 This is further substantiated by looking at the means by treatment. Observed means of eggs by treat:
 
@@ -62,9 +92,21 @@ This is further substantiated by looking at the means by treatment. Observed mea
 tapply(eggprod$eggs, eggprod$treat, mean)
 ```
 
-We see that the means of treatment `E` and `F` are closer to each other than either of them are to treatment `O`.
+We see that the means of treatment `E` and `F` are closer to each other than either of them are to treatment `O`. To test whether this effect is significant, there are two options. We can use the `car::Anova` function, or load the `lmerTest` package [@lmerTest].
 
-We can confirm this using pairwise comparisons, adjusted p-values and confidence intervals:
+```{r}
+car::Anova(m)
+```
+
+The `Anova()` function shows that the model including treat is a better fit ($\chi^2(2,N = 12) = 10.887, p < .01$) than the null model (intercept only). This tells us that this is a better fitting model, but does not provide deeper information as to potential significant differences within levels of our predictor. To investigate this, we can load `lmerTest` package and rerun the model. This will add a significance marker to the independent variables if they are significant.
+
+```{r}
+library(lmerTest)
+m <- lmer(eggs ~ treat + (1|block), data = eggprod)
+summary(m)
+```
+
+This shows that treatE and treatO are significantly different from one another, but neither is significantly different from treatF. We can further confirm this using pairwise comparisons, adjusted p-values and confidence intervals:
 
 ```{r}
 library(emmeans)
@@ -79,37 +121,27 @@ library(ggeffects)
 ggpredict(m, terms = ~ treat) |> plot(add.data = TRUE)
 ```
 
-This plot shows us the spread of predicted egg values based on their treatment group. We can see the same trend as indicated by their means, `E` and `F` are more similar to one another than either is to `O`, and we can also see that the spread of predicted values for `O` overlaps with `E` and `F`'s spreads. We can now assess model fit and significance of predictors.
+This plot shows us the spread of predicted egg values based on their treatment group. The black dot in the middle of each line represents the prediction and the length of the line represents its 95% confidence interval. The dots around each line represent the true data points. We can see the same trend as indicated by their predicted value, `E` and `F` are closer to one another than either is to `O`, and we can also see that the spread of predicted values for `O` overlaps with `E` and `F`'s spreads. 
+
+Another statistic of interest for multilevel models is the Intraclass Correlation Coefficient (ICC). The ICC tells us how strongly observations within clusters are associated with one another. In other words, it represents the correlation of any two units within a cluster. To assess this, we can use the `ICCm` function from the `mlmtools` package.
 
 ```{r}
-car::Anova(m)
-
-library(lmerTest)
-summary(m)
+ICCm(m)
 ```
 
+The likeness of egg production in the same block is .25, in other words, the correlation between any two egg production observations within the same block is .25. We can also look at what the variation is between clusters using the `VarCorr()` function.
+
 ```{r}
-caterpillarPlot(m, grouping = "block")
-m_assum <- mlm_assumptions(m)
-m_assum$linearity.plots
-m_assum$homo.test
-m_assum$fitted.residual.plot
-m_assum$outliers
-m_assum$resid.normality.plot
+VarCorr(m)
+```
+
+The variation around the random intercept for block is 11.40. We can also look at the $R^2$ values for the model to get an idea of how much variation in egg production is explained. We can use the `rsqmlm()` function from the `mlmtools` package to look at this.
+
+```{r}
 rsqmlm(m)
 ```
 
-Running a $\chi^2$ test on the model, we see that the model including treat is a better fit ($\chi^2(2,N = 12) = 10.887, p < .01$) than the null model (intercept only). By loading the `lmerTest` package, we can see in the summary that specifically, treatment O is significant less than treatment E.
-
-```{r}
-# normality of residuals; looks good
-lattice::qqmath(m)
-# constant variance; one pretty big residual (model predicts about 335 but the observed value is closer to 300)
-plot(m)
-# constant variance within treatment levels; TreatF has a lot more variability
-plot(m, treat ~ resid(.))
-```
-
+We see that by including just the fixed effects, 42.56% of the variance in egg production is explained. By including both the fixed and random effects, the variance explained increases to 57%. 
 
 ### Repeated-Measures model
 
@@ -121,26 +153,110 @@ The data is available in the file "rat_brain.dat". We can import this file using
 rats <- read.table("data/rat_brain.dat", header = TRUE)
 ```
 
-The animal column contains the id for each rat. Below we use the `head()` function to view the first six rows of data. Notice the first rat, R111097, has one measure for each combination of treatment and region. This is why we refer to this as repeated-measures data.
+The animal column contains the id for each rat. Below we use the `head()` function to view the first six rows of data. Notice the first rat, R111097, has one measure for each combination of treatment and region. This is why we refer to this as repeated-measures data. Looking at the structure of the data, treatment and region are being read in as integers. This means that if we were to use the data as is, the model will interpret 0 as a meaningful value for each of these variables. To avoid this, we will convert them both to factors.
 
 ```{r}
 head(rats)
-library(lattice)
-stripplot(activate ~ animal, data=rats, scales=list(tck=0.5))
-m <- lmer(activate ~ 1 + (1 | animal), data = rats)
-summary(m)
-ICCm(m)
-m2 <- lmer(activate ~ treatment + (1 | animal), data = rats)
-summary(m2)
-ICCm(m2)
-m3 <- lmer(activate ~ treatment + region + (1 | animal), data = rats)
-summary(m3)
-ICCm(m3)
-anova(m,m2,m3)
-varCompare(m,m2)
-varCompare(m2,m3)
+str(rats)
+rats$treatment <- as.factor(rats$treatment)
+rats$region <- as.factor(rats$region)
 ```
 
+We can start off plotting the data. The `stripplot()` from the `lattice` package [@lattice] produces a one-dimensional scatterplot of the outcome variable (activate) by rat. 
+
+```{r}
+library(lattice)
+stripplot(activate ~ animal, data=rats, scales=list(tck=0.5))
+```
+
+We can consider and fit several models with these data. The first model will be the null model containing no predictors only a random slope by animal. Then treatment will be introduced, treatment and region, and then the interaction between treatment and region.
+
+```{r echo=FALSE}
+detach("package:lmerTest", unload = TRUE)
+```
+
+```{r}
+m <- lmer(activate ~ 1 + (1 | animal), data = rats)
+m2 <- lmer(activate ~ treatment + (1 | animal), data = rats)
+m3 <- lmer(activate ~ treatment + region + (1 | animal), data = rats)
+m4 <- lmer(activate ~ treatment*region + (1 | animal), data = rats)
+```
+
+Now we can compare model fit. We'll start by looking at the AIC values for each model. Lower AIC value suggests a model will perform better on out-of-sample data. These AIC values indicate that the model containing the interaction between treatment and region is the best fit for these data.
+
+```{r}
+AIC(m, m2, m3, m4)
+```
+
+We can also look to see how much more variance in activation is explained by the model including the interaction than the null model.
+
+```{r}
+varCompare(m, m4)
+```
+
+We see that the model including the interaction explains 70.93% more variance than the null model. This is quite a large increase in variance explained and supports this model being a good model for these data. We can also look at the $R^2$ values for the model containing the interaction. We see that 72.09% of the variance is explained by the fixed effects (the interaction) and 90.63% of the variance is explained by both the fixed and random effects.
+
+```{r}
+rsqmlm(m4)
+```
+
+Now let's interpret the model parameter estimates.
+
+```{r}
+summary(m4)
+```
+
+Looking first at the fixed effects, the intercept (428.51) can be interpreted as the grand mean of activate when treatment and region are both 1 (the lowest level of each factor). The treatment2 estimate (98.20) is the mean difference between treatment 2 and treatment 1 when region is 1. Similarly, the region2 estimate (-190.76) is the mean difference between region 2 and region 1 when treatment is 1, and region3 (-216.21) is the mean difference between region 3 and region 2 when treatment is 1. The interaction terms require some calculation to full interpret. Since we have two categorical predictors in this interaction, we can interpret their coefficients in this way:
+
+$\text{intercept} + \text{factor level main effect 1} + \text{factor level main effect 2} + \text{interaction effect}$
+
+For example, when looking at treatment2:region2 we will take the values from the Estimates column that align with the following fixed effects:
+
+$\text{(Intercept)} + \text{treatment2} + \text{region2} + \text{treatment2:region2}$
+
+Which gives us:
+
+$428.51 + 98.20 - 190.76 + 99.32 = 435.27$
+
+This is also the mean of activate when treatment is 2 and region is 2:
+
+```{r}
+mean(rats[rats$treatment=="2" & rats$region=="2","activate"])
+```
+
+We can do the same thing for treatment2:region3:
+
+$428.51 + 98.20 - 216.21 + 261.82 = 572.32$
+
+Which is the mean of activate when treatment is 2 and region is 3:
+
+```{r}
+mean(rats[rats$treatment=="2" & rats$region=="3","activate"])
+```
+
+To get a better understanding how this interaction is functioning, let's plot this model using the `ggeffects` package [@ggeffects].
+
+```{r}
+library(ggeffects)
+ggeffect(m4, terms = c("region", "treatment")) |>
+         plot(add.data = TRUE, jitter = 0)
+```
+
+This shows the relationship between treatment groups by region. Within region one, the estimates for activate by treatment are closer together, then in region 2 the estimate for treatment 1 and treatment 2 decrease while their magnitude of difference also increases. Then in region 3 their magnitude of differences increases further as treatment 2 increases and treatment 1 decreases. This provides visual evidence that the relationship between treatment groups changes based on the region. We can use the `Anova()` function from the `car` package [@car] to assess the statistical significance of the visual evidence.
+
+```{r}
+car::Anova(m4)
+```
+
+This indicates that the overall interaction is indeed significant. However, we only know that an interaction exists, we must conduct further comparison tests. We want to test the difference between treatment levels within each region. The `contrast()` function from the `emmeans` package [@emmeans] allows us to do this. First, we must create an emmeans object to pass to the `contrast()` function. We will tell the `emmeans()` function which model to use (m4) and which comparisons we want to test. To do this, we use the `|` symbol to say test each treatment comparison by region. Finally, since we are testing all pairwise comparisons we set the adjust argument to "tukey" to use the Tukey post-hoc multiple comparison adjustment.
+
+```{r}
+library(emmeans)
+m4.emm <- emmeans(m4, ~ treatment | region, adjust = "tukey")
+contrast(m4.emm)
+```
+
+The output is split by each region. It tests each comparison and within each region, therefore each region has two lines comparing treatment 1 to treatment 2 and vice versa. Consequently, these lines will conduct equivalent tests just with opposite signs in mean differences. Looking at the "p.value" column, all pairwise comparisons were significant. As we saw in the plot, the magnitude of difference between treatment groups increases from region 1 (49.1) to region 2 (98.8) and then region 3 (180.0).  
 
 
 ### Longitudinal model
@@ -186,8 +302,6 @@ ggplot(phosphateL) +
   geom_line() +
   geom_smooth(aes(group = group), se = FALSE, linewidth = 2) +
   facet_wrap(~group)
-
-qplot(time,level, data=phosphateL, geom=c("line","point"), facets=~id)
 ```
 
 We can also compute simple means by time and group and compare visually. Below we use `aggregate()` to compute the means and then pipe into the ggplot code. Again it appears the phosphate levels for the control group drop faster and lower than the obese group, though by hour 3 they seem about the same. 
@@ -224,11 +338,6 @@ phosphateL$id <- ifelse(phosphateL$group == "obese",
 
 
 #### Linear Mixed-Effect Model
-
-```{r echo=FALSE}
-detach("package:lmerTest", unload = TRUE)
-```
-
 
 To fit our mixed-effect models we will use the `lmer()` function in the lme4 package [@lme4]. A mixed-effect model essentially allows us to fit separate models to each subject. We assume each subject exerts some _random effect_ on certain model parameters. The most basic mixed-effect model is the random intercept model, where each subject receives their own intercept. This is the model we will fit.
 
@@ -287,7 +396,7 @@ We can compare the models' AIC values to assess whether the more complicated non
 AIC(m, m2)
 ```
 
-The non-linear model seems to better than the original linear model. But is the non-linear model a _good_ model? One way to assess this is to simulate data using the model and see how it compares to the original data. Below we use the `simulate()` function to simulate 50 sets of phosphate values from our non-linear model. Next we plot a smooth histogram of the observed data. Then we loop through the simulated data and plot a smooth histogram for each simulation. What we see is that our model is generating data that looks pretty similar to our original data, though it seems to be a little off in the 3 - 4 range. It's not perfect, and we wouldn't want it to be, but it looks good enough. 
+The non-linear model seems better than the original linear model. But is the non-linear model a _good_ model? One way to assess this is to simulate data using the model and see how it compares to the original data. Below we use the `simulate()` function to simulate 50 sets of phosphate values from our non-linear model. Next we plot a smooth histogram of the observed data. Then we loop through the simulated data and plot a smooth histogram for each simulation. What we see is that our model is generating data that looks pretty similar to our original data, though it seems to be a little off in the 3 - 4 range. It's not perfect, and we wouldn't want it to be, but it looks good enough. 
 
 ```{r}
 sim1 <- simulate(m2, nsim = 50)
@@ -337,7 +446,7 @@ m0 <- gls(level ~ baseline + ns(time, df = 3) * group,
           data = phosphateL)
 ```
 
-Next we'll investigate correlation of errors using a _semivariogram_. Below we use the `Variogram()` function from the nlme package and pipe the result into the `plot()` function. The arguments `form = ~ time | id` and `resType = "n"` says to look at the "normalized" residuals over time by id. In addition we specify `robust = TRUE` to reduce the influence of outliers. The positive trend in the semivariogram values over "distance" indicate the errors are correlated.
+Next we'll investigate correlation of errors using a _semivariogram_. Below we use the `Variogram()` function from the nlme package and pipe the result into the `plot()` function. The arguments `form = ~ time | id` and `resType = "n"` says to look at the "normalized" residuals over time by id. In addition we specify `robust = TRUE` to reduce the influence of outliers. The positive trend in the semivariogram values over "distance" indicate the errors exhibit some correlation.
 
 ```{r}
 Variogram(m0, form = ~ time | id, resType = "n", robust = TRUE) |>
@@ -350,7 +459,7 @@ To help understand this, let's extract the residuals from our linear model, and 
 r <- residuals(m0)
 acf_out <- tapply(r, phosphateL$id, acf, plot = FALSE)
 lag1 <- sapply(acf_out, function(x)x[1,1][["acf"]])
-sort(abs(lag1), decreasing = TRUE)
+mean(abs(lag1) > 0.2)
 ```
 
 Now we model this correlation using the `corCAR1()` correlation structure. This will estimate a single correlation parameter for the errors that will decrease exponentially with each lag. Notice the model specification itself has not changed. We've simply added the argument `correlation = corCAR1(form = ~ time | id)`. 
@@ -460,25 +569,6 @@ And using the emmeans package we can make comparisons at levels of interest. For
 emmeans(m3, specs = pairwise ~ group, 
         at = list(time = 1, baseline = 4)) |>
   confint()
-```
-
-```{r}
-# Null model with random effects for intercept and slope
-m <- lmer(level ~ 1 + (time | id), data = phosphateL)
-# Adding in a predictor
-m2 <- lmer(level ~ group + (time | id), data = phosphateL)
-
-m3 <- lmer(level ~ group + time + (time | id), data = phosphateL)
-m4<-lmer(level ~ group*time + (time| id), data=phosphateL)
-
-anova(m, m2, m3, m4)
-
-summary(m4)
-
-qqmath(ranef(m4, condVar=TRUE))  
-randoms <- merTools::REsim(m4, n.sims = 500)
-merTools::plotREsim(randoms)
-
 ```
 
 

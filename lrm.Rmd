@@ -298,20 +298,22 @@ names(glow) <- tolower(names(glow))
 
 The variables are as follows:
 
-- priorfrac: history of prior fracture
+- priorfrac: history of prior fracture (1 = yes, 0 = no)
 - age: age at enrollment
 - weight: weight at enrollment in kilograms
 - premeno: menopause before age 45 (1 = yes, 0 = no)
 - raterisk: self-reported risk of fracture (1 = Less than others of the same age, 2 = Same as others of the same age, 3 = Greater than others of the same age)
 - fracture: any fracture in first year (1 = yes, 0 = no)
 
-Since raterisk is a categorical variable, let's format as a factor with descriptive labels.
+Since raterisk, priorfrac, and premeno are categorical variables, let's format as these as factors with descriptive labels.
 
 ```{r}
 glow$raterisk <- factor(glow$raterisk, labels = c("less", "same", "greater"))
+glow$priorfrac <- factor(glow$priorfrac, labels = c("no", "yes"))
+glow$premeno <- factor(glow$premeno, labels = c("no", "yes"))
 ```
 
-We can now model fracture as a function of the other variables. (Hosmer and Lemeshow 2013, Chapter 2). We use the syntax `fracture ~ .` where the `.` indicates to the `glm` function that we are predicting `fracture` using all other variables int he `glow` dataframe.
+We can now model fracture as a function of the other variables. (Hosmer and Lemeshow 2013, Chapter 2). We use the syntax `fracture ~ .` where the `.` indicates to the `glm` function that we are predicting `fracture` using all other variables in the `glow` dataframe.
 
 ```{r}
 m <- glm(fracture ~  ., data = glow, family = binomial)
@@ -325,20 +327,21 @@ vcdExtra::LRstats(m)
 
 The null hypothesis of this test is that the model is no different from the saturated model. A low p-value rejects the null. Here the p-value is pretty high, so we might have some confidence in using this model to predict the probability of a fracture in the last year.
 
-The fast and easy way to get started with the `effects` package is to simply use the `allEffects()` function in combination with `plot()`:
+To help understand the model, let's create effect displays. One way to get started is with the `effects` package [@effects]. Simply use the `allEffects()` function in combination with `plot()`:
 
-```{r}
+```{r fig.width=9.5}
 library(effects)
 plot(allEffects(m))
 ```
 
-This has produced 5 plots, one for each independent variable in the model. On the y-axis is the probability of fracture and on the x-axis is the value for each independent variable, the light blue bars indicatet the 95% confidence intervals. There is a positive linear relationship between each independent variable the probability of fracture. Notice that raterisk, since it is a factor, produced a slightly different plot. It shows the point estimate at each level of the factor and the 95% confidence interval for each level.
+This has produced 5 plots, one for each independent variable in the model. On the y-axis is the probability of fracture and on the x-axis is the value for each independent variable. The error bars and light blue ribbons indicate the 95% confidence intervals. It appears history of prior fracture, age, and self-reported risk are all positively associated with the probability of sustaining a fracture. The effects of weight and menopause before age 45 are less certain. 
 
-We can see where these estimates came from by looking at the object produced by `allEffects()`. 
+We can see the probability estimates by looking at the object produced by `allEffects()`. 
 
 ```{r}
 allEffects(m)
 ```
+
 
 ### Ordered logistic regression
 
