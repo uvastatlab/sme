@@ -674,7 +674,8 @@ region.</p>
 file using the <code>read.table()</code> function. We set
 <code>header = TRUE</code> because the first row of the data contains
 column headers.</p>
-<pre class="r"><code>rats &lt;- read.table(&quot;data/rat_brain.dat&quot;, header = TRUE)</code></pre>
+<pre class="r"><code>URL &lt;- &quot;https://github.com/uvastatlab/sme/raw/main/data/rat_brain.dat&quot;
+rats &lt;- read.table(URL, header = TRUE)</code></pre>
 <p>The animal column contains the id for each rat. Below we use the
 <code>head()</code> function to view the first six rows of data. Notice
 the first rat, R111097, has one measure for each combination of
@@ -893,7 +894,8 @@ investigate these questions:</p>
 <p>Below we read in the data, provide columns names, and format the
 group column as a factor. Notice the data is in “wide” format, with one
 record per subject.</p>
-<pre class="r"><code>phosphate &lt;- read.table(&quot;data/phosphate.dat&quot;, header = FALSE)
+<pre class="r"><code>URL &lt;- &quot;https://raw.githubusercontent.com/uvastatlab/sme/main/data/phosphate.dat&quot;
+phosphate &lt;- read.table(URL, header = FALSE)
 names(phosphate) &lt;- c(&quot;group&quot;, &quot;id&quot;, &quot;t0&quot;, &quot;t0.5&quot;, &quot;t1&quot;, &quot;t1.5&quot;, &quot;t2&quot;, &quot;t3&quot;)
 phosphate$group &lt;- factor(phosphate$group, labels = c(&quot;control&quot;, &quot;obese&quot;))
 head(phosphate)</code></pre>

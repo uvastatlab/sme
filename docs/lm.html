@@ -772,7 +772,8 @@ contains data on heating equipment orders over a span of four years. The
 data are listed in time order. Develop a reasonable predictor model for
 <code>orders</code>. Determine whether or not autocorrelation is
 present. If so, revise model as needed.</p>
-<pre class="r"><code>heating &lt;- readRDS(&quot;data/heating.rds&quot;)
+<pre class="r"><code>URL &lt;- &quot;https://github.com/uvastatlab/sme/raw/main/data/heating.rds&quot;
+heating &lt;- readRDS(url(URL))
 names(heating)</code></pre>
 <pre><code>## [1] &quot;orders&quot;       &quot;int_rate&quot;     &quot;new_homes&quot;    &quot;discount&quot;     &quot;inventories&quot; 
 ## [6] &quot;sell_through&quot; &quot;temp_dev&quot;     &quot;year&quot;         &quot;month&quot;</code></pre>
@@ -931,7 +932,7 @@ against the null.</p>
 <pre class="r"><code>library(car)
 durbinWatsonTest(m)</code></pre>
 <pre><code>##  lag Autocorrelation D-W Statistic p-value
-##    1     -0.05006007      2.079992   0.896
+##    1     -0.05006007      2.079992   0.916
 ##  Alternative hypothesis: rho != 0</code></pre>
 <p>Based on our residual versus time plot and the result of the
 Durbin-Watson test, we decide to assume our residual errors are

@@ -436,7 +436,8 @@ _Categorical Data Analysis 2nd ed_ [@agresti] presents data on nesting horseshoe
 The color and spine variables are categorical with levels defined as follows:
 
 ```{r}
-hsc <- read.csv("data/crabs.csv")
+URL <- "https://raw.githubusercontent.com/uvastatlab/sme/main/data/crabs.csv"
+hsc <- read.csv(URL)
 hsc$color <- factor(hsc$color, 
                       labels = c("light medium", 
                                  "medium", 
@@ -579,7 +580,8 @@ This model basically says there are two types of female horseshoe crabs:
 Let's read in the data and investigate the distribution of "satell", our dependent variable. This is the number of additional male crabs residing nearby a nesting female horseshoe crab.
 
 ```{r}
-hsc <- read.csv("data/crabs.csv")
+URL <- "https://raw.githubusercontent.com/uvastatlab/sme/main/data/crabs.csv"
+hsc <- read.csv(URL)
 hsc$color <- factor(hsc$color, 
                       labels = c("light medium", 
                                  "medium", 

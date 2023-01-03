@@ -1125,7 +1125,8 @@ width in cm (<code>width</code>), and the weight of the crab in kg
 (<code>weight</code>).</p>
 <p>The color and spine variables are categorical with levels defined as
 follows:</p>
-<pre class="r"><code>hsc &lt;- read.csv(&quot;data/crabs.csv&quot;)
+<pre class="r"><code>URL &lt;- &quot;https://raw.githubusercontent.com/uvastatlab/sme/main/data/crabs.csv&quot;
+hsc &lt;- read.csv(URL)
 hsc$color &lt;- factor(hsc$color, 
                       labels = c(&quot;light medium&quot;, 
                                  &quot;medium&quot;, 
@@ -1317,7 +1318,8 @@ counts will <em>always</em> be 0.</li>
 <p>Let’s read in the data and investigate the distribution of “satell”,
 our dependent variable. This is the number of additional male crabs
 residing nearby a nesting female horseshoe crab.</p>
-<pre class="r"><code>hsc &lt;- read.csv(&quot;data/crabs.csv&quot;)
+<pre class="r"><code>URL &lt;- &quot;https://raw.githubusercontent.com/uvastatlab/sme/main/data/crabs.csv&quot;
+hsc &lt;- read.csv(URL)
 hsc$color &lt;- factor(hsc$color, 
                       labels = c(&quot;light medium&quot;, 
                                  &quot;medium&quot;, 

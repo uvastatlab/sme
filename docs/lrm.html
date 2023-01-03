@@ -913,7 +913,8 @@ using the <code>read.table()</code> function with
 <code>header=TRUE</code> since the first row contains column header
 names. We then select columns we want to analyze and convert all the
 variable names to lower case for convenience.</p>
-<pre class="r"><code>glow &lt;- read.table(&quot;data/GLOW500.txt&quot;, header = TRUE)
+<pre class="r"><code>URL &lt;- &quot;https://raw.githubusercontent.com/uvastatlab/sme/main/data/GLOW500.txt&quot;
+glow &lt;- read.table(URL, header = TRUE)
 glow &lt;- glow[,c(&quot;PRIORFRAC&quot;, &quot;AGE&quot;, &quot;WEIGHT&quot;, &quot;PREMENO&quot;, &quot;RATERISK&quot;, &quot;FRACTURE&quot;)]
 names(glow) &lt;- tolower(names(glow))</code></pre>
 <p>The variables are as follows:</p>
