@@ -13,7 +13,7 @@
 
 <title>Logistic Regression Models</title>
 
-<script src="site_libs/header-attrs-2.18/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.19/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
@@ -688,11 +688,13 @@ data on 768 adult female Pima Indians living near Phoenix <span
 class="citation">(Faraway 2016)</span>. This data was collected by <a
 href="https://www.niddk.nih.gov/">The National Institute of Diabetes and
 Digestive and Kidney Diseases</a>. The purpose of the study was to
-investigate factors related to diabetes. The variable test indicates
+investigate factors related to diabetes. The variable “test” indicates
 whether the patient showed signs of diabetes (coded 0 if negative, 1 if
 positive). Model test as a function of all other predictors.</p>
 <pre class="r"><code>library(faraway)
 data(&quot;pima&quot;)</code></pre>
+<p>We can get quick statistical summaries of all the variables using the
+<code>summary()</code> function.</p>
 <pre class="r"><code>summary(pima)</code></pre>
 <pre><code>##     pregnant         glucose        diastolic         triceps     
 ##  Min.   : 0.000   Min.   :  0.0   Min.   :  0.00   Min.   : 0.00  
@@ -715,14 +717,20 @@ data(&quot;pima&quot;)</code></pre>
 ##  Mean   :0.349  
 ##  3rd Qu.:1.000  
 ##  Max.   :1.000</code></pre>
-<p>From the summary we can see that test is the dependent variable and
-there are eight independent variables. Pregnant indicates the number of
-times a subject was pregnant, glucose indicates the plasma glucose
-concentration, diastolic indicates the diastolic blood pressure, triceps
-indicates the triceps skin fold thickness, insulin indicates the 2-hour
-serum insulin in units of <span class="math inline">\(\mu U/ml\)</span>,
-bmi indicates the body mass index, diabetes indicates a diabetes
-pedigree function, and age is the subject’s age.</p>
+<p>The variables are as follows:</p>
+<ul>
+<li>pregnant: number of times a subject was pregnant</li>
+<li>glucose: plasma glucose concentration</li>
+<li>diastolic: diastolic blood pressure</li>
+<li>triceps: triceps skin fold thickness</li>
+<li>insulin: 2-hour serum insulin in units of <span
+class="math inline">\(\mu U/ml\)</span></li>
+<li>bmi: body mass index</li>
+<li>diabetes: diabetes pedigree function</li>
+<li>age: subject’s age</li>
+<li>test: whether patient showed signs of diabetes (0 if negative, 1 if
+positive)</li>
+</ul>
 <p>Looking at test, we can see that it ranges from 0 to 1. The mean of
 test is 0.349 which indicates that 34.9% of the data entries in test
 take the value of 1. In the context of this data set, this means that
@@ -937,9 +945,10 @@ using all other variables in the <code>glow</code> dataframe.</p>
 ##      AIC    BIC LR Chisq  Df Pr(&gt;Chisq)
 ## m 532.08 561.58   518.08 493       0.21</code></pre>
 <p>The null hypothesis of this test is that the model is no different
-from the saturated model. A low p-value rejects the null. Here the
-p-value is pretty high, so we might have some confidence in using this
-model to predict the probability of a fracture in the last year.</p>
+from the saturated model. A small p-value provides evidence against the
+null. Here the p-value is pretty high, so we might have some confidence
+in using this model to estimate the probability of a fracture based on
+the indepedent variables.</p>
 <p>To help understand the model, let’s create effect displays. One way
 to get started is with the <code>effects</code> package <span
 class="citation">(Fox and Weisberg 2018)</span>. Simply use the
@@ -956,7 +965,11 @@ prior fracture, age, and self-reported risk are all positively
 associated with the probability of sustaining a fracture. The effects of
 weight and menopause before age 45 are less certain.</p>
 <p>We can see the probability estimates by looking at the object
-produced by <code>allEffects()</code>.</p>
+produced by <code>allEffects()</code>. For example, the estimated
+probability of a fracture for someone who had a prior fracture is about
+0.33, assuming all other variables are held constant at their mean
+level. This is about 0.13 higher than the estimated probability for a
+fracture for those subjects who had no prior fracture.</p>
 <pre class="r"><code>allEffects(m)</code></pre>
 <pre><code>##  model: fracture ~ priorfrac + age + weight + premeno + raterisk
 ## 
@@ -984,6 +997,120 @@ produced by <code>allEffects()</code>.</p>
 ## raterisk
 ##      less      same   greater 
 ## 0.1587708 0.2436246 0.3114648</code></pre>
+<p>How certain are we about the estimated difference of 0.13 between
+those with and without prior fractures? We can use the emmeans package
+<span class="citation">(Lenth 2022)</span> to help investigate. Below we
+use the <code>emmeans()</code> function to compare the two estimated
+probabilities. The difference appears to be different from 0 which we
+infer from the large z ratio and small p-value. The
+<code>regrid = "response"</code> argument ensures the output is on the
+probability scale. The <code>revpairwise</code> keywords says to
+“reverse” the pairwise comparison and subtract “no” from “yes”.</p>
+<pre class="r"><code>library(emmeans)
+emmeans(m, specs = revpairwise ~ priorfrac, regrid = &quot;response&quot;)</code></pre>
+<pre><code>## $emmeans
+##  priorfrac  prob     SE  df asymp.LCL asymp.UCL
+##  no        0.219 0.0269 Inf     0.166     0.271
+##  yes       0.352 0.0473 Inf     0.259     0.444
+## 
+## Results are averaged over the levels of: premeno, raterisk 
+## Confidence level used: 0.95 
+## 
+## $contrasts
+##  contrast estimate     SE  df z.ratio p.value
+##  yes - no    0.133 0.0503 Inf   2.647  0.0081
+## 
+## Results are averaged over the levels of: premeno, raterisk</code></pre>
+<p>We can pipe the function’s output into <code>confint()</code> to get
+a 95% confidence interval on the difference in probabilities. It appears
+the data is consistent with a difference ranging from 0.0345 to
+0.232.</p>
+<pre class="r"><code>emmeans(m, specs = revpairwise ~ priorfrac, regrid = &quot;response&quot;) |&gt;
+  confint()</code></pre>
+<pre><code>## $emmeans
+##  priorfrac  prob     SE  df asymp.LCL asymp.UCL
+##  no        0.219 0.0269 Inf     0.166     0.271
+##  yes       0.352 0.0473 Inf     0.259     0.444
+## 
+## Results are averaged over the levels of: premeno, raterisk 
+## Confidence level used: 0.95 
+## 
+## $contrasts
+##  contrast estimate     SE  df asymp.LCL asymp.UCL
+##  yes - no    0.133 0.0503 Inf    0.0345     0.232
+## 
+## Results are averaged over the levels of: premeno, raterisk 
+## Confidence level used: 0.95</code></pre>
+<p>It’s important to note the above comparison is based on holding all
+other predictor variables at some fixed level, typically their mean
+value. We can use the <code>at</code> argument to specify at what levels
+to hold the other variables. For example, what’s the difference in
+expected probability of fracture between those with and without prior
+fractures assuming the subject is age 60, weighs 70 kg, did not
+experience menopause before age 45, and has “same” self-reported
+risk?</p>
+<pre class="r"><code>emmeans(m, specs = revpairwise ~ priorfrac, 
+        regrid = &quot;response&quot;,
+        at = list(age = 60, weight = 70, 
+                  premeno = &quot;no&quot;, raterisk = &quot;same&quot;)) |&gt;
+  confint()</code></pre>
+<pre><code>## $emmeans
+##  priorfrac  prob     SE  df asymp.LCL asymp.UCL
+##  no        0.145 0.0298 Inf    0.0862     0.203
+##  yes       0.250 0.0604 Inf    0.1318     0.369
+## 
+## Confidence level used: 0.95 
+## 
+## $contrasts
+##  contrast estimate     SE  df asymp.LCL asymp.UCL
+##  yes - no    0.106 0.0463 Inf    0.0147     0.196
+## 
+## Confidence level used: 0.95</code></pre>
+<p>We estimate the difference in probability to be about 0.11 with a 95%
+confidence interval of [0.0147, 0.196].</p>
+<p>Since we did not incorporate non-linear effects or interactions, we
+can directly interpret the coefficients in the logistic regression model
+output. Below we extract just the coefficient table from the summary
+output and round to three decimal places.</p>
+<pre class="r"><code>coef(summary(m)) |&gt; round(3)</code></pre>
+<pre><code>##                 Estimate Std. Error z value Pr(&gt;|z|)
+## (Intercept)       -5.606      1.221  -4.592    0.000
+## priorfracyes       0.679      0.242   2.803    0.005
+## age                0.050      0.013   3.737    0.000
+## weight             0.004      0.007   0.589    0.556
+## premenoyes         0.187      0.277   0.676    0.499
+## raterisksame       0.534      0.276   1.938    0.053
+## rateriskgreater    0.874      0.289   3.023    0.003</code></pre>
+<p>The coefficient for “priorfracyes” is the expected log-odds change in
+fracture when priorfrac = “yes”. If we exponentiate this value we get an
+odds ratio. Below we exponentiate all coefficients and round to 3
+decimal places.</p>
+<pre class="r"><code>coef(m) |&gt; exp() |&gt; round(3)</code></pre>
+<pre><code>##     (Intercept)    priorfracyes             age          weight      premenoyes 
+##           0.004           1.973           1.051           1.004           1.206 
+##    raterisksame rateriskgreater 
+##           1.707           2.397</code></pre>
+<p>Assuming all other variables held constant, the odds of a fracture if
+you had a prior fracture is about 1.97 times higher than if you did not
+have a prior fracture. Likewise the odds of a fracture increase by a
+factor of about 1.05 for each year subjects get older, assuming all else
+held constant.</p>
+<p>95% confidence intervals help us understand the uncertainty in the
+estimated odds ratios. We can get these using <code>confint()</code> on
+the model object.</p>
+<pre class="r"><code>confint(m) |&gt;
+  exp() |&gt;
+  round(3)</code></pre>
+<pre><code>##                 2.5 % 97.5 %
+## (Intercept)     0.000  0.039
+## priorfracyes    1.223  3.167
+## age             1.024  1.080
+## weight          0.990  1.018
+## premenoyes      0.692  2.056
+## raterisksame    1.000  2.957
+## rateriskgreater 1.368  4.263</code></pre>
+<p>It appears the odds ratio for priorfrac is plausibly between 1.223
+and 3.167.</p>
 </div>
 <div id="ordered-logistic-regression" class="section level3">
 <h3>Ordered logistic regression</h3>
@@ -1131,7 +1258,7 @@ ggplot(v_df) +
   aes(x = year, y = Prop, fill = sex) +
   geom_col(position = &quot;dodge&quot;) +
   facet_wrap(~ response)</code></pre>
-<p><img src="lrm_files/figure-html/unnamed-chunk-51-1.png" width="912" /></p>
+<p><img src="lrm_files/figure-html/unnamed-chunk-57-1.png" width="912" /></p>
 <p>We now proceed to model the ordered categorical response as a
 function of sex, year and their interaction. We use the
 <code>polr()</code> function <span class="citation">(Venables and Ripley
@@ -1493,7 +1620,7 @@ year increases, but the probability of responding “De-escalate”
 <pre class="r"><code>library(ggeffects)
 ggeffect(m, terms = c(&quot;year&quot;, &quot;sex&quot;)) |&gt; 
   plot()</code></pre>
-<p><img src="lrm_files/figure-html/unnamed-chunk-66-1.png" width="912" /></p>
+<p><img src="lrm_files/figure-html/unnamed-chunk-72-1.png" width="912" /></p>
 <p>Looking at the effect display we see varying differences in predicted
 probabilities between Males and Females. How can we quantify those
 differences? One way is using the emmeans package <span

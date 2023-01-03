@@ -190,19 +190,30 @@ prediction <- predict(lrm, newdata = malaria.test, type="response")
 
 ### Logistic regression with numeric predictors (2)
 
-The `pima` data frame from the faraway package contains data on 768 adult female Pima Indians living near Phoenix [@faraway]. This data was collected by [The National Institute of Diabetes and Digestive and Kidney Diseases](https://www.niddk.nih.gov/). The purpose of the study was to investigate factors related to diabetes. The variable test indicates whether the patient showed signs of diabetes (coded 0 if negative, 1 if positive). Model test as a function of all other predictors.
+The `pima` data frame from the faraway package contains data on 768 adult female Pima Indians living near Phoenix [@faraway]. This data was collected by [The National Institute of Diabetes and Digestive and Kidney Diseases](https://www.niddk.nih.gov/). The purpose of the study was to investigate factors related to diabetes. The variable "test" indicates whether the patient showed signs of diabetes (coded 0 if negative, 1 if positive). Model test as a function of all other predictors.
 
 ```{r}
 library(faraway)
 data("pima")
 ```
 
+We can get quick statistical summaries of all the variables using the `summary()` function. 
 
 ```{r}
 summary(pima)
 ```
 
-From the summary we can see that test is the dependent variable and there are eight independent variables. Pregnant indicates the number of times a subject was pregnant, glucose indicates the plasma glucose concentration, diastolic indicates the diastolic blood pressure, triceps indicates the triceps skin fold thickness, insulin indicates the 2-hour serum insulin in units of $\mu U/ml$, bmi indicates the body mass index, diabetes indicates a diabetes pedigree function, and age is the subject's age.
+The variables are as follows:
+
+- pregnant: number of times a subject was pregnant
+- glucose: plasma glucose concentration
+- diastolic: diastolic blood pressure
+- triceps: triceps skin fold thickness
+- insulin: 2-hour serum insulin in units of $\mu U/ml$
+- bmi: body mass index
+- diabetes: diabetes pedigree function
+- age: subject's age
+- test: whether patient showed signs of diabetes (0 if negative, 1 if positive)
 
 Looking at test, we can see that it ranges from 0 to 1. The mean of test is 0.349 which indicates that 34.9% of the data entries in test take the value of 1. In the context of this data set, this means that 34.9% of people in this study showed signs of diabetes. 
 
@@ -291,7 +302,8 @@ The text _Applied Logistic Regression (3rd Ed)_ [@hosmer2013] presents data on w
 The data is available as a ".txt" file. Below we import the data using the `read.table()` function with `header=TRUE` since the first row contains column header names. We then select columns we want to analyze and convert all the variable names to lower case for convenience. 
 
 ```{r}
-glow <- read.table("data/GLOW500.txt", header = TRUE)
+URL <- "https://raw.githubusercontent.com/uvastatlab/sme/main/data/GLOW500.txt"
+glow <- read.table(URL, header = TRUE)
 glow <- glow[,c("PRIORFRAC", "AGE", "WEIGHT", "PREMENO", "RATERISK", "FRACTURE")]
 names(glow) <- tolower(names(glow))
 ```
@@ -325,7 +337,7 @@ Similar to above, we can assess the fit of this model using the `LRstats()` func
 vcdExtra::LRstats(m)
 ```
 
-The null hypothesis of this test is that the model is no different from the saturated model. A low p-value rejects the null. Here the p-value is pretty high, so we might have some confidence in using this model to predict the probability of a fracture in the last year.
+The null hypothesis of this test is that the model is no different from the saturated model. A small p-value provides evidence against the null. Here the p-value is pretty high, so we might have some confidence in using this model to estimate the probability of a fracture based on the indepedent variables.
 
 To help understand the model, let's create effect displays. One way to get started is with the `effects` package [@effects]. Simply use the `allEffects()` function in combination with `plot()`:
 
@@ -336,12 +348,61 @@ plot(allEffects(m))
 
 This has produced 5 plots, one for each independent variable in the model. On the y-axis is the probability of fracture and on the x-axis is the value for each independent variable. The error bars and light blue ribbons indicate the 95% confidence intervals. It appears history of prior fracture, age, and self-reported risk are all positively associated with the probability of sustaining a fracture. The effects of weight and menopause before age 45 are less certain. 
 
-We can see the probability estimates by looking at the object produced by `allEffects()`. 
+We can see the probability estimates by looking at the object produced by `allEffects()`. For example, the estimated probability of a fracture for someone who had a prior fracture is about 0.33, assuming all other variables are held constant at their mean level. This is about 0.13 higher than the estimated probability for a fracture for those subjects who had no prior fracture.
 
 ```{r}
 allEffects(m)
 ```
 
+How certain are we about the estimated difference of 0.13 between those with and without prior fractures? We can use the emmeans package [@emmeans] to help investigate. Below we use the `emmeans()` function to compare the two estimated probabilities. The difference appears to be different from 0 which we infer from the large z ratio and small p-value. The `regrid = "response"` argument ensures the output is on the probability scale. The `revpairwise` keywords says to "reverse" the pairwise comparison and subtract "no" from "yes".
+
+```{r}
+library(emmeans)
+emmeans(m, specs = revpairwise ~ priorfrac, regrid = "response")
+```
+
+We can pipe the function's output into `confint()` to get a 95% confidence interval on the difference in probabilities. It appears the data is consistent with a difference ranging from 0.0345 to 0.232.
+
+```{r}
+emmeans(m, specs = revpairwise ~ priorfrac, regrid = "response") |>
+  confint()
+```
+
+It's important to note the above comparison is based on holding all other predictor variables at some fixed level, typically their mean value. We can use the `at` argument to specify at what levels to hold the other variables. For example, what's the difference in expected probability of fracture between those with and without prior fractures assuming the subject is age 60, weighs 70 kg, did not experience menopause before age 45, and has "same" self-reported risk?
+
+```{r}
+emmeans(m, specs = revpairwise ~ priorfrac, 
+        regrid = "response",
+        at = list(age = 60, weight = 70, 
+                  premeno = "no", raterisk = "same")) |>
+  confint()
+```
+
+We estimate the difference in probability to be about 0.11 with a 95% confidence interval of [0.0147, 0.196].
+
+Since we did not incorporate non-linear effects or interactions, we can directly interpret the coefficients in the logistic regression model output. Below we extract just the coefficient table from the summary output and round to three decimal places.
+
+```{r}
+coef(summary(m)) |> round(3)
+```
+
+The coefficient for "priorfracyes" is the expected log-odds change in fracture when priorfrac = "yes". If we exponentiate this value we get an odds ratio. Below we exponentiate all coefficients and round to 3 decimal places. 
+
+```{r}
+coef(m) |> exp() |> round(3)
+```
+
+Assuming all other variables held constant, the odds of a fracture if you had a prior fracture is about 1.97 times higher than if you did not have a prior fracture. Likewise the odds of a fracture increase by a factor of about 1.05 for each year subjects get older, assuming all else held constant.
+
+95% confidence intervals help us understand the uncertainty in the estimated odds ratios. We can get these using `confint()` on the model object.
+
+```{r}
+confint(m) |>
+  exp() |>
+  round(3)
+```
+
+It appears the odds ratio for priorfrac is plausibly between 1.223 and 3.167.
 
 ### Ordered logistic regression
 
