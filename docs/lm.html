@@ -397,28 +397,28 @@ Longnecker 2004)</span></p>
 <p><img src="lm_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
 <p>Find the mean of speed and a 95% confidence interval on the mean.</p>
 <pre class="r"><code>t.test(speed)</code></pre>
-<pre><code>## 
-##  One Sample t-test
-## 
-## data:  speed
-## t = 12.753, df = 20, p-value = 4.606e-11
-## alternative hypothesis: true mean is not equal to 0
-## 95 percent confidence interval:
-##   8.045653 11.192442
-## sample estimates:
-## mean of x 
-##  9.619048</code></pre>
+<pre><code>
+    One Sample t-test
+
+data:  speed
+t = 12.753, df = 20, p-value = 4.606e-11
+alternative hypothesis: true mean is not equal to 0
+95 percent confidence interval:
+  8.045653 11.192442
+sample estimates:
+mean of x 
+ 9.619048 </code></pre>
 <p>To get just the confidence interval:</p>
 <pre class="r"><code>tout &lt;- t.test(speed)
 tout$conf.int</code></pre>
-<pre><code>## [1]  8.045653 11.192442
-## attr(,&quot;conf.level&quot;)
-## [1] 0.95</code></pre>
+<pre><code>[1]  8.045653 11.192442
+attr(,&quot;conf.level&quot;)
+[1] 0.95</code></pre>
 <p>This can also be found using an intercept-only linear model:</p>
 <pre class="r"><code>m &lt;- lm(speed ~ 1)
 confint(m)</code></pre>
-<pre><code>##                2.5 %   97.5 %
-## (Intercept) 8.045653 11.19244</code></pre>
+<pre><code>               2.5 %   97.5 %
+(Intercept) 8.045653 11.19244</code></pre>
 <p>Does the sample appear to be from a Normal distribution? If so, the
 points in a QQ Plot should lie close to the diagonal line. See <a
 href="https://data.library.virginia.edu/understanding-q-q-plots/">this
@@ -431,7 +431,7 @@ qqline(speed)</code></pre>
 <p><img src="lm_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
 <p>A couple of observations seem unusual: 1, 3, 21</p>
 <pre class="r"><code>speed[c(1, 3, 21)]</code></pre>
-<pre><code>## [1]  5 15 20</code></pre>
+<pre><code>[1]  5 15 20</code></pre>
 <p>There was a fast reader and a couple of slower readers.</p>
 <p>If a Normal QQ Plot if your data looks suspect, try comparing it to
 other Normal QQ plots created with Normal data. Below we calculate the
@@ -487,29 +487,29 @@ ggplot(schooldays, aes(x = gender, y = absent, color=learner)) +
 predictors.</p>
 <pre class="r"><code>m &lt;- lm(absent ~ race + gender + school + learner, schooldays)
 summary(m)</code></pre>
-<pre><code>## 
-## Call:
-## lm(formula = absent ~ race + gender + school + learner, data = schooldays)
-## 
-## Residuals:
-##     Min      1Q  Median      3Q     Max 
-## -20.383 -10.252  -3.560   6.232  57.877 
-## 
-## Coefficients:
-##                    Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept)         17.0323     3.7353   4.560 1.07e-05 ***
-## racenon-aboriginal  -7.8280     2.4836  -3.152  0.00197 ** 
-## gendermale           2.6356     2.5596   1.030  0.30484    
-## schoolF1            -1.7803     3.8597  -0.461  0.64530    
-## schoolF2             5.3509     3.9365   1.359  0.17612    
-## schoolF3             3.2898     3.8428   0.856  0.39334    
-## learnerslow          0.7393     2.7243   0.271  0.78648    
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## Residual standard error: 15.32 on 147 degrees of freedom
-## Multiple R-squared:  0.1091, Adjusted R-squared:  0.07276 
-## F-statistic: 3.001 on 6 and 147 DF,  p-value: 0.00853</code></pre>
+<pre><code>
+Call:
+lm(formula = absent ~ race + gender + school + learner, data = schooldays)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-20.383 -10.252  -3.560   6.232  57.877 
+
+Coefficients:
+                   Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)         17.0323     3.7353   4.560 1.07e-05 ***
+racenon-aboriginal  -7.8280     2.4836  -3.152  0.00197 ** 
+gendermale           2.6356     2.5596   1.030  0.30484    
+schoolF1            -1.7803     3.8597  -0.461  0.64530    
+schoolF2             5.3509     3.9365   1.359  0.17612    
+schoolF3             3.2898     3.8428   0.856  0.39334    
+learnerslow          0.7393     2.7243   0.271  0.78648    
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+Residual standard error: 15.32 on 147 degrees of freedom
+Multiple R-squared:  0.1091,    Adjusted R-squared:  0.07276 
+F-statistic: 3.001 on 6 and 147 DF,  p-value: 0.00853</code></pre>
 <p>In the first section we would like to see Residuals centered around
 0, with the min/max and 1Q/3Q having roughly the same absolute value.
 This indicates a uniform scatter of residuals, which is what a linear
@@ -541,8 +541,8 @@ analysis data set.</p>
                                 gender = &quot;female&quot;,
                                 school = &quot;F1&quot;,
                                 learner = &quot;average&quot;))</code></pre>
-<pre><code>##        1 
-## 7.423977</code></pre>
+<pre><code>       1 
+7.423977 </code></pre>
 <p>Our model predicts about 7 days absence. Adding
 <code>interval = "confidence"</code> to <code>predict()</code> reports a
 95% confidence interval on this prediction.</p>
@@ -551,8 +551,8 @@ analysis data set.</p>
                                 school = &quot;F1&quot;,
                                 learner = &quot;average&quot;),
         interval = &quot;confidence&quot;)</code></pre>
-<pre><code>##        fit      lwr      upr
-## 1 7.423977 1.144474 13.70348</code></pre>
+<pre><code>       fit      lwr      upr
+1 7.423977 1.144474 13.70348</code></pre>
 <p>The estimate is rather wide, ranging from 1 day to 14 days.</p>
 <p>The “Std. Error” column in the summary output quantifies uncertainty
 in the estimated coefficients. The “t value” column is the ratio of the
@@ -640,13 +640,13 @@ class="citation">(Dalgaard 2020)</span></p>
 data(&quot;bp.obese&quot;)</code></pre>
 <p>First, we will look at summary statistics of the data.</p>
 <pre class="r"><code>summary(bp.obese)</code></pre>
-<pre><code>##       sex             obese             bp       
-##  Min.   :0.0000   Min.   :0.810   Min.   : 94.0  
-##  1st Qu.:0.0000   1st Qu.:1.143   1st Qu.:116.0  
-##  Median :1.0000   Median :1.285   Median :124.0  
-##  Mean   :0.5686   Mean   :1.313   Mean   :127.0  
-##  3rd Qu.:1.0000   3rd Qu.:1.430   3rd Qu.:137.5  
-##  Max.   :1.0000   Max.   :2.390   Max.   :208.0</code></pre>
+<pre><code>      sex             obese             bp       
+ Min.   :0.0000   Min.   :0.810   Min.   : 94.0  
+ 1st Qu.:0.0000   1st Qu.:1.143   1st Qu.:116.0  
+ Median :1.0000   Median :1.285   Median :124.0  
+ Mean   :0.5686   Mean   :1.313   Mean   :127.0  
+ 3rd Qu.:1.0000   3rd Qu.:1.430   3rd Qu.:137.5  
+ Max.   :1.0000   Max.   :2.390   Max.   :208.0  </code></pre>
 <p>Sex is encoded with 0s (male) and 1s (female). Sex’s mean of 0.5686
 tells us that about half of the people are female. Obese is a ratio
 representing participants weight. 1 indicates actual weight equals ideal
@@ -682,25 +682,25 @@ obese less that 1.75.</p>
 <pre class="r"><code>bp.obese$sex &lt;- as.factor(bp.obese$sex)
 m3 &lt;- lm(bp ~ obese + sex, bp.obese)
 summary(m3)</code></pre>
-<pre><code>## 
-## Call:
-## lm(formula = bp ~ obese + sex, data = bp.obese)
-## 
-## Residuals:
-##     Min      1Q  Median      3Q     Max 
-## -24.263 -11.613  -2.057   6.424  72.207 
-## 
-## Coefficients:
-##             Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept)   93.287      8.937  10.438  &lt; 2e-16 ***
-## obese         29.038      7.172   4.049 0.000102 ***
-## sex1          -7.730      3.715  -2.081 0.040053 *  
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## Residual standard error: 17 on 99 degrees of freedom
-## Multiple R-squared:  0.1438, Adjusted R-squared:  0.1265 
-## F-statistic: 8.314 on 2 and 99 DF,  p-value: 0.0004596</code></pre>
+<pre><code>
+Call:
+lm(formula = bp ~ obese + sex, data = bp.obese)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-24.263 -11.613  -2.057   6.424  72.207 
+
+Coefficients:
+            Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)   93.287      8.937  10.438  &lt; 2e-16 ***
+obese         29.038      7.172   4.049 0.000102 ***
+sex1          -7.730      3.715  -2.081 0.040053 *  
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+Residual standard error: 17 on 99 degrees of freedom
+Multiple R-squared:  0.1438,    Adjusted R-squared:  0.1265 
+F-statistic: 8.314 on 2 and 99 DF,  p-value: 0.0004596</code></pre>
 <p>One way we can assess the model is by examining diagnostic plots. We
 will view the fitted vs. residuals plot.</p>
 <pre class="r"><code>plot(m3, which=1)</code></pre>
@@ -738,10 +738,10 @@ of the predictors in the model also affect bp.</p>
 <p>Next, we will calculate confidence intervals for each of the
 coefficients in the model.</p>
 <pre class="r"><code>confint(m3)</code></pre>
-<pre><code>##                 2.5 %      97.5 %
-## (Intercept)  75.55321 111.0205442
-## obese        14.80766  43.2687683
-## sex1        -15.10225  -0.3580819</code></pre>
+<pre><code>                2.5 %      97.5 %
+(Intercept)  75.55321 111.0205442
+obese        14.80766  43.2687683
+sex1        -15.10225  -0.3580819</code></pre>
 <p>For the obese variable, the 95% confidence interval goes from 14.8 to
 43.3. According to the confidence interval, generally a 1 unit increase
 in obese will increase bp by about 14 to 43 units. If a participant’s
@@ -755,8 +755,8 @@ the obese measure increases by 0.2? To determine how much bp increases
 for every 0.1 unit increase in obese, we can divide the confidence
 interval by 10.</p>
 <pre class="r"><code>confint(m3)[&#39;obese&#39;,]/10</code></pre>
-<pre><code>##    2.5 %   97.5 % 
-## 1.480766 4.326877</code></pre>
+<pre><code>   2.5 %   97.5 % 
+1.480766 4.326877 </code></pre>
 <p>So generally, for every 0.1 unit increase in obese, bp increases by
 1.5 to 4.3 units. If a participant increases in obese by 0.2, the model
 predicts about a 2.0 to 8.6 unit increase in bp.</p>
@@ -775,8 +775,8 @@ present. If so, revise model as needed.</p>
 <pre class="r"><code>URL &lt;- &quot;https://github.com/uvastatlab/sme/raw/main/data/heating.rds&quot;
 heating &lt;- readRDS(url(URL))
 names(heating)</code></pre>
-<pre><code>## [1] &quot;orders&quot;       &quot;int_rate&quot;     &quot;new_homes&quot;    &quot;discount&quot;     &quot;inventories&quot; 
-## [6] &quot;sell_through&quot; &quot;temp_dev&quot;     &quot;year&quot;         &quot;month&quot;</code></pre>
+<pre><code>[1] &quot;orders&quot;       &quot;int_rate&quot;     &quot;new_homes&quot;    &quot;discount&quot;     &quot;inventories&quot; 
+[6] &quot;sell_through&quot; &quot;temp_dev&quot;     &quot;year&quot;         &quot;month&quot;       </code></pre>
 <p>The variables are as follows:</p>
 <ol style="list-style-type: decimal">
 <li><code>orders</code>: number orders during month</li>
@@ -800,33 +800,33 @@ contractors in previous month</li>
 <p>We had negative orders one month and zero orders a couple of
 months</p>
 <pre class="r"><code>summary(heating$orders)</code></pre>
-<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##    -5.0   262.5   754.0   937.4  1167.0  5105.0</code></pre>
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+   -5.0   262.5   754.0   937.4  1167.0  5105.0 </code></pre>
 <pre class="r"><code>head(sort(heating$orders))</code></pre>
-<pre><code>## [1] -5  0  0  8 12 34</code></pre>
+<pre><code>[1] -5  0  0  8 12 34</code></pre>
 <p>Let’s review summaries of potential predictors. Discounts are almost
 always 0.</p>
 <pre class="r"><code>summary(heating[,2:7])</code></pre>
-<pre><code>##     int_rate         new_homes        discount       inventories  
-##  Min.   :0.04750   Min.   :59.00   Min.   :0.0000   Min.   :1151  
-##  1st Qu.:0.06250   1st Qu.:63.00   1st Qu.:0.0000   1st Qu.:1796  
-##  Median :0.07500   Median :65.00   Median :0.0000   Median :2422  
-##  Mean   :0.07448   Mean   :65.53   Mean   :0.3721   Mean   :3052  
-##  3rd Qu.:0.08750   3rd Qu.:68.00   3rd Qu.:0.0000   3rd Qu.:4018  
-##  Max.   :0.09500   Max.   :72.00   Max.   :5.0000   Max.   :7142  
-##   sell_through       temp_dev    
-##  Min.   : 538.0   Min.   :0.020  
-##  1st Qu.: 724.0   1st Qu.:0.445  
-##  Median : 832.0   Median :0.860  
-##  Mean   : 926.1   Mean   :1.190  
-##  3rd Qu.:1002.5   3rd Qu.:2.130  
-##  Max.   :2388.0   Max.   :3.420</code></pre>
+<pre><code>    int_rate         new_homes        discount       inventories  
+ Min.   :0.04750   Min.   :59.00   Min.   :0.0000   Min.   :1151  
+ 1st Qu.:0.06250   1st Qu.:63.00   1st Qu.:0.0000   1st Qu.:1796  
+ Median :0.07500   Median :65.00   Median :0.0000   Median :2422  
+ Mean   :0.07448   Mean   :65.53   Mean   :0.3721   Mean   :3052  
+ 3rd Qu.:0.08750   3rd Qu.:68.00   3rd Qu.:0.0000   3rd Qu.:4018  
+ Max.   :0.09500   Max.   :72.00   Max.   :5.0000   Max.   :7142  
+  sell_through       temp_dev    
+ Min.   : 538.0   Min.   :0.020  
+ 1st Qu.: 724.0   1st Qu.:0.445  
+ Median : 832.0   Median :0.860  
+ Mean   : 926.1   Mean   :1.190  
+ 3rd Qu.:1002.5   3rd Qu.:2.130  
+ Max.   :2388.0   Max.   :3.420  </code></pre>
 <p>Tabling up discounts shows there were only 5 occasions when a
 discount was not 0.</p>
 <pre class="r"><code>table(heating$discount)</code></pre>
-<pre><code>## 
-##  0  1  2  3  5 
-## 38  1  1  1  2</code></pre>
+<pre><code>
+ 0  1  2  3  5 
+38  1  1  1  2 </code></pre>
 <p>Pairwise scatterplots again reveal that discount is mostly 0. But
 when greater than 0, it appears to be associated with higher orders.</p>
 <pre class="r"><code>pairs(heating[,1:7], lower.panel = NULL)</code></pre>
@@ -867,51 +867,51 @@ b.out &lt;- boot.stepAIC(m, heating, B = 999)</code></pre>
 being selected most often: <code>sell_through</code>,
 <code>discount</code>, and <code>inventories</code></p>
 <pre class="r"><code>b.out$Covariates</code></pre>
-<pre><code>##                   (%)
-## sell_through 96.19620
-## discount     94.99499
-## inventories  84.18418
-## int_rate     42.34234
-## new_homes    28.22823
-## temp_dev     21.12112</code></pre>
+<pre><code>                  (%)
+sell_through 96.19620
+discount     94.99499
+inventories  84.18418
+int_rate     42.34234
+new_homes    28.22823
+temp_dev     21.12112</code></pre>
 <p>The Sign element of the BootStep object shows that
 <code>sell_through</code> had a positive coefficient 100% of the time,
 while <code>discount</code> had a positive coefficient about 99.9% of
 the time. The sign of the coefficient for <code>inventories</code> was
 negative about 99.5% of the time.</p>
 <pre class="r"><code>b.out$Sign</code></pre>
-<pre><code>##                    + (%)      - (%)
-## sell_through 100.0000000  0.0000000
-## discount      99.8946259  0.1053741
-## int_rate      93.8534279  6.1465721
-## new_homes     92.5531915  7.4468085
-## temp_dev      20.3791469 79.6208531
-## inventories    0.4756243 99.5243757</code></pre>
+<pre><code>                   + (%)      - (%)
+sell_through 100.0000000  0.0000000
+discount      99.8946259  0.1053741
+int_rate      93.8534279  6.1465721
+new_homes     92.5531915  7.4468085
+temp_dev      20.3791469 79.6208531
+inventories    0.4756243 99.5243757</code></pre>
 <p>Let’s proceed with these three predictors in a simple additive
 model.</p>
 <pre class="r"><code>m &lt;- lm(orders ~ discount + inventories + sell_through, data = heating)
 summary(m)</code></pre>
-<pre><code>## 
-## Call:
-## lm(formula = orders ~ discount + inventories + sell_through, 
-##     data = heating)
-## 
-## Residuals:
-##    Min     1Q Median     3Q    Max 
-## -934.5 -364.4 -138.4  236.0 1531.2 
-## 
-## Coefficients:
-##               Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept)  371.89514  244.83077   1.519  0.13683    
-## discount     643.11308   71.31200   9.018 4.39e-11 ***
-## inventories   -0.11845    0.04962  -2.387  0.02192 *  
-## sell_through   0.74260    0.22357   3.322  0.00195 ** 
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## Residual standard error: 519.9 on 39 degrees of freedom
-## Multiple R-squared:  0.7599, Adjusted R-squared:  0.7414 
-## F-statistic: 41.14 on 3 and 39 DF,  p-value: 3.694e-12</code></pre>
+<pre><code>
+Call:
+lm(formula = orders ~ discount + inventories + sell_through, 
+    data = heating)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-934.5 -364.4 -138.4  236.0 1531.2 
+
+Coefficients:
+              Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)  371.89514  244.83077   1.519  0.13683    
+discount     643.11308   71.31200   9.018 4.39e-11 ***
+inventories   -0.11845    0.04962  -2.387  0.02192 *  
+sell_through   0.74260    0.22357   3.322  0.00195 ** 
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+Residual standard error: 519.9 on 39 degrees of freedom
+Multiple R-squared:  0.7599,    Adjusted R-squared:  0.7414 
+F-statistic: 41.14 on 3 and 39 DF,  p-value: 3.694e-12</code></pre>
 <p>Before we get too invested in the model output, we investigate the
 residuals for autocorrelation since our data is in time order. One
 (subjective) way to do that is to plot residuals over time. Since our
@@ -931,9 +931,9 @@ autocorrelation. The test result below fails to provide good evidence
 against the null.</p>
 <pre class="r"><code>library(car)
 durbinWatsonTest(m)</code></pre>
-<pre><code>##  lag Autocorrelation D-W Statistic p-value
-##    1     -0.05006007      2.079992   0.916
-##  Alternative hypothesis: rho != 0</code></pre>
+<pre><code> lag Autocorrelation D-W Statistic p-value
+   1     -0.05006007      2.079992   0.924
+ Alternative hypothesis: rho != 0</code></pre>
 <p>Based on our residual versus time plot and the result of the
 Durbin-Watson test, we decide to assume our residual errors are
 independent.</p>
@@ -952,8 +952,8 @@ be exerting a strong influence on the model.</p>
 appears this is one of the rare times there was a discount. And at 5%,
 this is the largest observed discount.</p>
 <pre class="r"><code>heating[18, c(&quot;orders&quot;, &quot;discount&quot;, &quot;inventories&quot;, &quot;sell_through&quot;)]</code></pre>
-<pre><code>##    orders discount inventories sell_through
-## 18   5105        5        2089         1078</code></pre>
+<pre><code>   orders discount inventories sell_through
+18   5105        5        2089         1078</code></pre>
 <p>We can assess how our model changes by re-fitting without observation
 18.</p>
 <pre class="r"><code>m2 &lt;- update(m, subset = -18)</code></pre>
@@ -962,25 +962,25 @@ it easy to compare model coefficients side-by-side. It doesn’t appear to
 change the substance of the results and we elect to keep the observation
 moving forward.</p>
 <pre class="r"><code>compareCoefs(m, m2)</code></pre>
-<pre><code>## Calls:
-## 1: lm(formula = orders ~ discount + inventories + sell_through, data = 
-##   heating)
-## 2: lm(formula = orders ~ discount + inventories + sell_through, data = 
-##   heating, subset = -18)
-## 
-##              Model 1 Model 2
-## (Intercept)      372     282
-## SE               245     231
-##                             
-## discount       643.1   505.7
-## SE              71.3    85.2
-##                             
-## inventories  -0.1185 -0.1071
-## SE            0.0496  0.0466
-##                             
-## sell_through   0.743   0.816
-## SE             0.224   0.211
-## </code></pre>
+<pre><code>Calls:
+1: lm(formula = orders ~ discount + inventories + sell_through, data = 
+  heating)
+2: lm(formula = orders ~ discount + inventories + sell_through, data = 
+  heating, subset = -18)
+
+             Model 1 Model 2
+(Intercept)      372     282
+SE               245     231
+                            
+discount       643.1   505.7
+SE              71.3    85.2
+                            
+inventories  -0.1185 -0.1071
+SE            0.0496  0.0466
+                            
+sell_through   0.743   0.816
+SE             0.224   0.211
+                            </code></pre>
 <p>Computing confidence intervals on the coefficients can help with
 interpretation. It appears every additional one percentage point
 discount could boost orders by about 500 units, perhaps as much as 750
@@ -994,11 +994,11 @@ in stock may slightly decrease orders. Same with the
 of [29, 119]. Every 100 number units sold the previous month suggests an
 increase of a few dozen orders.</p>
 <pre class="r"><code>confint(m)</code></pre>
-<pre><code>##                     2.5 %       97.5 %
-## (Intercept)  -123.3218428 867.11212629
-## discount      498.8709468 787.35521450
-## inventories    -0.2188203  -0.01808456
-## sell_through    0.2903863   1.19480804</code></pre>
+<pre><code>                    2.5 %       97.5 %
+(Intercept)  -123.3218428 867.11212629
+discount      498.8709468 787.35521450
+inventories    -0.2188203  -0.01808456
+sell_through    0.2903863   1.19480804</code></pre>
 <p>We can use our model to make a prediction. What’s the expected mean
 number of orders with <code>inventories</code> at 2500 and
 <code>sell_through</code> at 900, assuming a 1% discount?</p>
@@ -1006,8 +1006,8 @@ number of orders with <code>inventories</code> at 2500 and
                                 sell_through = 900,
                                 discount = 1), 
         interval = &quot;confidence&quot;)</code></pre>
-<pre><code>##        fit      lwr      upr
-## 1 1387.215 1194.674 1579.755</code></pre>
+<pre><code>       fit      lwr      upr
+1 1387.215 1194.674 1579.755</code></pre>
 <p>Based on the confidence interval, a conservative estimate would be
 about 1200 orders.</p>
 </div>

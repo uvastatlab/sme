@@ -398,12 +398,12 @@ data(&quot;AirCrash&quot;)</code></pre>
 <p>The AirCrash data frame has data on 439 crashes with the following 5
 variables:</p>
 <pre class="r"><code>str(AirCrash)</code></pre>
-<pre><code>## &#39;data.frame&#39;:    439 obs. of  5 variables:
-##  $ Phase     : Factor w/ 5 levels &quot;en route&quot;,&quot;landing&quot;,..: 2 2 2 2 2 2 2 2 2 2 ...
-##  $ Cause     : Factor w/ 5 levels &quot;criminal&quot;,&quot;human error&quot;,..: 1 1 1 1 4 4 4 4 4 4 ...
-##  $ date      : Date, format: &quot;1993-09-21&quot; &quot;1993-09-22&quot; ...
-##  $ Fatalities: int  27 108 125 112 41 19 8 22 14 43 ...
-##  $ Year      : int  1993 1993 1996 2002 1993 1993 1994 2000 2002 2004 ...</code></pre>
+<pre><code>&#39;data.frame&#39;:   439 obs. of  5 variables:
+ $ Phase     : Factor w/ 5 levels &quot;en route&quot;,&quot;landing&quot;,..: 2 2 2 2 2 2 2 2 2 2 ...
+ $ Cause     : Factor w/ 5 levels &quot;criminal&quot;,&quot;human error&quot;,..: 1 1 1 1 4 4 4 4 4 4 ...
+ $ date      : Date, format: &quot;1993-09-21&quot; &quot;1993-09-22&quot; ...
+ $ Fatalities: int  27 108 125 112 41 19 8 22 14 43 ...
+ $ Year      : int  1993 1993 1996 2002 1993 1993 1994 2000 2002 2004 ...</code></pre>
 <p>An interesting aspect of this data is that it is technically not a
 sample. We have <em>all the data</em>. We could argue that no
 inferential statistics or modeling is necessary. We should simply
@@ -421,8 +421,8 @@ of Fatalities is severely skewed by some large crashes. Notice the mean
 is over twice as large as the median. We also notice there are no
 commercial airplane crashes with 0 fatalities.</p>
 <pre class="r"><code>summary(AirCrash$Fatalities)</code></pre>
-<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##    1.00    7.00   19.00   50.68   60.00 1692.00</code></pre>
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+   1.00    7.00   19.00   50.68   60.00 1692.00 </code></pre>
 <p>A Histogram reveals the extent of the skewness. We set
 <code>breaks = 50</code> to increase the number of bins in the
 histogram.</p>
@@ -440,8 +440,8 @@ the plane crashed:</p>
 <p>Since it’s a factor we can get counts by calling
 <code>summary()</code> on the variable.</p>
 <pre class="r"><code>summary(AirCrash$Phase)</code></pre>
-<pre><code>## en route  landing standing take-off  unknown 
-##      157      210        4       65        3</code></pre>
+<pre><code>en route  landing standing take-off  unknown 
+     157      210        4       65        3 </code></pre>
 <p>The Cause variable tells us the cause of the crash (if known):</p>
 <ul>
 <li>criminal</li>
@@ -452,8 +452,8 @@ the plane crashed:</p>
 </ul>
 <p>It, too, is a factor.</p>
 <pre class="r"><code>summary(AirCrash$Cause)</code></pre>
-<pre><code>##    criminal human error  mechanical     unknown     weather 
-##          23         207          74          52          83</code></pre>
+<pre><code>   criminal human error  mechanical     unknown     weather 
+         23         207          74          52          83 </code></pre>
 <p>The Year column tells us in what year the crash occurred. We can use
 <code>tapply()</code> to quickly sum Fatalities by Year and pipe into
 the <code>barplot()</code> function. A barplot reveals Fatalities
@@ -488,29 +488,29 @@ class="citation">(Fox and Weisberg 2019)</span>. It appears both explain
 a substantial amount of variability.</p>
 <pre class="r"><code>library(car)
 Anova(m)</code></pre>
-<pre><code>## Analysis of Deviance Table (Type II tests)
-## 
-## Response: Fatalities
-##       LR Chisq Df Pr(&gt;Chisq)    
-## Phase   1643.1  4  &lt; 2.2e-16 ***
-## Cause   4718.1  4  &lt; 2.2e-16 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre><code>Analysis of Deviance Table (Type II tests)
+
+Response: Fatalities
+      LR Chisq Df Pr(&gt;Chisq)    
+Phase   1643.1  4  &lt; 2.2e-16 ***
+Cause   4718.1  4  &lt; 2.2e-16 ***
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p>The <code>drop1()</code> function in the stats package performs the
 same tests and includes information on the change in AIC if we drop the
 variable. For example, if we drop Cause from the model, the AIC
 increases from 35036 to 38111. Recall that lower AIC is desirable.</p>
 <pre class="r"><code>drop1(m, test = &quot;Chisq&quot;)</code></pre>
-<pre><code>## Single term deletions
-## 
-## Model:
-## Fatalities ~ Phase + Cause
-##        Df Deviance   AIC    LRT  Pr(&gt;Chi)    
-## &lt;none&gt;       31269 33401                     
-## Phase   4    32912 35036 1643.1 &lt; 2.2e-16 ***
-## Cause   4    35987 38111 4718.1 &lt; 2.2e-16 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre><code>Single term deletions
+
+Model:
+Fatalities ~ Phase + Cause
+       Df Deviance   AIC    LRT  Pr(&gt;Chi)    
+&lt;none&gt;       31269 33401                     
+Phase   4    32912 35036 1643.1 &lt; 2.2e-16 ***
+Cause   4    35987 38111 4718.1 &lt; 2.2e-16 ***
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p>While both variables seem highly “significant” we should assess the
 model’s goodness of fit. One effective way to do this for count models
 is creating a rootogram with the countreg package <span
@@ -548,28 +548,28 @@ look at a cross-tabulation of Phase and Cause to see if we have any
 <em>sparse cells</em>. Indeed we do. We have five cells of 0 counts and
 seven cells of counts 3 and under.</p>
 <pre class="r"><code>xtabs(~ Phase + Cause, data = AirCrash)</code></pre>
-<pre><code>##           Cause
-## Phase      criminal human error mechanical unknown weather
-##   en route       16          63         29      25      24
-##   landing         4         114         19      18      55
-##   standing        2           0          2       0       0
-##   take-off        1          29         24       8       3
-##   unknown         0           1          0       1       1</code></pre>
+<pre><code>          Cause
+Phase      criminal human error mechanical unknown weather
+  en route       16          63         29      25      24
+  landing         4         114         19      18      55
+  standing        2           0          2       0       0
+  take-off        1          29         24       8       3
+  unknown         0           1          0       1       1</code></pre>
 <p>Therefore we forego the interaction. We do not want to model
 interactions that we did not observe.</p>
 <p>Let’s add Year to the model. It appears to make a marginal
 contribution to explaining Fatalities.</p>
 <pre class="r"><code>m3 &lt;- glm.nb(Fatalities ~ Phase + Cause + Year, data = AirCrash)
 Anova(m3)</code></pre>
-<pre><code>## Analysis of Deviance Table (Type II tests)
-## 
-## Response: Fatalities
-##       LR Chisq Df Pr(&gt;Chisq)    
-## Phase   23.328  4  0.0001089 ***
-## Cause   51.136  4  2.091e-10 ***
-## Year     6.137  1  0.0132396 *  
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre><code>Analysis of Deviance Table (Type II tests)
+
+Response: Fatalities
+      LR Chisq Df Pr(&gt;Chisq)    
+Phase   23.328  4  0.0001089 ***
+Cause   51.136  4  2.091e-10 ***
+Year     6.137  1  0.0132396 *  
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p>The interested reader may wish to verify that adding Year to the
 model doesn’t appreciably change the rootogram.</p>
 <p>Diagnostic plots can help us assess if the model does a good job of
@@ -581,12 +581,12 @@ D (influence). By default the five most “noteworthy” points are labeled.
 The numbers refer to the row number in the data frame.</p>
 <pre class="r"><code>influencePlot(m3)</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-17-1.png" width="672" /></p>
-<pre><code>##        StudRes        Hat       CookD
-## 14   2.4499231 0.02360668 0.072971602
-## 222  2.9897351 0.04688623 0.232270205
-## 437 -0.2380636 0.34328385 0.003153681
-## 438 -1.8694688 0.34423047 0.055350359
-## 439  0.9817622 0.34111672 0.083016892</code></pre>
+<pre><code>       StudRes        Hat       CookD
+14   2.4499231 0.02360668 0.072971602
+222  2.9897351 0.04688623 0.232270205
+437 -0.2380636 0.34328385 0.003153681
+438 -1.8694688 0.34423047 0.055350359
+439  0.9817622 0.34111672 0.083016892</code></pre>
 <ul>
 <li><strong>Studentized Residuals</strong>: This is the scaled
 difference between the response for case <em>i</em> and the fitted value
@@ -607,50 +607,49 @@ coefficients.</li>
 <p>Row 222 has the highest Cook’s D value and Residual. This is one of
 the planes that was crashed en route on September 11, 2001.</p>
 <pre class="r"><code>AirCrash[222,]</code></pre>
-<pre><code>##        Phase    Cause       date Fatalities Year
-## 222 en route criminal 2001-09-11       1692 2001</code></pre>
+<pre><code>       Phase    Cause       date Fatalities Year
+222 en route criminal 2001-09-11       1692 2001</code></pre>
 <p>When cases appear to have high leverage or influence, we may want to
 re-fit the model without them (one at a time) to see if the results
 change. In this case we choose to use all available data.</p>
 <p>Our final model summary is as follows:</p>
 <pre class="r"><code>summary(m3)</code></pre>
-<pre><code>## 
-## Call:
-## glm.nb(formula = Fatalities ~ Phase + Cause + Year, data = AirCrash, 
-##     init.theta = 0.7339275638, link = log)
-## 
-## Deviance Residuals: 
-##     Min       1Q   Median       3Q      Max  
-## -2.4043  -1.1417  -0.5786   0.2520   2.8804  
-## 
-## Coefficients:
-##                    Estimate Std. Error z value Pr(&gt;|z|)    
-## (Intercept)      -43.834781  19.577798  -2.239 0.025156 *  
-## Phaselanding      -0.380320   0.128905  -2.950 0.003174 ** 
-## Phasestanding     -3.584073   0.679347  -5.276 1.32e-07 ***
-## Phasetake-off     -0.348486   0.177710  -1.961 0.049880 *  
-## Phaseunknown       0.066040   0.688236   0.096 0.923556    
-## Causehuman error  -1.015330   0.269419  -3.769 0.000164 ***
-## Causemechanical   -1.322336   0.288925  -4.577 4.72e-06 ***
-## Causeunknown      -1.731870   0.308109  -5.621 1.90e-08 ***
-## Causeweather      -1.561468   0.288959  -5.404 6.53e-08 ***
-## Year               0.024532   0.009792   2.505 0.012238 *  
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## (Dispersion parameter for Negative Binomial(0.7339) family taken to be 1)
-## 
-##     Null deviance: 600.09  on 438  degrees of freedom
-## Residual deviance: 511.98  on 429  degrees of freedom
-## AIC: 4207.8
-## 
-## Number of Fisher Scoring iterations: 1
-## 
-## 
-##               Theta:  0.7339 
-##           Std. Err.:  0.0443 
-## 
-##  2 x log-likelihood:  -4185.7620</code></pre>
+<pre><code>
+Call:
+glm.nb(formula = Fatalities ~ Phase + Cause + Year, data = AirCrash, 
+    init.theta = 0.7339275638, link = log)
+
+Deviance Residuals: 
+    Min       1Q   Median       3Q      Max  
+-2.4043  -1.1417  -0.5786   0.2520   2.8804  
+
+Coefficients:
+                   Estimate Std. Error z value Pr(&gt;|z|)    
+(Intercept)      -43.834781  19.577798  -2.239 0.025156 *  
+Phaselanding      -0.380320   0.128905  -2.950 0.003174 ** 
+Phasestanding     -3.584073   0.679347  -5.276 1.32e-07 ***
+Phasetake-off     -0.348486   0.177710  -1.961 0.049880 *  
+Phaseunknown       0.066040   0.688236   0.096 0.923556    
+Causehuman error  -1.015330   0.269419  -3.769 0.000164 ***
+Causemechanical   -1.322336   0.288925  -4.577 4.72e-06 ***
+Causeunknown      -1.731870   0.308109  -5.621 1.90e-08 ***
+Causeweather      -1.561468   0.288959  -5.404 6.53e-08 ***
+Year               0.024532   0.009792   2.505 0.012238 *  
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+(Dispersion parameter for Negative Binomial(0.7339) family taken to be 1)
+
+    Null deviance: 600.09  on 438  degrees of freedom
+Residual deviance: 511.98  on 429  degrees of freedom
+AIC: 4207.8
+
+Number of Fisher Scoring iterations: 1
+
+              Theta:  0.7339 
+          Std. Err.:  0.0443 
+
+ 2 x log-likelihood:  -4185.7620 </code></pre>
 <p>Since Phase and Cause have five levels each, both have four
 coefficients. The reference levels are “en route” and “criminal”,
 respectively. The coefficients for the other levels are relative to the
@@ -661,15 +660,15 @@ route”, all other variables held constant.</p>
 <p>Log counts are hard to understand. If we exponentiate we get a
 multiplicative interpretation.</p>
 <pre class="r"><code>exp(coef(m3)[&quot;Phasestanding&quot;])</code></pre>
-<pre><code>## Phasestanding 
-##    0.02776239</code></pre>
+<pre><code>Phasestanding 
+   0.02776239 </code></pre>
 <p>This says the expected count of Fatalities when Phase is “standing”
 is about 1 - 0.03 = 97% less than the expected count when Phase is “en
 route”, all other variables held constant.</p>
 <p>Exponentiating the Year coefficient returns the following:</p>
 <pre class="r"><code>exp(coef(m3)[&quot;Year&quot;])</code></pre>
-<pre><code>##     Year 
-## 1.024835</code></pre>
+<pre><code>    Year 
+1.024835 </code></pre>
 <p>This says air crash Fatalities increased by about 2% each year from
 1993 - 2015.</p>
 <p>Effect plots can help us visualize our count model. Using the
@@ -686,19 +685,19 @@ ggpredict(m3, terms = &quot;Cause&quot;) |&gt; plot()</code></pre>
 <p>We can see this by calling <code>ggpredict()</code> without
 <code>plot()</code>.</p>
 <pre class="r"><code>ggpredict(m3, terms = &quot;Cause&quot;)</code></pre>
-<pre><code>## # Predicted counts of Fatalities
-## 
-## Cause       | Predicted |           95% CI
-## ------------------------------------------
-## criminal    |    186.65 | [113.74, 306.29]
-## human error |     67.62 | [ 53.73,  85.09]
-## mechanical  |     49.74 | [ 36.45,  67.89]
-## unknown     |     33.03 | [ 23.03,  47.36]
-## weather     |     39.16 | [ 28.77,  53.32]
-## 
-## Adjusted for:
-## * Phase = en route
-## *  Year =  2000.00</code></pre>
+<pre><code># Predicted counts of Fatalities
+
+Cause       | Predicted |           95% CI
+------------------------------------------
+criminal    |    186.65 | [113.74, 306.29]
+human error |     67.62 | [ 53.73,  85.09]
+mechanical  |     49.74 | [ 36.45,  67.89]
+unknown     |     33.03 | [ 23.03,  47.36]
+weather     |     39.16 | [ 28.77,  53.32]
+
+Adjusted for:
+* Phase = en route
+*  Year =  2000.00</code></pre>
 <p>If we wanted to change the Phase and Year values, we could do so as
 follows:</p>
 <pre class="r"><code>ggpredict(m3, terms = &quot;Cause&quot;, 
@@ -742,33 +741,33 @@ look at the “model.matrix” element to see what values Phase and Cause
 were held at.</p>
 <pre class="r"><code>e &lt;- Effect(focal.predictors = &quot;Year&quot;, mod = m3)
 e$model.matrix</code></pre>
-<pre><code>##   (Intercept) Phaselanding Phasestanding Phasetake-off Phaseunknown
-## 1           1    0.4783599   0.009111617     0.1480638  0.006833713
-## 2           1    0.4783599   0.009111617     0.1480638  0.006833713
-## 3           1    0.4783599   0.009111617     0.1480638  0.006833713
-## 4           1    0.4783599   0.009111617     0.1480638  0.006833713
-## 5           1    0.4783599   0.009111617     0.1480638  0.006833713
-##   Causehuman error Causemechanical Causeunknown Causeweather Year
-## 1        0.4715262       0.1685649     0.118451    0.1890661 1993
-## 2        0.4715262       0.1685649     0.118451    0.1890661 1998
-## 3        0.4715262       0.1685649     0.118451    0.1890661 2004
-## 4        0.4715262       0.1685649     0.118451    0.1890661 2010
-## 5        0.4715262       0.1685649     0.118451    0.1890661 2015
-## attr(,&quot;assign&quot;)
-##  [1] 0 1 1 1 1 2 2 2 2 3
-## attr(,&quot;contrasts&quot;)
-## attr(,&quot;contrasts&quot;)$Phase
-## [1] &quot;contr.treatment&quot;
-## 
-## attr(,&quot;contrasts&quot;)$Cause
-## [1] &quot;contr.treatment&quot;</code></pre>
+<pre><code>  (Intercept) Phaselanding Phasestanding Phasetake-off Phaseunknown
+1           1    0.4783599   0.009111617     0.1480638  0.006833713
+2           1    0.4783599   0.009111617     0.1480638  0.006833713
+3           1    0.4783599   0.009111617     0.1480638  0.006833713
+4           1    0.4783599   0.009111617     0.1480638  0.006833713
+5           1    0.4783599   0.009111617     0.1480638  0.006833713
+  Causehuman error Causemechanical Causeunknown Causeweather Year
+1        0.4715262       0.1685649     0.118451    0.1890661 1993
+2        0.4715262       0.1685649     0.118451    0.1890661 1998
+3        0.4715262       0.1685649     0.118451    0.1890661 2004
+4        0.4715262       0.1685649     0.118451    0.1890661 2010
+5        0.4715262       0.1685649     0.118451    0.1890661 2015
+attr(,&quot;assign&quot;)
+ [1] 0 1 1 1 1 2 2 2 2 3
+attr(,&quot;contrasts&quot;)
+attr(,&quot;contrasts&quot;)$Phase
+[1] &quot;contr.treatment&quot;
+
+attr(,&quot;contrasts&quot;)$Cause
+[1] &quot;contr.treatment&quot;</code></pre>
 <p>These values are simply the proportions of observations at each
 level. For example, compare the above values for Phase to the observed
 proportions of Phase in the data.</p>
 <pre class="r"><code>table(AirCrash$Phase) |&gt; proportions()</code></pre>
-<pre><code>## 
-##    en route     landing    standing    take-off     unknown 
-## 0.357630979 0.478359909 0.009111617 0.148063781 0.006833713</code></pre>
+<pre><code>
+   en route     landing    standing    take-off     unknown 
+0.357630979 0.478359909 0.009111617 0.148063781 0.006833713 </code></pre>
 <p>We see that “landing”, “standing”, “take-off”, and “unknown” are held
 at their proportions. (“en route” is the reference level and not
 directly modeled.) While these values are not plausible in real life,
@@ -803,20 +802,20 @@ plans “en route” versus plans standing on a runway. That seems to make
 sense.</p>
 <pre class="r"><code>library(emmeans)
 emmeans(m3, pairwise ~ Phase, regrid = &quot;response&quot;)$contrasts</code></pre>
-<pre><code>##  contrast              estimate    SE  df z.ratio p.value
-##  en route - landing       24.39  8.63 Inf   2.826  0.0380
-##  en route - standing      74.97 10.88 Inf   6.892  &lt;.0001
-##  en route - (take-off)    22.69 10.94 Inf   2.074  0.2314
-##  en route - unknown       -5.26 56.65 Inf  -0.093  1.0000
-##  landing - standing       50.57  8.17 Inf   6.191  &lt;.0001
-##  landing - (take-off)     -1.71  9.44 Inf  -0.181  0.9998
-##  landing - unknown       -29.66 56.44 Inf  -0.525  0.9848
-##  standing - (take-off)   -52.28 10.71 Inf  -4.884  &lt;.0001
-##  standing - unknown      -80.23 57.20 Inf  -1.403  0.6259
-##  (take-off) - unknown    -27.95 56.95 Inf  -0.491  0.9882
-## 
-## Results are averaged over the levels of: Cause 
-## P value adjustment: tukey method for comparing a family of 5 estimates</code></pre>
+<pre><code> contrast              estimate    SE  df z.ratio p.value
+ en route - landing       24.39  8.63 Inf   2.826  0.0380
+ en route - standing      74.97 10.88 Inf   6.892  &lt;.0001
+ en route - (take-off)    22.69 10.94 Inf   2.074  0.2314
+ en route - unknown       -5.26 56.65 Inf  -0.093  1.0000
+ landing - standing       50.57  8.17 Inf   6.191  &lt;.0001
+ landing - (take-off)     -1.71  9.44 Inf  -0.181  0.9998
+ landing - unknown       -29.66 56.44 Inf  -0.525  0.9848
+ standing - (take-off)   -52.28 10.71 Inf  -4.884  &lt;.0001
+ standing - unknown      -80.23 57.20 Inf  -1.403  0.6259
+ (take-off) - unknown    -27.95 56.95 Inf  -0.491  0.9882
+
+Results are averaged over the levels of: Cause 
+P value adjustment: tukey method for comparing a family of 5 estimates </code></pre>
 <p>We can also pipe this result into <code>plot()</code> to see the
 difference in expected values visualized along with 95% confidence
 intervals.</p>
@@ -829,21 +828,21 @@ between “en route” and “standing” is plausibly anywhere between 45.3 and
 104.6.</p>
 <pre class="r"><code>emmeans(m3, pairwise ~ Phase, regrid = &quot;response&quot;)$contrasts |&gt;
   confint()</code></pre>
-<pre><code>##  contrast              estimate    SE  df asymp.LCL asymp.UCL
-##  en route - landing       24.39  8.63 Inf     0.846      47.9
-##  en route - standing      74.97 10.88 Inf    45.295     104.6
-##  en route - (take-off)    22.69 10.94 Inf    -7.155      52.5
-##  en route - unknown       -5.26 56.65 Inf  -159.801     149.3
-##  landing - standing       50.57  8.17 Inf    28.293      72.9
-##  landing - (take-off)     -1.71  9.44 Inf   -27.464      24.1
-##  landing - unknown       -29.66 56.44 Inf  -183.623     124.3
-##  standing - (take-off)   -52.28 10.71 Inf   -81.480     -23.1
-##  standing - unknown      -80.23 57.20 Inf  -236.257      75.8
-##  (take-off) - unknown    -27.95 56.95 Inf  -183.300     127.4
-## 
-## Results are averaged over the levels of: Cause 
-## Confidence level used: 0.95 
-## Conf-level adjustment: tukey method for comparing a family of 5 estimates</code></pre>
+<pre><code> contrast              estimate    SE  df asymp.LCL asymp.UCL
+ en route - landing       24.39  8.63 Inf     0.846      47.9
+ en route - standing      74.97 10.88 Inf    45.295     104.6
+ en route - (take-off)    22.69 10.94 Inf    -7.155      52.5
+ en route - unknown       -5.26 56.65 Inf  -159.801     149.3
+ landing - standing       50.57  8.17 Inf    28.293      72.9
+ landing - (take-off)     -1.71  9.44 Inf   -27.464      24.1
+ landing - unknown       -29.66 56.44 Inf  -183.623     124.3
+ standing - (take-off)   -52.28 10.71 Inf   -81.480     -23.1
+ standing - unknown      -80.23 57.20 Inf  -236.257      75.8
+ (take-off) - unknown    -27.95 56.95 Inf  -183.300     127.4
+
+Results are averaged over the levels of: Cause 
+Confidence level used: 0.95 
+Conf-level adjustment: tukey method for comparing a family of 5 estimates </code></pre>
 </div>
 <div id="rate-model" class="section level3">
 <h3>Rate model</h3>
@@ -865,13 +864,13 @@ the data contains information on</p>
 <li>hours: total number of hours worked</li>
 </ul>
 <pre class="r"><code>str(esdcomp)</code></pre>
-<pre><code>## &#39;data.frame&#39;:    44 obs. of  6 variables:
-##  $ visits    : int  2014 3091 879 1780 3646 2690 1864 2782 3071 1502 ...
-##  $ complaints: int  2 3 1 1 11 1 2 6 9 3 ...
-##  $ residency : Factor w/ 2 levels &quot;N&quot;,&quot;Y&quot;: 2 1 2 1 1 1 2 1 1 2 ...
-##  $ gender    : Factor w/ 2 levels &quot;F&quot;,&quot;M&quot;: 1 2 2 2 2 2 2 2 1 2 ...
-##  $ revenue   : num  263 335 206 226 289 ...
-##  $ hours     : num  1287 1588 705 1006 1667 ...</code></pre>
+<pre><code>&#39;data.frame&#39;:   44 obs. of  6 variables:
+ $ visits    : int  2014 3091 879 1780 3646 2690 1864 2782 3071 1502 ...
+ $ complaints: int  2 3 1 1 11 1 2 6 9 3 ...
+ $ residency : Factor w/ 2 levels &quot;N&quot;,&quot;Y&quot;: 2 1 2 1 1 1 2 1 1 2 ...
+ $ gender    : Factor w/ 2 levels &quot;F&quot;,&quot;M&quot;: 1 2 2 2 2 2 2 2 1 2 ...
+ $ revenue   : num  263 335 206 226 289 ...
+ $ hours     : num  1287 1588 705 1006 1667 ...</code></pre>
 <p>Hours worked and patient visits are highly correlated, so we’ll just
 work with visits in our analysis.</p>
 <pre class="r"><code>corr &lt;- cor(esdcomp$visits, esdcomp$hours)
@@ -881,8 +880,8 @@ plot(esdcomp$visits, esdcomp$hours,
 <p>The number of complaints range from 0 to 11, with over half the
 complaints less than or equal to 2.</p>
 <pre class="r"><code>summary(esdcomp$complaints)</code></pre>
-<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##   0.000   1.000   2.000   3.341   5.000  11.000</code></pre>
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  0.000   1.000   2.000   3.341   5.000  11.000 </code></pre>
 <p>A barplot of counts of complaints shows only one doctor has 0
 complaints and that most doctors have one or two complaints.</p>
 <pre class="r"><code>plot(table(esdcomp$complaints), type = &quot;h&quot;)</code></pre>
@@ -893,24 +892,24 @@ complaints in 3091 visits, while the second doctor listed has 3
 complaints in 1502 visits. While the number of complaints is the same
 for both doctors, the <em>rate of complaints</em> is different.</p>
 <pre class="r"><code>subset(esdcomp, complaints == 3, select = visits:complaints)</code></pre>
-<pre><code>##    visits complaints
-## 2    3091          3
-## 10   1502          3
-## 23   3003          3
-## 36   1451          3
-## 37   3328          3</code></pre>
+<pre><code>   visits complaints
+2    3091          3
+10   1502          3
+23   3003          3
+36   1451          3
+37   3328          3</code></pre>
 <p>Below we add rate of complaints to the data and look again at doctors
 with 3 complaints. The first doctor has about 1 complaint per 1000
 visits while the second doctor has about 2 complaints per 1000
 visits.</p>
 <pre class="r"><code>esdcomp$rate &lt;- esdcomp$complaints/esdcomp$visits
 subset(esdcomp, complaints == 3, select = c(visits:complaints, rate))</code></pre>
-<pre><code>##    visits complaints         rate
-## 2    3091          3 0.0009705597
-## 10   1502          3 0.0019973369
-## 23   3003          3 0.0009990010
-## 36   1451          3 0.0020675396
-## 37   3328          3 0.0009014423</code></pre>
+<pre><code>   visits complaints         rate
+2    3091          3 0.0009705597
+10   1502          3 0.0019973369
+23   3003          3 0.0009990010
+36   1451          3 0.0020675396
+37   3328          3 0.0009014423</code></pre>
 <p>There appears to be some variability in the rates. Not a lot but
 perhaps enough to be of interest to hospital administration.</p>
 <pre class="r"><code>hist(esdcomp$rate)</code></pre>
@@ -931,31 +930,31 @@ rate_mod &lt;- glm(complaints ~ residency + revenueC + gender +
                 data = esdcomp,
                 family = poisson)
 summary(rate_mod)</code></pre>
-<pre><code>## 
-## Call:
-## glm(formula = complaints ~ residency + revenueC + gender + offset(log(visits)), 
-##     family = poisson, data = esdcomp)
-## 
-## Deviance Residuals: 
-##     Min       1Q   Median       3Q      Max  
-## -2.3356  -0.9403  -0.4460   0.8726   2.0306  
-## 
-## Coefficients:
-##              Estimate Std. Error z value Pr(&gt;|z|)    
-## (Intercept) -6.542634   0.208779 -31.338   &lt;2e-16 ***
-## residencyY  -0.350610   0.191077  -1.835   0.0665 .  
-## revenueC     0.002362   0.002798   0.844   0.3986    
-## genderM      0.128995   0.214323   0.602   0.5473    
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## (Dispersion parameter for poisson family taken to be 1)
-## 
-##     Null deviance: 63.435  on 43  degrees of freedom
-## Residual deviance: 58.698  on 40  degrees of freedom
-## AIC: 189.48
-## 
-## Number of Fisher Scoring iterations: 5</code></pre>
+<pre><code>
+Call:
+glm(formula = complaints ~ residency + revenueC + gender + offset(log(visits)), 
+    family = poisson, data = esdcomp)
+
+Deviance Residuals: 
+    Min       1Q   Median       3Q      Max  
+-2.3356  -0.9403  -0.4460   0.8726   2.0306  
+
+Coefficients:
+             Estimate Std. Error z value Pr(&gt;|z|)    
+(Intercept) -6.542634   0.208779 -31.338   &lt;2e-16 ***
+residencyY  -0.350610   0.191077  -1.835   0.0665 .  
+revenueC     0.002362   0.002798   0.844   0.3986    
+genderM      0.128995   0.214323   0.602   0.5473    
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+(Dispersion parameter for poisson family taken to be 1)
+
+    Null deviance: 63.435  on 43  degrees of freedom
+Residual deviance: 58.698  on 40  degrees of freedom
+AIC: 189.48
+
+Number of Fisher Scoring iterations: 5</code></pre>
 <p>Both revenue and gender have high p-values, so we’re unsure if the
 coefficients for those predictors are positive or negative. The p-value
 for residency is pretty low, about 0.07, so we have decent evidence that
@@ -971,13 +970,13 @@ The Intercept is the expected rate of complaints for a female doctor,
 not in residency training, earning an average revenue. This comes out to
 about 1 complaint per 1000 visits.</p>
 <pre class="r"><code>car::Confint(rate_mod, exponentiate = TRUE)</code></pre>
-<pre><code>## 
-## Exponentiated Coefficients and Confidence Bounds</code></pre>
-<pre><code>##                Estimate        2.5 %      97.5 %
-## (Intercept) 0.001440689 0.0009389426 0.002132307
-## residencyY  0.704258118 0.4819236944 1.020449674
-## revenueC    1.002364774 0.9968532607 1.007848920
-## genderM     1.137683995 0.7559801492 1.756475968</code></pre>
+<pre><code>
+Exponentiated Coefficients and Confidence Bounds</code></pre>
+<pre><code>               Estimate        2.5 %      97.5 %
+(Intercept) 0.001440689 0.0009389426 0.002132307
+residencyY  0.704258118 0.4819236944 1.020449674
+revenueC    1.002364774 0.9968532607 1.007848920
+genderM     1.137683995 0.7559801492 1.756475968</code></pre>
 <p>Is this a good model? A rootogram can help us investigate. We use the
 <code>rootogram()</code> function from the countreg package <span
 class="citation">(Kleiber and Zeileis 2016)</span>. The plot is not
@@ -990,47 +989,47 @@ rootogram(rate_mod, max = 11)</code></pre>
 <p>The <code>drop1()</code> function tests single term deletions.
 Dropping the gender variable decreases the AIC by about 2 units.</p>
 <pre class="r"><code>drop1(rate_mod, test = &quot;Chisq&quot;)</code></pre>
-<pre><code>## Single term deletions
-## 
-## Model:
-## complaints ~ residency + revenueC + gender + offset(log(visits))
-##           Df Deviance    AIC    LRT Pr(&gt;Chi)  
-## &lt;none&gt;         58.698 189.48                  
-## residency  1   62.128 190.91 3.4303  0.06401 .
-## revenueC   1   59.407 188.19 0.7093  0.39969  
-## gender     1   59.067 187.85 0.3689  0.54361  
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre><code>Single term deletions
+
+Model:
+complaints ~ residency + revenueC + gender + offset(log(visits))
+          Df Deviance    AIC    LRT Pr(&gt;Chi)  
+&lt;none&gt;         58.698 189.48                  
+residency  1   62.128 190.91 3.4303  0.06401 .
+revenueC   1   59.407 188.19 0.7093  0.39969  
+gender     1   59.067 187.85 0.3689  0.54361  
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p>We proceed to fit a new model without gender using the
 <code>update()</code> function. The syntax <code>. ~ . - gender</code>
 means fit the same model as before except drop gender. This results in a
 slightly bigger coefficient for residency.</p>
 <pre class="r"><code>rate_mod2 &lt;- update(rate_mod, . ~ . - gender)
 summary(rate_mod2)</code></pre>
-<pre><code>## 
-## Call:
-## glm(formula = complaints ~ residency + revenueC + offset(log(visits)), 
-##     family = poisson, data = esdcomp)
-## 
-## Deviance Residuals: 
-##     Min       1Q   Median       3Q      Max  
-## -2.3118  -0.9309  -0.4820   0.9173   2.0869  
-## 
-## Coefficients:
-##              Estimate Std. Error z value Pr(&gt;|z|)    
-## (Intercept) -6.434509   0.103389 -62.236   &lt;2e-16 ***
-## residencyY  -0.378583   0.185434  -2.042   0.0412 *  
-## revenueC     0.002905   0.002661   1.092   0.2749    
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## (Dispersion parameter for poisson family taken to be 1)
-## 
-##     Null deviance: 63.435  on 43  degrees of freedom
-## Residual deviance: 59.067  on 41  degrees of freedom
-## AIC: 187.85
-## 
-## Number of Fisher Scoring iterations: 5</code></pre>
+<pre><code>
+Call:
+glm(formula = complaints ~ residency + revenueC + offset(log(visits)), 
+    family = poisson, data = esdcomp)
+
+Deviance Residuals: 
+    Min       1Q   Median       3Q      Max  
+-2.3118  -0.9309  -0.4820   0.9173   2.0869  
+
+Coefficients:
+             Estimate Std. Error z value Pr(&gt;|z|)    
+(Intercept) -6.434509   0.103389 -62.236   &lt;2e-16 ***
+residencyY  -0.378583   0.185434  -2.042   0.0412 *  
+revenueC     0.002905   0.002661   1.092   0.2749    
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+(Dispersion parameter for poisson family taken to be 1)
+
+    Null deviance: 63.435  on 43  degrees of freedom
+Residual deviance: 59.067  on 41  degrees of freedom
+AIC: 187.85
+
+Number of Fisher Scoring iterations: 5</code></pre>
 <p>The rootogram for this model is largely unchanged from the first
 model.</p>
 <p>Using this new model we may want to estimate how the rate of
@@ -1045,21 +1044,21 @@ counts per 1000.</p>
                                              visits = 1000),
              type = &quot;response&quot;)
 p</code></pre>
-<pre><code>##        1        2 
-## 1.605196 1.099288</code></pre>
+<pre><code>       1        2 
+1.605196 1.099288 </code></pre>
 <p>To get the rate of complaints we need to divide by 1000:</p>
 <pre class="r"><code>names(p) &lt;- c(&quot;Not in Training&quot;, &quot;Training&quot;)
 p/1000</code></pre>
-<pre><code>## Not in Training        Training 
-##     0.001605196     0.001099288</code></pre>
+<pre><code>Not in Training        Training 
+    0.001605196     0.001099288 </code></pre>
 <p>The rate seems slightly higher for doctors not in training. If we
 take the ratio of the rates we get about 1.46. This estimates that the
 rate of complaints for doctors not in training is about 46% higher than
 the rate of complaints for doctors in training.</p>
 <pre class="r"><code>p_rate &lt;- p/1000
 p_rate[1]/p_rate[2]</code></pre>
-<pre><code>## Not in Training 
-##        1.460214</code></pre>
+<pre><code>Not in Training 
+       1.460214 </code></pre>
 <p>How certain are we about this estimate of 46%? We can use the emmeans
 package to help us assess this question <span class="citation">(Lenth
 2022)</span>. Below we load the package and then use the
@@ -1081,20 +1080,20 @@ emmeans(rate_mod2, trt.vs.ctrl ~ residency,
         type = &quot;response&quot;, offset = log(1000), 
         reverse = TRUE) |&gt;
   confint()</code></pre>
-<pre><code>## $emmeans
-##  residency rate    SE  df asymp.LCL asymp.UCL
-##  N         1.61 0.166 Inf      1.31      1.97
-##  Y         1.10 0.164 Inf      0.82      1.47
-## 
-## Confidence level used: 0.95 
-## Intervals are back-transformed from the log scale 
-## 
-## $contrasts
-##  contrast ratio    SE  df asymp.LCL asymp.UCL
-##  N / Y     1.46 0.271 Inf      1.02       2.1
-## 
-## Confidence level used: 0.95 
-## Intervals are back-transformed from the log scale</code></pre>
+<pre><code>$emmeans
+ residency rate    SE  df asymp.LCL asymp.UCL
+ N         1.61 0.166 Inf      1.31      1.97
+ Y         1.10 0.164 Inf      0.82      1.47
+
+Confidence level used: 0.95 
+Intervals are back-transformed from the log scale 
+
+$contrasts
+ contrast ratio    SE  df asymp.LCL asymp.UCL
+ N / Y     1.46 0.271 Inf      1.02       2.1
+
+Confidence level used: 0.95 
+Intervals are back-transformed from the log scale </code></pre>
 <p>If this was a <em>sample of 44 doctors</em>, the 95% confidence
 interval might lead us to conclude that patient complaints are slightly
 lower for doctors in residency training. If this was <em>all the
@@ -1142,19 +1141,19 @@ color as predictors. (Agresti 2002, problem 13.16)</p>
 <code>satell</code>, ranges from 0 to 15 with a fair amount of
 zeroes.</p>
 <pre class="r"><code>summary(hsc$satell)</code></pre>
-<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##   0.000   0.000   2.000   2.919   5.000  15.000</code></pre>
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  0.000   0.000   2.000   2.919   5.000  15.000 </code></pre>
 <p>In fact over a third of the crabs had 0 satellites.</p>
 <pre class="r"><code>mean(hsc$satell == 0)</code></pre>
-<pre><code>## [1] 0.3583815</code></pre>
+<pre><code>[1] 0.3583815</code></pre>
 <p>Instead of a histogram, we generate a barplot of counts. In addition
 to the spike at 0 we see an interesting dip at 2.</p>
 <pre class="r"><code>table(hsc$satell)|&gt; barplot()</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-54-1.png" width="672" /></p>
 <p>Most crabs are medium color.</p>
 <pre class="r"><code>summary(hsc$color)</code></pre>
-<pre><code>## light medium       medium  dark medium         dark 
-##           12           95           44           22</code></pre>
+<pre><code>light medium       medium  dark medium         dark 
+          12           95           44           22 </code></pre>
 <p>The median number of satellites increases as coloring of the crab
 gets lighter.</p>
 <pre class="r"><code>library(ggplot2)
@@ -1190,18 +1189,18 @@ assess the interaction.</p>
 library(car)
 m &lt;- glm.nb(satell ~ width * color, data = hsc)
 Anova(m, test = &quot;F&quot;)</code></pre>
-<pre><code>## Analysis of Deviance Table (Type II tests)
-## 
-## Response: satell
-## Error estimate based on Pearson residuals 
-## 
-##              Sum Sq  Df F value    Pr(&gt;F)    
-## width        14.744   1 15.1595 0.0001432 ***
-## color         2.774   3  0.9507 0.4175644    
-## width:color   2.100   3  0.7196 0.5416109    
-## Residuals   160.483 165                      
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre><code>Analysis of Deviance Table (Type II tests)
+
+Response: satell
+Error estimate based on Pearson residuals 
+
+             Sum Sq  Df F value    Pr(&gt;F)    
+width        14.744   1 15.1595 0.0001432 ***
+color         2.774   3  0.9507 0.4175644    
+width:color   2.100   3  0.7196 0.5416109    
+Residuals   160.483 165                      
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p>The low F value and high p-value for the <code>width:color</code>
 term indicates the interaction adds little value to the model. The null
 hypothesis of the test in this case is that the model without the
@@ -1218,17 +1217,17 @@ hypothesis. However we’ll retain this term in the model going
 forward.</p>
 <pre class="r"><code>m2 &lt;- glm.nb(satell ~ width + color, data = hsc)
 Anova(m2, test = &quot;F&quot;)</code></pre>
-<pre><code>## Analysis of Deviance Table (Type II tests)
-## 
-## Response: satell
-## Error estimate based on Pearson residuals 
-## 
-##            Sum Sq  Df F value    Pr(&gt;F)    
-## width      14.470   1 15.9110 9.892e-05 ***
-## color       2.723   3  0.9982    0.3952    
-## Residuals 152.785 168                      
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre><code>Analysis of Deviance Table (Type II tests)
+
+Response: satell
+Error estimate based on Pearson residuals 
+
+           Sum Sq  Df F value    Pr(&gt;F)    
+width      14.470   1 15.9110 9.892e-05 ***
+color       2.723   3  0.9982    0.3952    
+Residuals 152.785 168                      
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p>Before we interpret the model let’s assess the fit. A good model
 should generate data that’s similar to the data used to fit the model.
 Below we use the <code>densityPlot()</code> function from the car
@@ -1270,14 +1269,14 @@ the coefficients. For example it appears that for every 1 cm increase in
 carapace width results in about a 20% increase in counts (95% CI: [8,
 31]).</p>
 <pre class="r"><code>Confint(m2, exponentiate = TRUE)</code></pre>
-<pre><code>## 
-## Exponentiated Coefficients and Confidence Bounds</code></pre>
-<pre><code>##                    Estimate       2.5 %    97.5 %
-## (Intercept)      0.03500076 0.002560117 0.4531445
-## width            1.19529162 1.089259341 1.3153087
-## colormedium      0.75886462 0.362037718 1.4724292
-## colordark medium 0.59432532 0.270255682 1.2280651
-## colordark        0.58506859 0.245133460 1.3434182</code></pre>
+<pre><code>
+Exponentiated Coefficients and Confidence Bounds</code></pre>
+<pre><code>                   Estimate       2.5 %    97.5 %
+(Intercept)      0.03500076 0.002560117 0.4531445
+width            1.19529162 1.089259341 1.3153087
+colormedium      0.75886462 0.362037718 1.4724292
+colordark medium 0.59432532 0.270255682 1.2280651
+colordark        0.58506859 0.245133460 1.3434182</code></pre>
 <p>We can visualize this effect using the ggeffects package <span
 class="citation">(Lüdecke 2018)</span>. Below we use the
 <code>ggeffect()</code> function to make predictions of satel for
@@ -1355,28 +1354,28 @@ coefficient is relatively large and negative. This suggests females with
 wider shells are less likely to have 0 satellites.</p>
 <pre class="r"><code>glm(zero ~ width, data = hsc, family = binomial) |&gt;
   summary()</code></pre>
-<pre><code>## 
-## Call:
-## glm(formula = zero ~ width, family = binomial, data = hsc)
-## 
-## Deviance Residuals: 
-##     Min       1Q   Median       3Q      Max  
-## -1.6942  -0.9066  -0.5480   1.0458   2.0281  
-## 
-## Coefficients:
-##             Estimate Std. Error z value Pr(&gt;|z|)    
-## (Intercept)  12.3508     2.6287   4.698 2.62e-06 ***
-## width        -0.4972     0.1017  -4.887 1.02e-06 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## (Dispersion parameter for binomial family taken to be 1)
-## 
-##     Null deviance: 225.76  on 172  degrees of freedom
-## Residual deviance: 194.45  on 171  degrees of freedom
-## AIC: 198.45
-## 
-## Number of Fisher Scoring iterations: 4</code></pre>
+<pre><code>
+Call:
+glm(formula = zero ~ width, family = binomial, data = hsc)
+
+Deviance Residuals: 
+    Min       1Q   Median       3Q      Max  
+-1.6942  -0.9066  -0.5480   1.0458   2.0281  
+
+Coefficients:
+            Estimate Std. Error z value Pr(&gt;|z|)    
+(Intercept)  12.3508     2.6287   4.698 2.62e-06 ***
+width        -0.4972     0.1017  -4.887 1.02e-06 ***
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 225.76  on 172  degrees of freedom
+Residual deviance: 194.45  on 171  degrees of freedom
+AIC: 198.45
+
+Number of Fisher Scoring iterations: 4</code></pre>
 <p>We can visualize this model using the <code>ggeffect()</code>
 function from the ggeffects package. Smaller widths appear to be
 associated with higher probabilities of 0 satellites.</p>
@@ -1420,41 +1419,41 @@ the model with 11 parameters (ie. df, or degrees of freedom). With only
 173 observations it seems wise to prefer the model with only 8
 parameters.</p>
 <pre class="r"><code>AIC(zm, zm1, zm2, zm3)</code></pre>
-<pre><code>##     df      AIC
-## zm   7 743.8041
-## zm1  8 717.6382
-## zm2 10 735.1719
-## zm3 11 715.6936</code></pre>
+<pre><code>    df      AIC
+zm   7 743.8041
+zm1  8 717.6382
+zm2 10 735.1719
+zm3 11 715.6936</code></pre>
 <p>The model summary shows results for two models: the negative binomial
 count model and the zero-inflation binary logistic regression model.</p>
 <pre class="r"><code>summary(zm1)</code></pre>
-<pre><code>## 
-## Call:
-## zeroinfl(formula = satell ~ width + color | width, data = hsc, dist = &quot;negbin&quot;)
-## 
-## Pearson residuals:
-##     Min      1Q  Median      3Q     Max 
-## -1.3426 -0.7773 -0.2581  0.6553  4.0435 
-## 
-## Count model coefficients (negbin with log link):
-##                  Estimate Std. Error z value Pr(&gt;|z|)    
-## (Intercept)       0.48404    0.84391   0.574    0.566    
-## width             0.04417    0.03044   1.451    0.147    
-## colormedium      -0.20465    0.21731  -0.942    0.346    
-## colordark medium -0.37987    0.24325  -1.562    0.118    
-## colordark         0.17605    0.30884   0.570    0.569    
-## Log(theta)        1.78104    0.37577   4.740 2.14e-06 ***
-## 
-## Zero-inflation model coefficients (binomial with logit link):
-##             Estimate Std. Error z value Pr(&gt;|z|)    
-## (Intercept)  12.5433     2.8388   4.419 9.94e-06 ***
-## width        -0.5094     0.1104  -4.613 3.96e-06 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1 
-## 
-## Theta = 5.936 
-## Number of iterations in BFGS optimization: 14 
-## Log-likelihood: -350.8 on 8 Df</code></pre>
+<pre><code>
+Call:
+zeroinfl(formula = satell ~ width + color | width, data = hsc, dist = &quot;negbin&quot;)
+
+Pearson residuals:
+    Min      1Q  Median      3Q     Max 
+-1.3426 -0.7773 -0.2581  0.6553  4.0435 
+
+Count model coefficients (negbin with log link):
+                 Estimate Std. Error z value Pr(&gt;|z|)    
+(Intercept)       0.48404    0.84391   0.574    0.566    
+width             0.04417    0.03044   1.451    0.147    
+colormedium      -0.20465    0.21731  -0.942    0.346    
+colordark medium -0.37987    0.24325  -1.562    0.118    
+colordark         0.17605    0.30884   0.570    0.569    
+Log(theta)        1.78104    0.37577   4.740 2.14e-06 ***
+
+Zero-inflation model coefficients (binomial with logit link):
+            Estimate Std. Error z value Pr(&gt;|z|)    
+(Intercept)  12.5433     2.8388   4.419 9.94e-06 ***
+width        -0.5094     0.1104  -4.613 3.96e-06 ***
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1 
+
+Theta = 5.936 
+Number of iterations in BFGS optimization: 14 
+Log-likelihood: -350.8 on 8 Df</code></pre>
 <p>The only coefficient in the count model that looks reliably positive
 or negative is <em>theta</em>. This is the dispersion parameter in the
 negative binomial model. This tells us the conditional mean of the
@@ -1472,33 +1471,33 @@ coefficients.</p>
 <pre class="r"><code>zm4 &lt;- zeroinfl(satell ~ 1 | width, 
                 data = hsc, dist = &quot;negbin&quot;)
 AIC(zm1, zm4)</code></pre>
-<pre><code>##     df      AIC
-## zm1  8 717.6382
-## zm4  4 716.3546</code></pre>
+<pre><code>    df      AIC
+zm1  8 717.6382
+zm4  4 716.3546</code></pre>
 <pre class="r"><code>summary(zm4)</code></pre>
-<pre><code>## 
-## Call:
-## zeroinfl(formula = satell ~ 1 | width, data = hsc, dist = &quot;negbin&quot;)
-## 
-## Pearson residuals:
-##     Min      1Q  Median      3Q     Max 
-## -1.2864 -0.7710 -0.2773  0.5899  3.6437 
-## 
-## Count model coefficients (negbin with log link):
-##             Estimate Std. Error z value Pr(&gt;|z|)    
-## (Intercept)  1.47294    0.06622  22.244  &lt; 2e-16 ***
-## Log(theta)   1.55404    0.34193   4.545  5.5e-06 ***
-## 
-## Zero-inflation model coefficients (binomial with logit link):
-##             Estimate Std. Error z value Pr(&gt;|z|)    
-## (Intercept)  13.1286     2.9472   4.455 8.41e-06 ***
-## width        -0.5332     0.1152  -4.628 3.69e-06 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1 
-## 
-## Theta = 4.7305 
-## Number of iterations in BFGS optimization: 10 
-## Log-likelihood: -354.2 on 4 Df</code></pre>
+<pre><code>
+Call:
+zeroinfl(formula = satell ~ 1 | width, data = hsc, dist = &quot;negbin&quot;)
+
+Pearson residuals:
+    Min      1Q  Median      3Q     Max 
+-1.2864 -0.7710 -0.2773  0.5899  3.6437 
+
+Count model coefficients (negbin with log link):
+            Estimate Std. Error z value Pr(&gt;|z|)    
+(Intercept)  1.47294    0.06622  22.244  &lt; 2e-16 ***
+Log(theta)   1.55404    0.34193   4.545  5.5e-06 ***
+
+Zero-inflation model coefficients (binomial with logit link):
+            Estimate Std. Error z value Pr(&gt;|z|)    
+(Intercept)  13.1286     2.9472   4.455 8.41e-06 ***
+width        -0.5332     0.1152  -4.628 3.69e-06 ***
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1 
+
+Theta = 4.7305 
+Number of iterations in BFGS optimization: 10 
+Log-likelihood: -354.2 on 4 Df</code></pre>
 <p>This updated model basically says that counts of satellites is a
 mixture of two models:</p>
 <ol style="list-style-type: decimal">
@@ -1517,9 +1516,9 @@ previous section. It has two fewer coefficients and a substantially
 lower AIC.</p>
 <pre class="r"><code># m2 fit in the Negative binomial model section
 AIC(zm4, m2)</code></pre>
-<pre><code>##     df      AIC
-## zm4  4 716.3546
-## m2   6 760.5958</code></pre>
+<pre><code>    df      AIC
+zm4  4 716.3546
+m2   6 760.5958</code></pre>
 </div>
 <div id="references" class="section level3 unnumbered">
 <h3 class="unnumbered">References</h3>

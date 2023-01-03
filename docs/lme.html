@@ -434,22 +434,22 @@ model.</p>
 m_assum &lt;- mlm_assumptions(m)
 # Homogeneity of variance
 m_assum$homo.test</code></pre>
-<pre><code>## Analysis of Variance Table
-## 
-## Response: model.Res2
-##           Df  Sum Sq Mean Sq F value Pr(&gt;F)
-## group      3  295471   98490  0.7357 0.5595
-## Residuals  8 1070935  133867</code></pre>
+<pre><code>Analysis of Variance Table
+
+Response: model.Res2
+          Df  Sum Sq Mean Sq F value Pr(&gt;F)
+group      3  295471   98490  0.7357 0.5595
+Residuals  8 1070935  133867               </code></pre>
 <p>The output from the test of homogeneity of variance indicates that
 this assumption has been met. <span class="math inline">\(p =
 0.56\)</span> which is greater than .05, indicating that the residual
 variation across clusters is not significantly different.</p>
 <pre class="r"><code># Outliers
 m_assum$outliers</code></pre>
-<pre><code>## [1] &quot;No outliers detected.&quot;</code></pre>
+<pre><code>[1] &quot;No outliers detected.&quot;</code></pre>
 <pre class="r"><code># Multicollinearity
 m_assum$multicollinearity</code></pre>
-<pre><code>## [1] &quot;Model contains fewer than 2 terms, multicollinearity cannot be assessed.\n&quot;</code></pre>
+<pre><code>[1] &quot;Model contains fewer than 2 terms, multicollinearity cannot be assessed.\n&quot;</code></pre>
 <p>No outliers were detected in the model and since we only have one
 predictor multicollinearity is not necessary to test. The remaining
 tests included in <code>m_assum</code> are plots we need to visually
@@ -482,32 +482,32 @@ affect the number of eggs, and if so, which treatment seems superior? We
 can look into this assessing both model fit and significance of
 predictors. First, a summary of the model is useful to look at.</p>
 <pre class="r"><code>summary(m)</code></pre>
-<pre><code>## Linear mixed model fit by REML [&#39;lmerMod&#39;]
-## Formula: eggs ~ treat + (1 | block)
-##    Data: eggprod
-## 
-## REML criterion at convergence: 85.4
-## 
-## Scaled residuals: 
-##      Min       1Q   Median       3Q      Max 
-## -1.71233 -0.47453 -0.02845  0.64196  1.42942 
-## 
-## Random effects:
-##  Groups   Name        Variance Std.Dev.
-##  block    (Intercept) 129.9    11.40   
-##  Residual             386.9    19.67   
-## Number of obs: 12, groups:  block, 4
-## 
-## Fixed effects:
-##             Estimate Std. Error t value
-## (Intercept)   349.00      11.37  30.702
-## treatF         -6.25      13.91  -0.449
-## treatO        -42.50      13.91  -3.056
-## 
-## Correlation of Fixed Effects:
-##        (Intr) treatF
-## treatF -0.612       
-## treatO -0.612  0.500</code></pre>
+<pre><code>Linear mixed model fit by REML [&#39;lmerMod&#39;]
+Formula: eggs ~ treat + (1 | block)
+   Data: eggprod
+
+REML criterion at convergence: 85.4
+
+Scaled residuals: 
+     Min       1Q   Median       3Q      Max 
+-1.71233 -0.47453 -0.02845  0.64196  1.42942 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ block    (Intercept) 129.9    11.40   
+ Residual             386.9    19.67   
+Number of obs: 12, groups:  block, 4
+
+Fixed effects:
+            Estimate Std. Error t value
+(Intercept)   349.00      11.37  30.702
+treatF         -6.25      13.91  -0.449
+treatO        -42.50      13.91  -3.056
+
+Correlation of Fixed Effects:
+       (Intr) treatF
+treatF -0.612       
+treatO -0.612  0.500</code></pre>
 <p>Looking at the predictor, the fixed intercept, 349.00, is the mean
 eggs when the treat factor is at its lowest level (treatE). The
 intercept fixed effect is the grand mean of eggs across the entire
@@ -518,8 +518,8 @@ produces 42.50 less mean egg production.</p>
 <p>This is further substantiated by looking at the means by treatment.
 Observed means of eggs by treat:</p>
 <pre class="r"><code>tapply(eggprod$eggs, eggprod$treat, mean)</code></pre>
-<pre><code>##      E      F      O 
-## 349.00 342.75 306.50</code></pre>
+<pre><code>     E      F      O 
+349.00 342.75 306.50 </code></pre>
 <p>We see that the means of treatment <code>E</code> and <code>F</code>
 are closer to each other than either of them are to treatment
 <code>O</code>. To test whether this effect is significant, there are
@@ -527,13 +527,13 @@ two options. We can use the <code>car::Anova</code> function, or load
 the <code>lmerTest</code> package <span class="citation">(Kuznetsova,
 Brockhoff, and Christensen 2017)</span>.</p>
 <pre class="r"><code>car::Anova(m)</code></pre>
-<pre><code>## Analysis of Deviance Table (Type II Wald chisquare tests)
-## 
-## Response: eggs
-##        Chisq Df Pr(&gt;Chisq)   
-## treat 10.887  2   0.004324 **
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre><code>Analysis of Deviance Table (Type II Wald chisquare tests)
+
+Response: eggs
+       Chisq Df Pr(&gt;Chisq)   
+treat 10.887  2   0.004324 **
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p>The <code>Anova()</code> function shows that the model including
 treat is a better fit (<span class="math inline">\(\chi^2(2,N = 12) =
 10.887, p &lt; .01\)</span>) than the null model (intercept only). This
@@ -545,77 +545,77 @@ independent variables if they are significant.</p>
 <pre class="r"><code>library(lmerTest)
 m &lt;- lmer(eggs ~ treat + (1|block), data = eggprod)
 summary(m)</code></pre>
-<pre><code>## Linear mixed model fit by REML. t-tests use Satterthwaite&#39;s method [
-## lmerModLmerTest]
-## Formula: eggs ~ treat + (1 | block)
-##    Data: eggprod
-## 
-## REML criterion at convergence: 85.4
-## 
-## Scaled residuals: 
-##      Min       1Q   Median       3Q      Max 
-## -1.71233 -0.47453 -0.02845  0.64196  1.42942 
-## 
-## Random effects:
-##  Groups   Name        Variance Std.Dev.
-##  block    (Intercept) 129.9    11.40   
-##  Residual             386.9    19.67   
-## Number of obs: 12, groups:  block, 4
-## 
-## Fixed effects:
-##             Estimate Std. Error     df t value Pr(&gt;|t|)    
-## (Intercept)   349.00      11.37   7.99  30.702  1.4e-09 ***
-## treatF         -6.25      13.91   6.00  -0.449   0.6690    
-## treatO        -42.50      13.91   6.00  -3.056   0.0224 *  
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## Correlation of Fixed Effects:
-##        (Intr) treatF
-## treatF -0.612       
-## treatO -0.612  0.500</code></pre>
+<pre><code>Linear mixed model fit by REML. t-tests use Satterthwaite&#39;s method [
+lmerModLmerTest]
+Formula: eggs ~ treat + (1 | block)
+   Data: eggprod
+
+REML criterion at convergence: 85.4
+
+Scaled residuals: 
+     Min       1Q   Median       3Q      Max 
+-1.71233 -0.47453 -0.02845  0.64196  1.42942 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ block    (Intercept) 129.9    11.40   
+ Residual             386.9    19.67   
+Number of obs: 12, groups:  block, 4
+
+Fixed effects:
+            Estimate Std. Error     df t value Pr(&gt;|t|)    
+(Intercept)   349.00      11.37   7.99  30.702  1.4e-09 ***
+treatF         -6.25      13.91   6.00  -0.449   0.6690    
+treatO        -42.50      13.91   6.00  -3.056   0.0224 *  
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+Correlation of Fixed Effects:
+       (Intr) treatF
+treatF -0.612       
+treatO -0.612  0.500</code></pre>
 <p>This shows that treatE and treatO are significantly different from
 one another, but neither is significantly different from treatF. We can
 further confirm this using pairwise comparisons, adjusted p-values and
 confidence intervals:</p>
 <pre class="r"><code>library(emmeans)
 emmeans(m, pairwise ~ treat)</code></pre>
-<pre><code>## $emmeans
-##  treat emmean   SE   df lower.CL upper.CL
-##  E        349 11.4 7.99      323      375
-##  F        343 11.4 7.99      317      369
-##  O        306 11.4 7.99      280      333
-## 
-## Degrees-of-freedom method: kenward-roger 
-## Confidence level used: 0.95 
-## 
-## $contrasts
-##  contrast estimate   SE df t.ratio p.value
-##  E - F        6.25 13.9  6   0.449  0.8965
-##  E - O       42.50 13.9  6   3.056  0.0508
-##  F - O       36.25 13.9  6   2.606  0.0892
-## 
-## Degrees-of-freedom method: kenward-roger 
-## P value adjustment: tukey method for comparing a family of 3 estimates</code></pre>
+<pre><code>$emmeans
+ treat emmean   SE   df lower.CL upper.CL
+ E        349 11.4 7.99      323      375
+ F        343 11.4 7.99      317      369
+ O        306 11.4 7.99      280      333
+
+Degrees-of-freedom method: kenward-roger 
+Confidence level used: 0.95 
+
+$contrasts
+ contrast estimate   SE df t.ratio p.value
+ E - F        6.25 13.9  6   0.449  0.8965
+ E - O       42.50 13.9  6   3.056  0.0508
+ F - O       36.25 13.9  6   2.606  0.0892
+
+Degrees-of-freedom method: kenward-roger 
+P value adjustment: tukey method for comparing a family of 3 estimates </code></pre>
 <pre class="r"><code>emmeans(m, pairwise ~ treat) |&gt; confint()</code></pre>
-<pre><code>## $emmeans
-##  treat emmean   SE   df lower.CL upper.CL
-##  E        349 11.4 7.99      323      375
-##  F        343 11.4 7.99      317      369
-##  O        306 11.4 7.99      280      333
-## 
-## Degrees-of-freedom method: kenward-roger 
-## Confidence level used: 0.95 
-## 
-## $contrasts
-##  contrast estimate   SE df lower.CL upper.CL
-##  E - F        6.25 13.9  6  -36.426     48.9
-##  E - O       42.50 13.9  6   -0.176     85.2
-##  F - O       36.25 13.9  6   -6.426     78.9
-## 
-## Degrees-of-freedom method: kenward-roger 
-## Confidence level used: 0.95 
-## Conf-level adjustment: tukey method for comparing a family of 3 estimates</code></pre>
+<pre><code>$emmeans
+ treat emmean   SE   df lower.CL upper.CL
+ E        349 11.4 7.99      323      375
+ F        343 11.4 7.99      317      369
+ O        306 11.4 7.99      280      333
+
+Degrees-of-freedom method: kenward-roger 
+Confidence level used: 0.95 
+
+$contrasts
+ contrast estimate   SE df lower.CL upper.CL
+ E - F        6.25 13.9  6  -36.426     48.9
+ E - O       42.50 13.9  6   -0.176     85.2
+ F - O       36.25 13.9  6   -6.426     78.9
+
+Degrees-of-freedom method: kenward-roger 
+Confidence level used: 0.95 
+Conf-level adjustment: tukey method for comparing a family of 3 estimates </code></pre>
 <p>We see that none of the mean differences are significant by treatment
 group. However, the <code>t.ratio</code> is higher for <code>E-O</code>
 and <code>F-O</code> than <code>E-F</code>. Visually we can also see
@@ -639,23 +639,23 @@ words, it represents the correlation of any two units within a cluster.
 To assess this, we can use the <code>ICCm</code> function from the
 <code>mlmtools</code> package.</p>
 <pre class="r"><code>ICCm(m)</code></pre>
-<pre><code>## Likeness of eggs values of units in the same block factor: 0.251</code></pre>
+<pre><code>Likeness of eggs values of units in the same block factor: 0.251</code></pre>
 <p>The likeness of egg production in the same block is .25, in other
 words, the correlation between any two egg production observations
 within the same block is .25. We can also look at what the variation is
 between clusters using the <code>VarCorr()</code> function.</p>
 <pre class="r"><code>VarCorr(m)</code></pre>
-<pre><code>##  Groups   Name        Std.Dev.
-##  block    (Intercept) 11.399  
-##  Residual             19.670</code></pre>
+<pre><code> Groups   Name        Std.Dev.
+ block    (Intercept) 11.399  
+ Residual             19.670  </code></pre>
 <p>The variation around the random intercept for block is 11.40. We can
 also look at the <span class="math inline">\(R^2\)</span> values for the
 model to get an idea of how much variation in egg production is
 explained. We can use the <code>rsqmlm()</code> function from the
 <code>mlmtools</code> package to look at this.</p>
 <pre class="r"><code>rsqmlm(m)</code></pre>
-<pre><code>## 42.56% of the total variance is explained by the fixed effects.
-## 57.00% of the total variance is explained by both fixed and random effects.</code></pre>
+<pre><code>42.56% of the total variance is explained by the fixed effects.
+57.00% of the total variance is explained by both fixed and random effects.</code></pre>
 <p>We see that by including just the fixed effects, 42.56% of the
 variance in egg production is explained. By including both the fixed and
 random effects, the variance explained increases to 57%.</p>
@@ -685,19 +685,19 @@ being read in as integers. This means that if we were to use the data as
 is, the model will interpret 0 as a meaningful value for each of these
 variables. To avoid this, we will convert them both to factors.</p>
 <pre class="r"><code>head(rats)</code></pre>
-<pre><code>##    animal treatment region activate
-## 1 R111097         1      1   366.19
-## 2 R111097         1      2   199.31
-## 3 R111097         1      3   187.11
-## 4 R111097         2      1   371.71
-## 5 R111097         2      2   302.02
-## 6 R111097         2      3   449.70</code></pre>
+<pre><code>   animal treatment region activate
+1 R111097         1      1   366.19
+2 R111097         1      2   199.31
+3 R111097         1      3   187.11
+4 R111097         2      1   371.71
+5 R111097         2      2   302.02
+6 R111097         2      3   449.70</code></pre>
 <pre class="r"><code>str(rats)</code></pre>
-<pre><code>## &#39;data.frame&#39;:    30 obs. of  4 variables:
-##  $ animal   : chr  &quot;R111097&quot; &quot;R111097&quot; &quot;R111097&quot; &quot;R111097&quot; ...
-##  $ treatment: int  1 1 1 2 2 2 1 1 1 2 ...
-##  $ region   : int  1 2 3 1 2 3 1 2 3 1 ...
-##  $ activate : num  366 199 187 372 302 ...</code></pre>
+<pre><code>&#39;data.frame&#39;:   30 obs. of  4 variables:
+ $ animal   : chr  &quot;R111097&quot; &quot;R111097&quot; &quot;R111097&quot; &quot;R111097&quot; ...
+ $ treatment: int  1 1 1 2 2 2 1 1 1 2 ...
+ $ region   : int  1 2 3 1 2 3 1 2 3 1 ...
+ $ activate : num  366 199 187 372 302 ...</code></pre>
 <pre class="r"><code>rats$treatment &lt;- as.factor(rats$treatment)
 rats$region &lt;- as.factor(rats$region)</code></pre>
 <p>We can start off plotting the data. The <code>stripplot()</code> from
@@ -721,16 +721,16 @@ better on out-of-sample data. These AIC values indicate that the model
 containing the interaction between treatment and region is the best fit
 for these data.</p>
 <pre class="r"><code>AIC(m, m2, m3, m4)</code></pre>
-<pre><code>##    df      AIC
-## m   3 385.1023
-## m2  4 355.0961
-## m3  6 328.2485
-## m4  8 291.2822</code></pre>
+<pre><code>   df      AIC
+m   3 385.1023
+m2  4 355.0961
+m3  6 328.2485
+m4  8 291.2822</code></pre>
 <p>We can also look to see how much more variance in activation is
 explained by the model including the interaction than the null
 model.</p>
 <pre class="r"><code>varCompare(m, m4)</code></pre>
-<pre><code>## m4 explains 70.93% more variance than m</code></pre>
+<pre><code>m4 explains 70.93% more variance than m</code></pre>
 <p>We see that the model including the interaction explains 70.93% more
 variance than the null model. This is quite a large increase in variance
 explained and supports this model being a good model for these data. We
@@ -739,42 +739,42 @@ the model containing the interaction. We see that 72.09% of the variance
 is explained by the fixed effects (the interaction) and 90.63% of the
 variance is explained by both the fixed and random effects.</p>
 <pre class="r"><code>rsqmlm(m4)</code></pre>
-<pre><code>## 72.09% of the total variance is explained by the fixed effects.
-## 90.63% of the total variance is explained by both fixed and random effects.</code></pre>
+<pre><code>72.09% of the total variance is explained by the fixed effects.
+90.63% of the total variance is explained by both fixed and random effects.</code></pre>
 <p>Now let’s interpret the model parameter estimates.</p>
 <pre class="r"><code>summary(m4)</code></pre>
-<pre><code>## Linear mixed model fit by REML [&#39;lmerMod&#39;]
-## Formula: activate ~ treatment * region + (1 | animal)
-##    Data: rats
-## 
-## REML criterion at convergence: 275.3
-## 
-## Scaled residuals: 
-##     Min      1Q  Median      3Q     Max 
-## -1.4643 -0.5762  0.0802  0.4072  1.5509 
-## 
-## Random effects:
-##  Groups   Name        Variance Std.Dev.
-##  animal   (Intercept) 4850     69.64   
-##  Residual             2450     49.50   
-## Number of obs: 30, groups:  animal, 5
-## 
-## Fixed effects:
-##                    Estimate Std. Error t value
-## (Intercept)          428.51      38.21  11.214
-## treatment2            98.20      31.31   3.137
-## region2             -190.76      31.31  -6.093
-## region3             -216.21      31.31  -6.906
-## treatment2:region2    99.32      44.27   2.243
-## treatment2:region3   261.82      44.27   5.914
-## 
-## Correlation of Fixed Effects:
-##             (Intr) trtmn2 regin2 regin3 trt2:2
-## treatment2  -0.410                            
-## region2     -0.410  0.500                     
-## region3     -0.410  0.500  0.500              
-## trtmnt2:rg2  0.290 -0.707 -0.707 -0.354       
-## trtmnt2:rg3  0.290 -0.707 -0.354 -0.707  0.500</code></pre>
+<pre><code>Linear mixed model fit by REML [&#39;lmerMod&#39;]
+Formula: activate ~ treatment * region + (1 | animal)
+   Data: rats
+
+REML criterion at convergence: 275.3
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-1.4643 -0.5762  0.0802  0.4072  1.5509 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ animal   (Intercept) 4850     69.64   
+ Residual             2450     49.50   
+Number of obs: 30, groups:  animal, 5
+
+Fixed effects:
+                   Estimate Std. Error t value
+(Intercept)          428.51      38.21  11.214
+treatment2            98.20      31.31   3.137
+region2             -190.76      31.31  -6.093
+region3             -216.21      31.31  -6.906
+treatment2:region2    99.32      44.27   2.243
+treatment2:region3   261.82      44.27   5.914
+
+Correlation of Fixed Effects:
+            (Intr) trtmn2 regin2 regin3 trt2:2
+treatment2  -0.410                            
+region2     -0.410  0.500                     
+region3     -0.410  0.500  0.500              
+trtmnt2:rg2  0.290 -0.707 -0.707 -0.354       
+trtmnt2:rg3  0.290 -0.707 -0.354 -0.707  0.500</code></pre>
 <p>Looking first at the fixed effects, the intercept (428.51) can be
 interpreted as the grand mean of activate when treatment and region are
 both 1 (the lowest level of each factor). The treatment2 estimate
@@ -799,14 +799,14 @@ effects:</p>
 <p>This is also the mean of activate when treatment is 2 and region is
 2:</p>
 <pre class="r"><code>mean(rats[rats$treatment==&quot;2&quot; &amp; rats$region==&quot;2&quot;,&quot;activate&quot;])</code></pre>
-<pre><code>## [1] 435.27</code></pre>
+<pre><code>[1] 435.27</code></pre>
 <p>We can do the same thing for treatment2:region3:</p>
 <p><span class="math inline">\(428.51 + 98.20 - 216.21 + 261.82 =
 572.32\)</span></p>
 <p>Which is the mean of activate when treatment is 2 and region is
 3:</p>
 <pre class="r"><code>mean(rats[rats$treatment==&quot;2&quot; &amp; rats$region==&quot;3&quot;,&quot;activate&quot;])</code></pre>
-<pre><code>## [1] 572.32</code></pre>
+<pre><code>[1] 572.32</code></pre>
 <p>To get a better understanding how this interaction is functioning,
 let’s plot this model using the <code>ggeffects</code> package <span
 class="citation">(Lüdecke 2018)</span>.</p>
@@ -825,15 +825,15 @@ We can use the <code>Anova()</code> function from the <code>car</code>
 package <span class="citation">(Fox and Weisberg 2019)</span> to assess
 the statistical significance of the visual evidence.</p>
 <pre class="r"><code>car::Anova(m4)</code></pre>
-<pre><code>## Analysis of Deviance Table (Type II Wald chisquare tests)
-## 
-## Response: activate
-##                    Chisq Df Pr(&gt;Chisq)    
-## treatment        146.246  1  &lt; 2.2e-16 ***
-## region            41.219  2  1.121e-09 ***
-## treatment:region  35.649  2  1.815e-08 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre><code>Analysis of Deviance Table (Type II Wald chisquare tests)
+
+Response: activate
+                   Chisq Df Pr(&gt;Chisq)    
+treatment        146.246  1  &lt; 2.2e-16 ***
+region            41.219  2  1.121e-09 ***
+treatment:region  35.649  2  1.815e-08 ***
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p>This indicates that the overall interaction is indeed significant.
 However, we only know that an interaction exists, we must conduct
 further comparison tests. We want to test the difference between
@@ -850,23 +850,23 @@ comparison adjustment.</p>
 <pre class="r"><code>library(emmeans)
 m4.emm &lt;- emmeans(m4, ~ treatment | region, adjust = &quot;tukey&quot;)
 contrast(m4.emm)</code></pre>
-<pre><code>## region = 1:
-##  contrast          estimate   SE df t.ratio p.value
-##  treatment1 effect    -49.1 15.7 20  -3.137  0.0052
-##  treatment2 effect     49.1 15.7 20   3.137  0.0052
-## 
-## region = 2:
-##  contrast          estimate   SE df t.ratio p.value
-##  treatment1 effect    -98.8 15.7 20  -6.309  &lt;.0001
-##  treatment2 effect     98.8 15.7 20   6.309  &lt;.0001
-## 
-## region = 3:
-##  contrast          estimate   SE df t.ratio p.value
-##  treatment1 effect   -180.0 15.7 20 -11.500  &lt;.0001
-##  treatment2 effect    180.0 15.7 20  11.500  &lt;.0001
-## 
-## Degrees-of-freedom method: kenward-roger 
-## P value adjustment: fdr method for 2 tests</code></pre>
+<pre><code>region = 1:
+ contrast          estimate   SE df t.ratio p.value
+ treatment1 effect    -49.1 15.7 20  -3.137  0.0052
+ treatment2 effect     49.1 15.7 20   3.137  0.0052
+
+region = 2:
+ contrast          estimate   SE df t.ratio p.value
+ treatment1 effect    -98.8 15.7 20  -6.309  &lt;.0001
+ treatment2 effect     98.8 15.7 20   6.309  &lt;.0001
+
+region = 3:
+ contrast          estimate   SE df t.ratio p.value
+ treatment1 effect   -180.0 15.7 20 -11.500  &lt;.0001
+ treatment2 effect    180.0 15.7 20  11.500  &lt;.0001
+
+Degrees-of-freedom method: kenward-roger 
+P value adjustment: fdr method for 2 tests </code></pre>
 <p>The output is split by each region. It tests each comparison and
 within each region, therefore each region has two lines comparing
 treatment 1 to treatment 2 and vice versa. Consequently, these lines
@@ -899,13 +899,13 @@ phosphate &lt;- read.table(URL, header = FALSE)
 names(phosphate) &lt;- c(&quot;group&quot;, &quot;id&quot;, &quot;t0&quot;, &quot;t0.5&quot;, &quot;t1&quot;, &quot;t1.5&quot;, &quot;t2&quot;, &quot;t3&quot;)
 phosphate$group &lt;- factor(phosphate$group, labels = c(&quot;control&quot;, &quot;obese&quot;))
 head(phosphate)</code></pre>
-<pre><code>##     group id  t0 t0.5  t1 t1.5  t2  t3
-## 1 control  1 4.3  3.3 3.0  2.6 2.2 2.5
-## 2 control  2 3.7  2.6 2.6  1.9 2.9 3.2
-## 3 control  3 4.0  4.1 3.1  2.3 2.9 3.1
-## 4 control  4 3.6  3.0 2.2  2.8 2.9 3.9
-## 5 control  5 4.1  3.8 2.1  3.0 3.6 3.4
-## 6 control  6 3.8  2.2 2.0  2.6 3.8 3.6</code></pre>
+<pre><code>    group id  t0 t0.5  t1 t1.5  t2  t3
+1 control  1 4.3  3.3 3.0  2.6 2.2 2.5
+2 control  2 3.7  2.6 2.6  1.9 2.9 3.2
+3 control  3 4.0  4.1 3.1  2.3 2.9 3.1
+4 control  4 3.6  3.0 2.2  2.8 2.9 3.9
+5 control  5 4.1  3.8 2.1  3.0 3.6 3.4
+6 control  6 3.8  2.2 2.0  2.6 3.8 3.6</code></pre>
 <p>Reshaping the data facilitates data visualization. The
 <code>pivot_longer()</code> function from the tidyr package makes quick
 work of this. <span class="citation">(Wickham and Girlich
@@ -927,15 +927,15 @@ phosphateL &lt;- pivot_longer(phosphate, cols = t0:t3,
                            names_transform = list(time = as.numeric),
                            values_to = &quot;level&quot;)
 head(phosphateL)</code></pre>
-<pre><code>## # A tibble: 6 × 4
-##   group      id  time level
-##   &lt;fct&gt;   &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt;
-## 1 control     1   0     4.3
-## 2 control     1   0.5   3.3
-## 3 control     1   1     3  
-## 4 control     1   1.5   2.6
-## 5 control     1   2     2.2
-## 6 control     1   3     2.5</code></pre>
+<pre><code># A tibble: 6 × 4
+  group      id  time level
+  &lt;fct&gt;   &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt;
+1 control     1   0     4.3
+2 control     1   0.5   3.3
+3 control     1   1     3  
+4 control     1   1.5   2.6
+5 control     1   2     2.2
+6 control     1   3     2.5</code></pre>
 <p>Now we can use the ggplot2 package <span class="citation">(Wickham
 2016)</span> to visualize the data. Below we plot the phosphate
 trajectories over time for each subject, with the plots broken out by
@@ -979,15 +979,15 @@ will use as a predictor in our models.</p>
                            values_to = &quot;level&quot;)
 names(phosphateL)[3] &lt;- &quot;baseline&quot;
 head(phosphateL)</code></pre>
-<pre><code>## # A tibble: 6 × 5
-##   group      id baseline  time level
-##   &lt;fct&gt;   &lt;int&gt;    &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
-## 1 control     1      4.3   0.5   3.3
-## 2 control     1      4.3   1     3  
-## 3 control     1      4.3   1.5   2.6
-## 4 control     1      4.3   2     2.2
-## 5 control     1      4.3   3     2.5
-## 6 control     2      3.7   0.5   2.6</code></pre>
+<pre><code># A tibble: 6 × 5
+  group      id baseline  time level
+  &lt;fct&gt;   &lt;int&gt;    &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+1 control     1      4.3   0.5   3.3
+2 control     1      4.3   1     3  
+3 control     1      4.3   1.5   2.6
+4 control     1      4.3   2     2.2
+5 control     1      4.3   3     2.5
+6 control     2      3.7   0.5   2.6</code></pre>
 <p>Finally we renumber group ids in the obese group to pick up where the
 control group id numbering leaves off at 13.</p>
 <pre class="r"><code>phosphateL$id &lt;- ifelse(phosphateL$group == &quot;obese&quot;, 
@@ -1013,40 +1013,40 @@ framework.)</p>
 <pre class="r"><code>library(lme4)
 m &lt;- lmer(level ~ baseline + time * group + (1|id), data = phosphateL)
 summary(m, corr = FALSE)</code></pre>
-<pre><code>## Linear mixed model fit by REML [&#39;lmerMod&#39;]
-## Formula: level ~ baseline + time * group + (1 | id)
-##    Data: phosphateL
-## 
-## REML criterion at convergence: 269.1
-## 
-## Scaled residuals: 
-##      Min       1Q   Median       3Q      Max 
-## -2.33236 -0.58048 -0.00628  0.57732  2.45665 
-## 
-## Random effects:
-##  Groups   Name        Variance Std.Dev.
-##  id       (Intercept) 0.05685  0.2384  
-##  Residual             0.23781  0.4877  
-## Number of obs: 165, groups:  id, 33
-## 
-## Fixed effects:
-##                 Estimate Std. Error t value
-## (Intercept)      0.02284    0.37509   0.061
-## baseline         0.68366    0.08465   8.076
-## time             0.11310    0.07031   1.608
-## groupobese       0.97883    0.18844   5.194
-## time:groupobese -0.42850    0.09032  -4.744</code></pre>
+<pre><code>Linear mixed model fit by REML [&#39;lmerMod&#39;]
+Formula: level ~ baseline + time * group + (1 | id)
+   Data: phosphateL
+
+REML criterion at convergence: 269.1
+
+Scaled residuals: 
+     Min       1Q   Median       3Q      Max 
+-2.33236 -0.58048 -0.00628  0.57732  2.45665 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ id       (Intercept) 0.05685  0.2384  
+ Residual             0.23781  0.4877  
+Number of obs: 165, groups:  id, 33
+
+Fixed effects:
+                Estimate Std. Error t value
+(Intercept)      0.02284    0.37509   0.061
+baseline         0.68366    0.08465   8.076
+time             0.11310    0.07031   1.608
+groupobese       0.97883    0.18844   5.194
+time:groupobese -0.42850    0.09032  -4.744</code></pre>
 <p>If we view the coefficients we see each subject has their own model,
 but only the intercept varies between the subjects. Hence the reason we
 call this a random-intercept model.</p>
 <pre class="r"><code>head(coef(m)$id)</code></pre>
-<pre><code>##   (Intercept)  baseline      time groupobese time:groupobese
-## 1 -0.20776681 0.6836591 0.1130977  0.9788342      -0.4285031
-## 2 -0.02798001 0.6836591 0.1130977  0.9788342      -0.4285031
-## 3  0.11081072 0.6836591 0.1130977  0.9788342      -0.4285031
-## 4  0.18347980 0.6836591 0.1130977  0.9788342      -0.4285031
-## 5  0.11714532 0.6836591 0.1130977  0.9788342      -0.4285031
-## 6  0.04369291 0.6836591 0.1130977  0.9788342      -0.4285031</code></pre>
+<pre><code>  (Intercept)  baseline      time groupobese time:groupobese
+1 -0.20776681 0.6836591 0.1130977  0.9788342      -0.4285031
+2 -0.02798001 0.6836591 0.1130977  0.9788342      -0.4285031
+3  0.11081072 0.6836591 0.1130977  0.9788342      -0.4285031
+4  0.18347980 0.6836591 0.1130977  0.9788342      -0.4285031
+5  0.11714532 0.6836591 0.1130977  0.9788342      -0.4285031
+6  0.04369291 0.6836591 0.1130977  0.9788342      -0.4285031</code></pre>
 <p>Before we use or interpret this model, we should assess the residuals
 vs fitted value plot. We can create this plot by simply calling
 <code>plot()</code> on the model object. We would like to see a uniform
@@ -1097,9 +1097,9 @@ the model with non-linear effects is a good deal better than the model
 with linear effects. The df column refers to the number of parameters in
 the model.</p>
 <pre class="r"><code>AIC(m, m2)</code></pre>
-<pre><code>##    df      AIC
-## m   7 283.0897
-## m2 11 252.1101</code></pre>
+<pre><code>   df      AIC
+m   7 283.0897
+m2 11 252.1101</code></pre>
 <p>The non-linear model seems better than the original linear model. But
 is the non-linear model a <em>good</em> model? One way to assess this is
 to simulate data using the model and see how it compares to the original
@@ -1126,33 +1126,33 @@ non-linear effects. However we see under the Random effects section that
 there is more variation within subjects (0.4246) than between subjects
 (0.2615).</p>
 <pre class="r"><code>summary(m2, corr = FALSE)</code></pre>
-<pre><code>## Linear mixed model fit by REML [&#39;lmerMod&#39;]
-## Formula: level ~ baseline + ns(time, df = 3) * group + (1 | id)
-##    Data: phosphateL
-## 
-## REML criterion at convergence: 230.1
-## 
-## Scaled residuals: 
-##      Min       1Q   Median       3Q      Max 
-## -2.42067 -0.52371  0.07521  0.58973  2.49791 
-## 
-## Random effects:
-##  Groups   Name        Variance Std.Dev.
-##  id       (Intercept) 0.06836  0.2615  
-##  Residual             0.18027  0.4246  
-## Number of obs: 165, groups:  id, 33
-## 
-## Fixed effects:
-##                              Estimate Std. Error t value
-## (Intercept)                   0.47602    0.37259   1.278
-## baseline                      0.68366    0.08465   8.076
-## ns(time, df = 3)1             0.14832    0.23792   0.623
-## ns(time, df = 3)2            -0.79764    0.28400  -2.809
-## ns(time, df = 3)3             0.61529    0.15111   4.072
-## groupobese                    0.56063    0.18006   3.114
-## ns(time, df = 3)1:groupobese -1.15172    0.30561  -3.769
-## ns(time, df = 3)2:groupobese -0.43565    0.36481  -1.194
-## ns(time, df = 3)3:groupobese -1.14106    0.19411  -5.878</code></pre>
+<pre><code>Linear mixed model fit by REML [&#39;lmerMod&#39;]
+Formula: level ~ baseline + ns(time, df = 3) * group + (1 | id)
+   Data: phosphateL
+
+REML criterion at convergence: 230.1
+
+Scaled residuals: 
+     Min       1Q   Median       3Q      Max 
+-2.42067 -0.52371  0.07521  0.58973  2.49791 
+
+Random effects:
+ Groups   Name        Variance Std.Dev.
+ id       (Intercept) 0.06836  0.2615  
+ Residual             0.18027  0.4246  
+Number of obs: 165, groups:  id, 33
+
+Fixed effects:
+                             Estimate Std. Error t value
+(Intercept)                   0.47602    0.37259   1.278
+baseline                      0.68366    0.08465   8.076
+ns(time, df = 3)1             0.14832    0.23792   0.623
+ns(time, df = 3)2            -0.79764    0.28400  -2.809
+ns(time, df = 3)3             0.61529    0.15111   4.072
+groupobese                    0.56063    0.18006   3.114
+ns(time, df = 3)1:groupobese -1.15172    0.30561  -3.769
+ns(time, df = 3)2:groupobese -0.43565    0.36481  -1.194
+ns(time, df = 3)3:groupobese -1.14106    0.19411  -5.878</code></pre>
 <p>Judging from the effect display the interaction in the model is
 warranted, but we can formally test and verify this using the
 <code>Anova()</code> function in the car package <span
@@ -1160,16 +1160,16 @@ class="citation">(Fox and Weisberg 2019)</span>. The large chi-square
 statistic (37.6901) and small p-value confirm this.</p>
 <pre class="r"><code>library(car)
 Anova(m2)</code></pre>
-<pre><code>## Analysis of Deviance Table (Type II Wald chisquare tests)
-## 
-## Response: level
-##                          Chisq Df Pr(&gt;Chisq)    
-## baseline               65.2257  1  6.679e-16 ***
-## ns(time, df = 3)       52.0478  3  2.926e-11 ***
-## group                   5.8791  1    0.01532 *  
-## ns(time, df = 3):group 37.6901  3  3.287e-08 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre><code>Analysis of Deviance Table (Type II Wald chisquare tests)
+
+Response: level
+                         Chisq Df Pr(&gt;Chisq)    
+baseline               65.2257  1  6.679e-16 ***
+ns(time, df = 3)       52.0478  3  2.926e-11 ***
+group                   5.8791  1    0.01532 *  
+ns(time, df = 3):group 37.6901  3  3.287e-08 ***
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p>Since we have both non-linear effects and interactions, there is no
 convenient interpretation of our model parameters. However we can use
 our model to make predictions at levels of interest and then compare the
@@ -1187,20 +1187,20 @@ indicates an estimated difference of about -0.825 with a 95% CI of
 emmeans(m2, specs = pairwise ~ group, 
         at = list(time = 1, baseline = 4)) |&gt;
   confint()</code></pre>
-<pre><code>## $emmeans
-##  group   emmean    SE   df lower.CL upper.CL
-##  control   2.62 0.123 89.1     2.37     2.86
-##  obese     3.44 0.109 73.2     3.22     3.66
-## 
-## Degrees-of-freedom method: kenward-roger 
-## Confidence level used: 0.95 
-## 
-## $contrasts
-##  contrast        estimate    SE   df lower.CL upper.CL
-##  control - obese   -0.825 0.162 84.1    -1.15   -0.502
-## 
-## Degrees-of-freedom method: kenward-roger 
-## Confidence level used: 0.95</code></pre>
+<pre><code>$emmeans
+ group   emmean    SE   df lower.CL upper.CL
+ control   2.62 0.123 89.1     2.37     2.86
+ obese     3.44 0.109 73.2     3.22     3.66
+
+Degrees-of-freedom method: kenward-roger 
+Confidence level used: 0.95 
+
+$contrasts
+ contrast        estimate    SE   df lower.CL upper.CL
+ control - obese   -0.825 0.162 84.1    -1.15   -0.502
+
+Degrees-of-freedom method: kenward-roger 
+Confidence level used: 0.95 </code></pre>
 </div>
 <div id="generalized-least-squares-model" class="section level4">
 <h4>Generalized Least Squares Model</h4>
@@ -1240,7 +1240,7 @@ autocorrelation at lag 1 greater than 0.2 in absolute value.</p>
 acf_out &lt;- tapply(r, phosphateL$id, acf, plot = FALSE)
 lag1 &lt;- sapply(acf_out, function(x)x[1,1][[&quot;acf&quot;]])
 mean(abs(lag1) &gt; 0.2)</code></pre>
-<pre><code>## [1] 0.5757576</code></pre>
+<pre><code>[1] 0.5757576</code></pre>
 <p>Now we model this correlation using the <code>corCAR1()</code>
 correlation structure. This will estimate a single correlation parameter
 for the errors that will decrease exponentially with each lag. Notice
@@ -1259,9 +1259,9 @@ with the correlation structure is adequate.</p>
 and difference in AIC/BIC values provides strong evidence against the
 assumption of independent errors.</p>
 <pre class="r"><code>anova(m0, m3)</code></pre>
-<pre><code>##    Model df      AIC      BIC    logLik   Test  L.Ratio p-value
-## m0     1 10 266.7059 297.2045 -123.3530                        
-## m3     2 11 241.0958 274.6442 -109.5479 1 vs 2 27.61011  &lt;.0001</code></pre>
+<pre><code>   Model df      AIC      BIC    logLik   Test  L.Ratio p-value
+m0     1 10 266.7059 297.2045 -123.3530                        
+m3     2 11 241.0958 274.6442 -109.5479 1 vs 2 27.61011  &lt;.0001</code></pre>
 <p>Does our GLS model simulate data that is similar to our observed
 data? To assess this we use the <code>simulate_lme()</code> function
 from the nlraa package <span class="citation">(Miguez 2022)</span>.
@@ -1280,9 +1280,9 @@ summary object is a list. The correlation parameter is contained within
 the modelStruct element.</p>
 <pre class="r"><code>m3_summary &lt;- summary(m3)
 m3_summary$modelStruct$corStruct</code></pre>
-<pre><code>## Correlation structure of class corCAR1 representing
-##       Phi 
-## 0.3026456</code></pre>
+<pre><code>Correlation structure of class corCAR1 representing
+      Phi 
+0.3026456 </code></pre>
 <p>The estimate of the correlation between two phosphate measurements
 taken one hour apart on the same subject is about 0.302. The estimated
 correlation for measurements two hours apart is <span
@@ -1292,30 +1292,30 @@ coefficient table. Unlike the <code>lmer()</code> model, the
 <code>gls()</code> model returns p-values for the marginal hypothesis
 tests of the coefficients.</p>
 <pre class="r"><code>coef(m3_summary)</code></pre>
-<pre><code>##                                   Value  Std.Error   t-value      p-value
-## (Intercept)                   0.4091347 0.38361051  1.066537 2.878289e-01
-## baseline                      0.6976846 0.08699849  8.019502 2.356676e-13
-## ns(time, df = 3)1             0.1572562 0.24999798  0.629030 5.302494e-01
-## ns(time, df = 3)2            -0.7716235 0.28387468 -2.718184 7.307124e-03
-## ns(time, df = 3)3             0.6129700 0.19036134  3.220034 1.559771e-03
-## groupobese                    0.5689284 0.18739199  3.036034 2.809947e-03
-## ns(time, df = 3)1:groupobese -1.1653201 0.32112822 -3.628831 3.853622e-04
-## ns(time, df = 3)2:groupobese -0.4752147 0.36464363 -1.303230 1.944163e-01
-## ns(time, df = 3)3:groupobese -1.1375232 0.24452357 -4.651998 6.969175e-06</code></pre>
+<pre><code>                                  Value  Std.Error   t-value      p-value
+(Intercept)                   0.4091347 0.38361051  1.066537 2.878289e-01
+baseline                      0.6976846 0.08699849  8.019502 2.356676e-13
+ns(time, df = 3)1             0.1572562 0.24999798  0.629030 5.302494e-01
+ns(time, df = 3)2            -0.7716235 0.28387468 -2.718184 7.307124e-03
+ns(time, df = 3)3             0.6129700 0.19036134  3.220034 1.559771e-03
+groupobese                    0.5689284 0.18739199  3.036034 2.809947e-03
+ns(time, df = 3)1:groupobese -1.1653201 0.32112822 -3.628831 3.853622e-04
+ns(time, df = 3)2:groupobese -0.4752147 0.36464363 -1.303230 1.944163e-01
+ns(time, df = 3)3:groupobese -1.1375232 0.24452357 -4.651998 6.969175e-06</code></pre>
 <p>Notice the GLS coefficients are not terribly different from the
 mixed-effect model coefficients.</p>
 <pre class="r"><code># mixed-effect model coefficients
 coef(summary(m2))</code></pre>
-<pre><code>##                                Estimate Std. Error    t value
-## (Intercept)                   0.4760242 0.37258684  1.2776195
-## baseline                      0.6836591 0.08465065  8.0762412
-## ns(time, df = 3)1             0.1483164 0.23791902  0.6233903
-## ns(time, df = 3)2            -0.7976376 0.28400303 -2.8085533
-## ns(time, df = 3)3             0.6152937 0.15111466  4.0717009
-## groupobese                    0.5606301 0.18005581  3.1136460
-## ns(time, df = 3)1:groupobese -1.1517234 0.30561251 -3.7685740
-## ns(time, df = 3)2:groupobese -0.4356495 0.36480850 -1.1941868
-## ns(time, df = 3)3:groupobese -1.1410573 0.19411030 -5.8783965</code></pre>
+<pre><code>                               Estimate Std. Error    t value
+(Intercept)                   0.4760242 0.37258684  1.2776195
+baseline                      0.6836591 0.08465065  8.0762412
+ns(time, df = 3)1             0.1483164 0.23791902  0.6233903
+ns(time, df = 3)2            -0.7976376 0.28400303 -2.8085533
+ns(time, df = 3)3             0.6152937 0.15111466  4.0717009
+groupobese                    0.5606301 0.18005581  3.1136460
+ns(time, df = 3)1:groupobese -1.1517234 0.30561251 -3.7685740
+ns(time, df = 3)2:groupobese -0.4356495 0.36480850 -1.1941868
+ns(time, df = 3)3:groupobese -1.1410573 0.19411030 -5.8783965</code></pre>
 <p>Major differences between our mixed-effect model and GLS model are as
 follows:</p>
 <ul>
@@ -1333,36 +1333,36 @@ assumed to be drawn from a Normal distribution with mean 0 and a
 standard deviation of 0.26. We can extract these values using the
 <code>VarCorr()</code> function.</p>
 <pre class="r"><code>VarCorr(m2)</code></pre>
-<pre><code>##  Groups   Name        Std.Dev.
-##  id       (Intercept) 0.26145 
-##  Residual             0.42459</code></pre>
+<pre><code> Groups   Name        Std.Dev.
+ id       (Intercept) 0.26145 
+ Residual             0.42459 </code></pre>
 <p>The within-subject errors for the GLS model are assumed to be drawn
 from a multivariate Normal distribution with mean 0 and a
 variance-covariance matrix with the specified correlation pattern. We
 can extract this matrix using the <code>getVarCov()</code> function. The
 standard deviations listed is the estimated residual standard error.</p>
 <pre class="r"><code>getVarCov(m3)</code></pre>
-<pre><code>## Marginal variance covariance matrix
-##          [,1]     [,2]     [,3]     [,4]     [,5]
-## [1,] 0.265340 0.145970 0.080305 0.044179 0.013370
-## [2,] 0.145970 0.265340 0.145970 0.080305 0.024304
-## [3,] 0.080305 0.145970 0.265340 0.145970 0.044179
-## [4,] 0.044179 0.080305 0.145970 0.265340 0.080305
-## [5,] 0.013370 0.024304 0.044179 0.080305 0.265340
-##   Standard Deviations: 0.51512 0.51512 0.51512 0.51512 0.51512</code></pre>
+<pre><code>Marginal variance covariance matrix
+         [,1]     [,2]     [,3]     [,4]     [,5]
+[1,] 0.265340 0.145970 0.080305 0.044179 0.013370
+[2,] 0.145970 0.265340 0.145970 0.080305 0.024304
+[3,] 0.080305 0.145970 0.265340 0.145970 0.044179
+[4,] 0.044179 0.080305 0.145970 0.265340 0.080305
+[5,] 0.013370 0.024304 0.044179 0.080305 0.265340
+  Standard Deviations: 0.51512 0.51512 0.51512 0.51512 0.51512 </code></pre>
 <p>Using the <code>cov2cor()</code> function we can see the estimated
 correlation pattern for the errors. Notice our Phi estimate, 0.30265,
 appears two spots over from the diagonal. That’s because some of our
 time measures are in half-hour increments.</p>
 <pre class="r"><code>cov2cor(getVarCov(m3))</code></pre>
-<pre><code>## Marginal variance covariance matrix
-##          [,1]     [,2]    [,3]    [,4]     [,5]
-## [1,] 1.000000 0.550130 0.30265 0.16650 0.050389
-## [2,] 0.550130 1.000000 0.55013 0.30265 0.091594
-## [3,] 0.302650 0.550130 1.00000 0.55013 0.166500
-## [4,] 0.166500 0.302650 0.55013 1.00000 0.302650
-## [5,] 0.050389 0.091594 0.16650 0.30265 1.000000
-##   Standard Deviations: 1 1 1 1 1</code></pre>
+<pre><code>Marginal variance covariance matrix
+         [,1]     [,2]    [,3]    [,4]     [,5]
+[1,] 1.000000 0.550130 0.30265 0.16650 0.050389
+[2,] 0.550130 1.000000 0.55013 0.30265 0.091594
+[3,] 0.302650 0.550130 1.00000 0.55013 0.166500
+[4,] 0.166500 0.302650 0.55013 1.00000 0.302650
+[5,] 0.050389 0.091594 0.16650 0.30265 1.000000
+  Standard Deviations: 1 1 1 1 1 </code></pre>
 <p>As with the mixed-effect model we should assess model fit, the
 constant variance assumption, and normality of residuals. No pattern in
 the residuals is evident and just about all the standardized residuals
@@ -1392,20 +1392,20 @@ This is similar to what we obtained with the mixed-effect model.</p>
 <pre class="r"><code>emmeans(m3, specs = pairwise ~ group, 
         at = list(time = 1, baseline = 4)) |&gt;
   confint()</code></pre>
-<pre><code>## $emmeans
-##  group   emmean    SE   df lower.CL upper.CL
-##  control   2.62 0.137 86.2     2.35     2.89
-##  obese     3.43 0.119 76.4     3.19     3.67
-## 
-## Degrees-of-freedom method: satterthwaite 
-## Confidence level used: 0.95 
-## 
-## $contrasts
-##  contrast        estimate   SE   df lower.CL upper.CL
-##  control - obese   -0.814 0.18 83.2    -1.17   -0.457
-## 
-## Degrees-of-freedom method: satterthwaite 
-## Confidence level used: 0.95</code></pre>
+<pre><code>$emmeans
+ group   emmean    SE   df lower.CL upper.CL
+ control   2.62 0.137 86.2     2.35     2.89
+ obese     3.43 0.119 76.4     3.19     3.67
+
+Degrees-of-freedom method: satterthwaite 
+Confidence level used: 0.95 
+
+$contrasts
+ contrast        estimate   SE   df lower.CL upper.CL
+ control - obese   -0.814 0.18 83.2    -1.17   -0.457
+
+Degrees-of-freedom method: satterthwaite 
+Confidence level used: 0.95 </code></pre>
 </div>
 </div>
 <div id="references" class="section level3 unnumbered">
