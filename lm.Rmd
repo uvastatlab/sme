@@ -17,50 +17,51 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, comment = '')
 A new reading program is being evaluated at an elementary school. A random sample of 20 students were tested to determine reading speed. Speed was measured in minutes. [@ott2004]
 
 ```{r}
-speed <- c(5, 7, 15, 12, 8, 7, 10, 11, 9, 13, 10, 6, 11, 8, 10, 8, 7, 6, 11, 8, 20)
+speed <- c(5, 7, 15, 12, 8, 7, 10, 11, 9, 13, 10, 
+           6, 11, 8, 10, 8, 7, 6, 11, 8, 20)
 ```
 
-Visualize distribution of data:
+We can visualize the distribution of data using a histogram as follows:
 
 ```{r}
 hist(speed)
 ```
 
 
-Find the mean of speed and a 95% confidence interval on the mean.
+We can use the `t.test()` function to calculate both the mean of speed and a 95% confidence interval on the mean. The mean reading speed was about 9.62 with a 95% CI of [8.04, 11.19]. 
 
 ```{r}
 t.test(speed)
 ```
 
-To get just the confidence interval:
+To extract just the confidence interval we can save the result of the t-test and view the `conf.int` element of the saved object.
 
 ```{r}
 tout <- t.test(speed)
 tout$conf.int
 ```
 
-This can also be found using an intercept-only linear model:
+We can also calculate the 95% confidence interval using an intercept-only linear model. Below we model speed as a function of the number 1 using the `lm()` function. This is the R syntax for fitting an intercept-only model. We save the result into an object we name "m" and use the `confint()` function to view the 95% confidence interval.
 
 ```{r}
 m <- lm(speed ~ 1)
 confint(m)
 ```
 
-Does the sample appear to be from a Normal distribution? If so, the points in a QQ Plot should lie close to the diagonal line. See [this article](https://data.library.virginia.edu/understanding-q-q-plots/) for information on QQ Plots. This plot looks ok.
+Does the sample appear to be from a Normal distribution? If so, the points in a QQ plot should lie close to the diagonal line. See [this article](https://data.library.virginia.edu/understanding-q-q-plots/) for information on QQ plots. This plot looks ok.
 
 ```{r}
 qqnorm(speed)
 qqline(speed)
 ```
 
-Using the model output:
+We can also obtain a QQ plot by calling the `plot()` function on the model object. By default the `plot()` method for model objects returns four plots. Setting `which = 2` produces just the QQ plot. 
 
 ```{r}
 plot(m, which = 2)
 ```
 
-A couple of observations seem unusual: 1, 3, 21
+A few observations seem unusual: 1, 3, 21. We can extract their speed values using index subsetting. 
 
 ```{r}
 speed[c(1, 3, 21)]
@@ -68,16 +69,23 @@ speed[c(1, 3, 21)]
 
 There was a fast reader and a couple of slower readers.
 
-If a Normal QQ Plot if your data looks suspect, try comparing it to other Normal QQ plots created with Normal data. Below we calculate the mean and standard deviation of our data, re-draw the original QQ Plot, and then generate 24 additional QQ plots from a Normal distribution with the same mean and standard deviation as our data. The QQ Plot of our observed data doesn't seem too different from the QQ Plots of Normal data.
+If a Normal QQ plot of your data looks suspect, we can try comparing it to other Normal QQ plots created with Normal data. Below we calculate the mean and standard deviation of our data, re-draw the original QQ Plot, and then generate 24 additional QQ plots from a Normal distribution with the same mean and standard deviation as our data. The QQ plot of our observed data doesn't seem too different from the QQ plots of Normal data.
 
 ```{r}
 m <- mean(speed)
 s <- sd(speed)
 
+# create a 5x5 grid of plotting areas
 op <- par(mar = c(2,2,1,1), mfrow = c(5,5))
+
+# create first qq plot
 qqnorm(speed, xlab = "", ylab = "", main = "")
 qqline(speed)
+
+# now create 24 qq plots using observed mean and sd
 for(i in 1:24){
+  # rnorm() samples from a Normal dist'n 
+  # with specified mean and sd
   d <- rnorm(20, mean = m, sd = s)
   qqnorm(d, xlab = "", ylab = "", main = "")
   qqline(d)
