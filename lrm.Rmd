@@ -15,18 +15,20 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, comment = '')
 
 100 Hershey's Kisses are put into a large cup and dumped on a table. We want to estimate the proportion of Kisses we can expect to land on their base. [@bilder2015] In our experiment we observe 39 out of 100. What is the 95% confidence interval on the proportion?
 
+We can calculate both the estimated proportion and the 95% confidence interval using the `prop.test()` function. We use the `x` argument to specify the number of "successes" and the `n` argument to specify the number of "trials". Clearly the estimated proportion is 39/100 = 0.39. The 95% confidence interval is reported as [0.296, 0.493]
+
 ```{r}
 prop.test(x = 39, n = 100)
 ```
 
-To get just the confidence interval:
+To extract just the confidence interval we can save the result of the `prop.test()` function and access the `conf.int` element:
 
 ```{r}
 pout <- prop.test(x = 39, n = 100)
 pout$conf.int
 ```
 
-This can be analyzed as an intercept-only binary logistic regression model. The confidence interval is slightly different.
+This can also be analyzed as an intercept-only binary logistic regression model using the `glm()` function. To carry this out we create a 1 x 2 matrix using the `cbind()` function with successes in the first column and failures in the second column. We then model the successes and failures as a function of the number one. This is R's syntax for fitting an intercept-only model. Notice we also set `family = binomial` to tell the `glm()` that our response is binary. To extract the confidence interval, we save the modeling output to an object we name "m"  and call `confint()` function on it. To get probabilities, we use the `plogis()` function, which converts log-odds to probabilities. (Binary logistic regression models probabilities on the log-odds scale.) The resulting confidence interval is slightly different than what we calculated above because `confint()` uses the profile likelihood method.
 
 ```{r}
 m <- glm(cbind(39, 100-39) ~ 1, family = binomial)
@@ -40,7 +42,14 @@ library(binom)
 binom.confint(x = 39, n = 100)
 ```
 
-The "prop.test" and "profile" versions are the two we calculated above. 
+The "prop.test" row shows the first CI we calculated using `prop.test()`. The CI in the "profile" row is slightly different from what we calculated using the `confint()` function on the glm model object. The method is the same but the difference is due to the different default profile settings in the `confint()` and `binom.confint()` functions. 
+
+When an estimated proportion is not near 0 or 1 it hardly matters how you estimate the confidence interval. However when your proportion is at the boundary, the confidence intervals can vary dramatically. For example, observe the wide variety of confidence intervals for the estimated proportion of 0.01. The first two methods return estimates with a lower bound below 0.
+
+```{r}
+binom.confint(x = 1, n = 100)
+```
+
 
 ### Logistic regression with numeric predictors (1)
 

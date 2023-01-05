@@ -392,6 +392,12 @@ We want to estimate the proportion of Kisses we can expect to land on
 their base. <span class="citation">(Bilder and Loughin 2015)</span> In
 our experiment we observe 39 out of 100. What is the 95% confidence
 interval on the proportion?</p>
+<p>We can calculate both the estimated proportion and the 95% confidence
+interval using the <code>prop.test()</code> function. We use the
+<code>x</code> argument to specify the number of “successes” and the
+<code>n</code> argument to specify the number of “trials”. Clearly the
+estimated proportion is 39/100 = 0.39. The 95% confidence interval is
+reported as [0.296, 0.493]</p>
 <pre class="r"><code>prop.test(x = 39, n = 100)</code></pre>
 <pre><code>
     1-sample proportions test with continuity correction
@@ -404,14 +410,28 @@ alternative hypothesis: true p is not equal to 0.5
 sample estimates:
    p 
 0.39 </code></pre>
-<p>To get just the confidence interval:</p>
+<p>To extract just the confidence interval we can save the result of the
+<code>prop.test()</code> function and access the <code>conf.int</code>
+element:</p>
 <pre class="r"><code>pout &lt;- prop.test(x = 39, n = 100)
 pout$conf.int</code></pre>
 <pre><code>[1] 0.2955674 0.4929886
 attr(,&quot;conf.level&quot;)
 [1] 0.95</code></pre>
-<p>This can be analyzed as an intercept-only binary logistic regression
-model. The confidence interval is slightly different.</p>
+<p>This can also be analyzed as an intercept-only binary logistic
+regression model using the <code>glm()</code> function. To carry this
+out we create a 1 x 2 matrix using the <code>cbind()</code> function
+with successes in the first column and failures in the second column. We
+then model the successes and failures as a function of the number one.
+This is R’s syntax for fitting an intercept-only model. Notice we also
+set <code>family = binomial</code> to tell the <code>glm()</code> that
+our response is binary. To extract the confidence interval, we save the
+modeling output to an object we name “m” and call <code>confint()</code>
+function on it. To get probabilities, we use the <code>plogis()</code>
+function, which converts log-odds to probabilities. (Binary logistic
+regression models probabilities on the log-odds scale.) The resulting
+confidence interval is slightly different than what we calculated above
+because <code>confint()</code> uses the profile likelihood method.</p>
 <pre class="r"><code>m &lt;- glm(cbind(39, 100-39) ~ 1, family = binomial)
 plogis(confint(m))</code></pre>
 <pre><code>    2.5 %    97.5 % 
@@ -433,8 +453,31 @@ binom.confint(x = 39, n = 100)</code></pre>
 9            lrt 39 100 0.3900000 0.2980690 0.4875128
 10     prop.test 39 100 0.3900000 0.2955674 0.4929886
 11        wilson 39 100 0.3900000 0.3001687 0.4879698</code></pre>
-<p>The “prop.test” and “profile” versions are the two we calculated
-above.</p>
+<p>The “prop.test” row shows the first CI we calculated using
+<code>prop.test()</code>. The CI in the “profile” row is slightly
+different from what we calculated using the <code>confint()</code>
+function on the glm model object. The method is the same but the
+difference is due to the different default profile settings in the
+<code>confint()</code> and <code>binom.confint()</code> functions.</p>
+<p>When an estimated proportion is not near 0 or 1 it hardly matters how
+you estimate the confidence interval. However when your proportion is at
+the boundary, the confidence intervals can vary dramatically. For
+example, observe the wide variety of confidence intervals for the
+estimated proportion of 0.01. The first two methods return estimates
+with a lower bound below 0.</p>
+<pre class="r"><code>binom.confint(x = 1, n = 100)</code></pre>
+<pre><code>          method x   n       mean         lower      upper
+1  agresti-coull 1 100 0.01000000 -0.0036732336 0.05992686
+2     asymptotic 1 100 0.01000000 -0.0095013954 0.02950140
+3          bayes 1 100 0.01485149  0.0000171265 0.03842621
+4        cloglog 1 100 0.01000000  0.0008820719 0.04902922
+5          exact 1 100 0.01000000  0.0002531460 0.05445939
+6          logit 1 100 0.01000000  0.0014069013 0.06752894
+7         probit 1 100 0.01000000  0.0011139167 0.05539560
+8        profile 1 100 0.01000000  0.0009043933 0.04328775
+9            lrt 1 100 0.01000000  0.0005804259 0.04328644
+10     prop.test 1 100 0.01000000  0.0005222226 0.06241198
+11        wilson 1 100 0.01000000  0.0017674321 0.05448620</code></pre>
 </div>
 <div id="logistic-regression-with-numeric-predictors-1"
 class="section level3">
@@ -480,9 +523,9 @@ quantile value, which may hint that the 2066.0 could be an outlier.</p>
 this skewness and spread of the data. Here we plot the distribution of
 ab by mal and log(ab) by mal.</p>
 <pre class="r"><code>boxplot(ab ~ mal, data = malaria)</code></pre>
-<p><img src="lrm_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p><img src="lrm_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
 <pre class="r"><code>boxplot(log(ab) ~ mal, data = malaria)</code></pre>
-<p><img src="lrm_files/figure-html/unnamed-chunk-7-2.png" width="672" /></p>
+<p><img src="lrm_files/figure-html/unnamed-chunk-8-2.png" width="672" /></p>
 <p>In the first box plot (ab by mal), because of the spread of the data,
 it appears very sqiushed and hard to interpret. We can see that children
 who did show symptoms of malaria (mal = 1) tend to have a lower antibody
@@ -504,7 +547,7 @@ ggplot(malaria, aes(x=age, fill = group)) +
   geom_histogram(binwidth=1, color=&quot;black&quot;,) + 
   scale_fill_manual(values = c(&#39;no symptoms&#39; = &#39;gray&#39;, 
                                &#39;symptoms&#39; = &#39;cornflowerblue&#39;))</code></pre>
-<p><img src="lrm_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p><img src="lrm_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
 <p>From the histogram, we can see that the ages of subjects are more or
 less uniformly spread from 3 to 15. From the box plot, we can see that
 subjects who showed symptoms of malaria tended to be of a younger
@@ -582,7 +625,7 @@ model to predict the probability of malaria risk.</p>
 at a plot of residuals vs. “Hat-values”. Residuals = observed response -
 predicted probability. Hat-values measure leverage.</p>
 <pre class="r"><code>car::influencePlot(lrm)</code></pre>
-<p><img src="lrm_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<p><img src="lrm_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
 <pre><code>     StudRes        Hat      CookD
 13  2.674594 0.01824130 0.16944607
 19 -1.151539 0.08404905 0.02888989
@@ -645,7 +688,7 @@ antibody levels, holding age at its mean level (in this case, around
 9).</p>
 <pre class="r"><code>library(ggeffects)
 plot(ggpredict(model = lrm, terms = &quot;logab [all]&quot;))</code></pre>
-<p><img src="lrm_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
+<p><img src="lrm_files/figure-html/unnamed-chunk-19-1.png" width="672" /></p>
 <p>We see the probability of being at risk of malaria drops pretty
 dramatically when logab is greater than 3, or transformed back to the
 original scale, when ab is exp(3) = 54.59, or about 55. The grey strip
@@ -741,7 +784,7 @@ outlier.</p>
 <p>Like our previous example, we can look at a box plot to see this
 skewness.</p>
 <pre class="r"><code>boxplot(insulin ~ test, data = pima)</code></pre>
-<p><img src="lrm_files/figure-html/unnamed-chunk-24-1.png" width="672" /></p>
+<p><img src="lrm_files/figure-html/unnamed-chunk-25-1.png" width="672" /></p>
 <p>Now let’s build our logistic regression model using the
 <code>glm()</code> function. Setting
 <code>family = binomial(link = "logit")</code> in the argument specifies
@@ -823,7 +866,7 @@ the predictors.</p>
 <p>We can also assess the model error by looking at a plot of residuals
 vs. “Hat-values”.</p>
 <pre class="r"><code>car::influencePlot(pima_model)</code></pre>
-<p><img src="lrm_files/figure-html/unnamed-chunk-28-1.png" width="672" /></p>
+<p><img src="lrm_files/figure-html/unnamed-chunk-29-1.png" width="672" /></p>
 <pre><code>      StudRes         Hat       CookD
 14   1.002281 0.114022424 0.009536169
 229 -2.634163 0.020610966 0.057205591
@@ -885,7 +928,7 @@ odds of having diabetes increases anywhere from 2.85% to 4.37%.</p>
 <code>ggpredict()</code> from the <code>ggeffects</code> package:</p>
 <pre class="r"><code>library(ggeffects)
 plot(ggpredict(model = pima_model, terms = &quot;glucose [all]&quot;))</code></pre>
-<p><img src="lrm_files/figure-html/unnamed-chunk-33-1.png" width="672" /></p>
+<p><img src="lrm_files/figure-html/unnamed-chunk-34-1.png" width="672" /></p>
 <p>This plot shows the predicted probabilities of having diabetes (test)
 over the range of observed glucose values. It holds the remaining
 predictors at their mean values.</p>
@@ -954,7 +997,7 @@ class="citation">(Fox and Weisberg 2018)</span>. Simply use the
 <code>plot()</code>:</p>
 <pre class="r"><code>library(effects)
 plot(allEffects(m))</code></pre>
-<p><img src="lrm_files/figure-html/unnamed-chunk-38-1.png" width="912" /></p>
+<p><img src="lrm_files/figure-html/unnamed-chunk-39-1.png" width="912" /></p>
 <p>This has produced 5 plots, one for each independent variable in the
 model. On the y-axis is the probability of fracture and on the x-axis is
 the value for each independent variable. The error bars and light blue
@@ -1256,7 +1299,7 @@ ggplot(v_df) +
   aes(x = year, y = Prop, fill = sex) +
   geom_col(position = &quot;dodge&quot;) +
   facet_wrap(~ response)</code></pre>
-<p><img src="lrm_files/figure-html/unnamed-chunk-57-1.png" width="912" /></p>
+<p><img src="lrm_files/figure-html/unnamed-chunk-58-1.png" width="912" /></p>
 <p>We now proceed to model the ordered categorical response as a
 function of sex, year and their interaction. We use the
 <code>polr()</code> function <span class="citation">(Venables and Ripley
@@ -1618,7 +1661,7 @@ year increases, but the probability of responding “De-escalate”
 <pre class="r"><code>library(ggeffects)
 ggeffect(m, terms = c(&quot;year&quot;, &quot;sex&quot;)) |&gt; 
   plot()</code></pre>
-<p><img src="lrm_files/figure-html/unnamed-chunk-72-1.png" width="912" /></p>
+<p><img src="lrm_files/figure-html/unnamed-chunk-73-1.png" width="912" /></p>
 <p>Looking at the effect display we see varying differences in predicted
 probabilities between Males and Females. How can we quantify those
 differences? One way is using the emmeans package <span
