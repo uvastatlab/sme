@@ -1,0 +1,125 @@
+---
+title: "Survival Analysis"
+output:
+  html_document:
+    toc: TRUE
+    toc_float: TRUE
+bibliography: refs.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, comment = '')
+```
+
+### Estimated Survival Functions
+
+In the textbook _Applied Survival Analysis, Second Edition_ [@hosmer2008], the authors explore data from the Worcester Heart Attack Study (WHAS). The goal of the study was to investigate factors associated with survival following myocardial infarction (heart attacks) among residents of Worcester, Massachusetts. At the time of the book's publication, the study had over 11,000 subjects. The authors explore a subset of just 100 subjects for teaching purposes. In this section we replicate some of their analyses.
+
+We read in the data file, set admission date and follow-up date as a Date class, and set gender as a factor.
+
+```{r}
+whas <- read.table("data/whas100.dat")
+names(whas) <- c("id", "admitdate", "foldate", "los", "lenfol", "fstat",
+                 "age", "gender", "bmi")
+whas$admitdate <- as.Date(whas$admitdate, format = "%m/%d/%Y")
+whas$foldate <- as.Date(whas$foldate, format = "%m/%d/%Y")
+whas$gender <- factor(whas$gender, labels = c("Male", "Female"))
+head(whas, n = 10)
+```
+
+The "lenfol" variable is follow up time in days. This is how long subjects were in the study. The "fstat" variable is vital status, where dead = 1 and alive = 0. In the data above, subject 1 was in the study for 6 days until they died. Subject 10 was in the study for 2,719 days and was alive when they left the study. This latter subject is "censored", meaning they did not experience the event of interest. 
+
+A study that is analyzed using survival analysis typically has an _observation period_ during which subjects are enrolled and observed, or it concerns a window of time where objects are observed. When a subject or object is censored, that means they didn't experience the event _during_ the observation period. It does not mean they will never experience the event. A key assumption of survival analysis is that the censoring is _uninformative_ and not related to when the subject will experience the event. 
+
+The _Kaplan-Meier (KM) curve_ is the workhorse function for visualizing and describing survival data over time. This method was published by Edward Kaplan and Paul Meier in 1958. We can create a KM curve using the `survfit()` function from the {survival} package. To do this, we need to define survival time data using the `Surv()` function. The first argument is survival time, the second argument is the censoring indicator. Values with "+" appended are censored values. These are subjects that were alive at the end of their time in the study.
+
+```{r message=FALSE}
+library(survival)
+Surv(whas$lenfol, whas$fstat)
+```
+
+The `survfit()` function has `formula` and `data` arguments, so we can directly use the variable names in the `Surv()` function. The `~ 1` says we want to fit a single survival curve for the entire data set. Calling `plot()` on the fitted object produces an estimate of a survival function for the data.
+
+```{r}
+fit <- survfit(Surv(lenfol, fstat) ~ 1, data = whas)
+plot(fit, xlab = "Survial Time (days)", 
+     ylab = "Estimated Survival Probability",
+     mark.time = TRUE)
+```
+
+Starting at the far left of the plot, we estimate a probability of 1 that subjects survive to day 0. By day 500, the probability of survival drops to about 0.75. The dashed lines around the solid line are 95% confidence limits. We estimate the probability of survival to day 500 to be about [0.68, 0.85] with 95% confidence. The little markers represent censored observations. These can be suprressed by setting `mark.time = FALSE`.
+
+We can call `summary()` on the fitted object to get specific predicted probabilities. For example, we can look at days 0, 500, 1000 and 1500. It appears subjects have about [0.54, 0.73] probability to survive to 1500 days after a heart attack.
+
+```{r}
+summary(fit, times = c(0,500,1000,1500))
+```
+
+With such long periods of time, it may be more natural to consider years instead of days. We can either convert days to years in our data and re-fit the model, or we can use the `xscale` and `scale` arguments in `plot()` and `summary()`, respectively. Let's try the latter approach where we set the arguments to 365.25 (i.e., the number of days in a year).
+
+```{r}
+plot(fit, xlab = "Survial Time (years)", 
+     ylab = "Estimated Survival Probability", 
+     xscale = 365.25, mark.time = TRUE)
+```
+
+To get predicted probabilities for years 0 through 6, we need to set `scale = 365.25` and multiply the times of interest by 365.25.
+
+```{r}
+summary(fit, times = 365.25* c(0:6), scale = 365.25)
+```
+
+How does survival differ between men and women? We can estimate a survival function for each group and create a plot as follows:
+
+```{r}
+fit2 <- survfit(Surv(lenfol, fstat) ~ gender, data = whas)
+plot(fit2, xlab = "Survial Time (days)", 
+     ylab = "Estimated Survival Probability", col = 1:2,
+     mark.time = TRUE)
+legend("topright", col = 1:2, lty = 1, legend = c("Male", "Female"))
+```
+
+The {survminer} package makes creating such a plot a little easier. Simply call the `ggsurvplot()` function on the fitted object. Setting `conf.int = TRUE` adds a confidence ribbon for each group.
+
+```{r message=FALSE}
+library(survminer)
+ggsurvplot(fit2, conf.int = TRUE)
+```
+
+It appears males have an expected higher probability of survival following a heart attack, though the overlapping confidence bands suggest some uncertainty in this observation. We can formally test for a difference in the survival functions using the log-rank test, which is available via the `survdiff()` function.
+
+```{r}
+survdiff(Surv(lenfol, fstat) ~ gender, data = whas)
+```
+
+The null hypothesis of this test is no difference in the estimated survival functions. Small p-values provide evidence against this hypothesis. With p = 0.05, it seems this difference in survival between males and females could be real. However, as we see in the plot, the confidence bands overlap throughout the range of the data. Calling `summary()` on the model object for years 1 - 5 shows an overlap in 95% confidence intervals at every year.
+
+```{r}
+summary(fit2, times = 365.25* c(1:5), scale = 365.25)
+```
+
+Clearly we should be cautious before stating with certainty that men survive longer than women after heart attacks. 
+
+
+
+```{r}
+whas$agegp <- cut(whas$age, breaks = c(0,60,70,80,Inf), 
+                  include.lowest = TRUE, right = FALSE)
+fit3 <- survfit(Surv(lenfol, fstat) ~ agegp, data = whas)
+fit3
+```
+
+```{r}
+ggsurvplot(fit3)
+```
+
+```{r}
+survdiff(Surv(lenfol, fstat) ~ agegp, data = whas, rho = 1)
+```
+
+
+```{r}
+plot(fit, xlab = "Survial Time (years)", xscale = 365.25,
+     ylab = "Cumulative Hazard", cumhaz = TRUE, conf.int = F)
+```
+

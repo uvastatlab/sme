@@ -2,4 +2,4 @@
 title: "Statistical Modeling Examples in R"
 ---
 
-Worked examples of statistical linear modeling in R by the [UVA Library StatLab](https://data.library.virginia.edu/statlab/).
+Worked examples of statistical linear modeling in R by the [UVA Library StatLab](https://library.virginia.edu/data/statlab).

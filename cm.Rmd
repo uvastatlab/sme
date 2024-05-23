@@ -110,13 +110,13 @@ The `drop1()` function in the stats package performs the same tests and includes
 drop1(m, test = "Chisq")
 ```
 
-While both variables seem highly "significant" we should assess the model's goodness of fit. One effective way to do this for count models is creating a rootogram with the countreg package [@rootograms]. The tops of the bars are the _expected frequencies_ of the counts given the model. The counts are plotted on the square-root scale to help visualize smaller frequencies. The red line shows the fitted frequencies as a smooth curve. The x-axis is a horizontal reference line. Bars that hang below the line show underfitting, bars that hang above show overfitting. We see our model is extremely ill-fitting for Fatalities ranging from 1 - 100.
+While both variables seem highly "significant" we should assess the model's goodness of fit. One effective way to do this for count models is creating a rootogram with the topmodels package [@topmodels]. The tops of the bars are the _expected frequencies_ of the counts given the model. The counts are plotted on the square-root scale to help visualize smaller frequencies. The red line shows the fitted frequencies as a smooth curve. The x-axis is a horizontal reference line. Bars that hang below the line show underfitting, bars that hang above show overfitting. We see our model is extremely ill-fitting for Fatalities ranging from 1 - 100.
 
-```{r}
+```{r message=FALSE}
 # Need to install from R-Forge instead of CRAN
-# install.packages("countreg", repos="http://R-Forge.R-project.org")
-library(countreg)
-rootogram(m, max = 100)
+# install.packages("topmodels", repos = "https://R-Forge.R-project.org")
+library(topmodels)
+rootogram(m, xlim = c(0,100), confint = FALSE)
 ```
 
 One reason for such an ill-fitting model may be the choice of family distribution we used with `glm()`. The Poisson distribution assumes equivalent mean and variance. A more flexible model would allow the mean and variance to differ. One such model that allows this is the negative binomial model. We can fit a negative binomial model using the `glm.nb()` function in the MASS package. [@MASS]
@@ -125,7 +125,7 @@ One reason for such an ill-fitting model may be the choice of family distributio
 ```{r}
 library(MASS)
 m2 <- glm.nb(Fatalities ~ Phase + Cause, data = AirCrash)
-rootogram(m2, max = 100)
+rootogram(m2, xlim = c(0,100), confint = FALSE)
 ```
 
 This rootogram looks much better though it's far from good. However it's probably not reasonable to expect to sufficiently model something like air crash fatalities using only two categorical variables. 
@@ -233,7 +233,7 @@ Another way to create an effect plot is to hold Phase and Cause at their _mean v
 
 First let's see the plot it creates. Notice this plot seems a little more certain. We also get a "rug" at the bottom of the plot to remind us how much data we have. We see we have fewer observations after 2010.
 
-```{r}
+```{r message=FALSE}
 library(effects)
 Effect(focal.predictors = "Year", mod = m3) |>
   plot()
@@ -263,7 +263,7 @@ ggeffect(m3, terms = "Year") |>
 
 While the effect plots give us some indication of how expected fatalities differ between Phase and Cause, they don't directly quantify how they differ. For this type of analysis we can use the emmeans package. [@emmeans] Below we estimate differences in expected fatalities between Phases using the `emmeans()` function. The syntax `pairwise ~ Phase` says to calculate all pairwise differences between the levels of Phase. The argument `regrid = "response"` says to calculate the differences on the original response scale, which is a count. Finally the `$contrasts` notation extracts just the contrasts. (Without `$contrasts` the result also includes estimated means at each level of Phase.) The largest significant difference is between "en route" and "standing", which estimates about 75 more fatalities for plans "en route" versus plans standing on a runway. That seems to make sense. 
 
-```{r}
+```{r message=FALSE}
 library(emmeans)
 emmeans(m3, pairwise ~ Phase, regrid = "response")$contrasts
 ```
@@ -366,11 +366,11 @@ Confidence intervals provide insight into the direction and magnitude of point e
 car::Confint(rate_mod, exponentiate = TRUE)
 ```
 
-Is this a good model? A rootogram can help us investigate. We use the `rootogram()` function from the countreg package [@rootograms]. The plot is not pretty. Our model is over-predicting 0, 3, and 5 counts; under-predicting 1 and 2 counts; and not doing very well in the higher counts.
+Is this a good model? A rootogram can help us investigate. We use the `rootogram()` function from the topmodels package [@topmodels]. The plot is not pretty. Our model is over-predicting 0, 3, and 5 counts; under-predicting 1 and 2 counts; and not doing very well in the higher counts.
 
 ```{r}
-library(countreg)
-rootogram(rate_mod, max = 11)
+library(topmodels)
+rootogram(rate_mod, xlim = c(0,11), confint = FALSE)
 ```
 
 The `drop1()` function tests single term deletions. Dropping the gender variable decreases the AIC by about 2 units.
@@ -533,14 +533,14 @@ for(i in 1:50)lines(density(sim[[i]], from=0), col = "grey90")
 
 Notice we're underpredicting 0 counts and in the range of 3 - 6. We're also overpredicting in the area of 1 and 2.
 
-Another type of fit assessment for count models can be performed with a rootogram, which we can create using the `rootogram()` function from the countreg package [@rootograms]. (Note: The countreg package is not on CRAN at the time of this writing (Oct 2022), but can be installed with the following code: `install.packages("countreg", repos="http://R-Forge.R-project.org")`) 
+Another type of fit assessment for count models can be performed with a rootogram, which we can create using the `rootogram()` function from the topmodels package [@topmodels]. (Note: The topmodels package is not on CRAN at the time of this writing (May 2024), but can be installed with the following code: `install.packages("topmodels", repos = "https://R-Forge.R-project.org")`) 
 
 The tops of the bars are the _expected frequencies_ of the counts given the model. The counts are plotted on the square-root scale to help visualize smaller frequencies. The red line shows the fitted frequencies as a smooth curve. The bars represent the difference between observed and predicted counts. The x-axis is a horizontal reference line. Bars that hang below the line show underpredicting, bars that hang above show overpredicting. We see our model is ill-fitting for satellites in the 0 - 6 range, but not too bad for the higher counts. The 
 
 ```{r}
-# install.packages("countreg", repos="http://R-Forge.R-project.org")
-library(countreg)
-rootogram(m2)
+# install.packages("topmodels", repos = "https://R-Forge.R-project.org")
+library(topmodels)
+rootogram(m2, confint = FALSE)
 ```
 
 Using the `Confint()` function (from the car package) with `exponentiate = TRUE` returns the multiplicative effect of the coefficients. For example it appears that for every 1 cm increase in carapace width results in about a 20% increase in counts (95% CI: [8, 31]).
@@ -672,7 +672,7 @@ This updated model basically says that counts of satellites is a mixture of two 
 We can evaluate the fit of this updated model with a rootogram. The fit is not great, especially when it comes to modeling counts of ones and twos. But we have a much better understanding of zero counts. 
 
 ```{r}
-rootogram(zm4)
+rootogram(zm4, confint = FALSE)
 ```
 
 This model also improves on the negative binomial model we fit in the previous section. It has two fewer coefficients and a substantially lower AIC.

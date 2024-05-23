@@ -13,7 +13,7 @@
 
 <title>Mixed-Effect Models</title>
 
-<script src="site_libs/header-attrs-2.19/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.27/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
@@ -29,7 +29,7 @@
        h6 {font-size: 12px;}
        code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
        pre:not([class]) { background-color: white }</style>
-<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<script src="site_libs/jqueryui-1.13.2/jquery-ui.min.js"></script>
 <link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
 <script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
@@ -65,6 +65,7 @@ if (window.hljs) {
 div.csl-bib-body { }
 div.csl-entry {
   clear: both;
+  margin-bottom: 0em;
 }
 .hanging div.csl-entry {
   margin-left:2em;
@@ -622,6 +623,8 @@ and <code>F-O</code> than <code>E-F</code>. Visually we can also see
 this using an effect plot:</p>
 <pre class="r"><code>library(ggeffects)
 ggpredict(m, terms = ~ treat) |&gt; plot(add.data = TRUE)</code></pre>
+<pre><code>Warning: Argument `add.data` is deprecated and will be removed in the future.
+  Please use `show_data` instead.</code></pre>
 <p><img src="lme_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
 <p>This plot shows us the spread of predicted egg values based on their
 treatment group. The black dot in the middle of each line represents the
@@ -813,6 +816,8 @@ class="citation">(Lüdecke 2018)</span>.</p>
 <pre class="r"><code>library(ggeffects)
 ggeffect(m4, terms = c(&quot;region&quot;, &quot;treatment&quot;)) |&gt;
          plot(add.data = TRUE, jitter = 0)</code></pre>
+<pre><code>Warning: Argument `add.data` is deprecated and will be removed in the future.
+  Please use `show_data` instead.</code></pre>
 <p><img src="lme_files/figure-html/unnamed-chunk-27-1.png" width="672" /></p>
 <p>This shows the relationship between treatment groups by region.
 Within region one, the estimates for activate by treatment are closer
@@ -1062,6 +1067,8 @@ be too simplistic.</p>
 <pre class="r"><code>library(ggeffects)
 ggeffect(m, terms = c(&quot;time&quot;, &quot;group&quot;)) |&gt;
   plot(add.data = TRUE, jitter = 0)</code></pre>
+<pre><code>Warning: Argument `add.data` is deprecated and will be removed in the future.
+  Please use `show_data` instead.</code></pre>
 <p><img src="lme_files/figure-html/unnamed-chunk-39-1.png" width="672" /></p>
 <p>Given our exploratory plots we may want to entertain a
 <em>non-linear</em> effect of time. One way to do this is with natural
@@ -1119,6 +1126,8 @@ for(i in 1:50)lines(density(sim1[[i]]), col = &quot;grey90&quot;)</code></pre>
 bend in our fitted lines due to the non-linear effects.</p>
 <pre class="r"><code>ggeffect(m2, terms = c(&quot;time&quot;, &quot;group&quot;)) |&gt;
   plot(add.data = TRUE, jitter = 0)</code></pre>
+<pre><code>Warning: Argument `add.data` is deprecated and will be removed in the future.
+  Please use `show_data` instead.</code></pre>
 <p><img src="lme_files/figure-html/unnamed-chunk-45-1.png" width="672" /></p>
 <p>Looking at the summary for model m2 reveals coefficients that are
 impossible to interpret. This is one of the drawbacks of models with
@@ -1381,6 +1390,8 @@ of normality.</p>
 model.</p>
 <pre class="r"><code>ggeffect(m3, terms = c(&quot;time&quot;, &quot;group&quot;)) |&gt;
   plot(add.data = TRUE, jitter = 0)</code></pre>
+<pre><code>Warning: Argument `add.data` is deprecated and will be removed in the future.
+  Please use `show_data` instead.</code></pre>
 <p><img src="lme_files/figure-html/unnamed-chunk-65-1.png" width="672" /></p>
 <p>And using the emmeans package we can make comparisons at levels of
 interest. For example, what is the expected difference in phosphate
@@ -1394,8 +1405,8 @@ This is similar to what we obtained with the mixed-effect model.</p>
   confint()</code></pre>
 <pre><code>$emmeans
  group   emmean    SE   df lower.CL upper.CL
- control   2.62 0.137 86.2     2.35     2.89
- obese     3.43 0.119 76.4     3.19     3.67
+ control   2.62 0.137 86.1     2.35     2.89
+ obese     3.43 0.119 76.3     3.19     3.67
 
 Degrees-of-freedom method: satterthwaite 
 Confidence level used: 0.95 
@@ -1410,7 +1421,8 @@ Confidence level used: 0.95 </code></pre>
 </div>
 <div id="references" class="section level3 unnumbered">
 <h3 class="unnumbered">References</h3>
-<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="refs" class="references csl-bib-body hanging-indent"
+entry-spacing="0">
 <div id="ref-lme4" class="csl-entry">
 Bates, Douglas, Martin Mächler, Ben Bolker, and Steve Walker. 2015.
 <span>“Fitting Linear Mixed-Effects Models Using <span

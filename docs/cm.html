@@ -13,7 +13,7 @@
 
 <title>Count Models</title>
 
-<script src="site_libs/header-attrs-2.19/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.27/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
@@ -29,7 +29,7 @@
        h6 {font-size: 12px;}
        code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
        pre:not([class]) { background-color: white }</style>
-<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<script src="site_libs/jqueryui-1.13.2/jquery-ui.min.js"></script>
 <link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
 <script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
@@ -65,6 +65,7 @@ if (window.hljs) {
 div.csl-bib-body { }
 div.csl-entry {
   clear: both;
+  margin-bottom: 0em;
 }
 .hanging div.csl-entry {
   margin-left:2em;
@@ -513,19 +514,19 @@ Cause   4    35987 38111 4718.1 &lt; 2.2e-16 ***
 Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p>While both variables seem highly “significant” we should assess the
 model’s goodness of fit. One effective way to do this for count models
-is creating a rootogram with the countreg package <span
-class="citation">(Kleiber and Zeileis 2016)</span>. The tops of the bars
-are the <em>expected frequencies</em> of the counts given the model. The
-counts are plotted on the square-root scale to help visualize smaller
-frequencies. The red line shows the fitted frequencies as a smooth
-curve. The x-axis is a horizontal reference line. Bars that hang below
-the line show underfitting, bars that hang above show overfitting. We
-see our model is extremely ill-fitting for Fatalities ranging from 1 -
-100.</p>
+is creating a rootogram with the topmodels package <span
+class="citation">(Zeileis, Lang, and Stauffer 2024)</span>. The tops of
+the bars are the <em>expected frequencies</em> of the counts given the
+model. The counts are plotted on the square-root scale to help visualize
+smaller frequencies. The red line shows the fitted frequencies as a
+smooth curve. The x-axis is a horizontal reference line. Bars that hang
+below the line show underfitting, bars that hang above show overfitting.
+We see our model is extremely ill-fitting for Fatalities ranging from 1
+- 100.</p>
 <pre class="r"><code># Need to install from R-Forge instead of CRAN
-# install.packages(&quot;countreg&quot;, repos=&quot;http://R-Forge.R-project.org&quot;)
-library(countreg)
-rootogram(m, max = 100)</code></pre>
+# install.packages(&quot;topmodels&quot;, repos = &quot;https://R-Forge.R-project.org&quot;)
+library(topmodels)
+rootogram(m, xlim = c(0,100), confint = FALSE)</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
 <p>One reason for such an ill-fitting model may be the choice of family
 distribution we used with <code>glm()</code>. The Poisson distribution
@@ -536,7 +537,7 @@ negative binomial model. We can fit a negative binomial model using the
 class="citation">(Venables and Ripley 2002)</span></p>
 <pre class="r"><code>library(MASS)
 m2 &lt;- glm.nb(Fatalities ~ Phase + Cause, data = AirCrash)
-rootogram(m2, max = 100)</code></pre>
+rootogram(m2, xlim = c(0,100), confint = FALSE)</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
 <p>This rootogram looks much better though it’s far from good. However
 it’s probably not reasonable to expect to sufficiently model something
@@ -619,10 +620,6 @@ Call:
 glm.nb(formula = Fatalities ~ Phase + Cause + Year, data = AirCrash, 
     init.theta = 0.7339275638, link = log)
 
-Deviance Residuals: 
-    Min       1Q   Median       3Q      Max  
--2.4043  -1.1417  -0.5786   0.2520   2.8804  
-
 Coefficients:
                    Estimate Std. Error z value Pr(&gt;|z|)    
 (Intercept)      -43.834781  19.577798  -2.239 0.025156 *  
@@ -687,13 +684,13 @@ ggpredict(m3, terms = &quot;Cause&quot;) |&gt; plot()</code></pre>
 <pre class="r"><code>ggpredict(m3, terms = &quot;Cause&quot;)</code></pre>
 <pre><code># Predicted counts of Fatalities
 
-Cause       | Predicted |           95% CI
-------------------------------------------
-criminal    |    186.65 | [113.74, 306.29]
-human error |     67.62 | [ 53.73,  85.09]
-mechanical  |     49.74 | [ 36.45,  67.89]
-unknown     |     33.03 | [ 23.03,  47.36]
-weather     |     39.16 | [ 28.77,  53.32]
+Cause       | Predicted |         95% CI
+----------------------------------------
+criminal    |    186.65 | 113.74, 306.29
+human error |     67.62 |  53.73,  85.09
+mechanical  |     49.74 |  36.45,  67.89
+unknown     |     33.03 |  23.03,  47.36
+weather     |     39.16 |  28.77,  53.32
 
 Adjusted for:
 * Phase = en route
@@ -935,10 +932,6 @@ Call:
 glm(formula = complaints ~ residency + revenueC + gender + offset(log(visits)), 
     family = poisson, data = esdcomp)
 
-Deviance Residuals: 
-    Min       1Q   Median       3Q      Max  
--2.3356  -0.9403  -0.4460   0.8726   2.0306  
-
 Coefficients:
              Estimate Std. Error z value Pr(&gt;|z|)    
 (Intercept) -6.542634   0.208779 -31.338   &lt;2e-16 ***
@@ -978,13 +971,13 @@ residencyY  0.704258118 0.4819236944 1.020449674
 revenueC    1.002364774 0.9968532607 1.007848920
 genderM     1.137683995 0.7559801492 1.756475968</code></pre>
 <p>Is this a good model? A rootogram can help us investigate. We use the
-<code>rootogram()</code> function from the countreg package <span
-class="citation">(Kleiber and Zeileis 2016)</span>. The plot is not
-pretty. Our model is over-predicting 0, 3, and 5 counts;
+<code>rootogram()</code> function from the topmodels package <span
+class="citation">(Zeileis, Lang, and Stauffer 2024)</span>. The plot is
+not pretty. Our model is over-predicting 0, 3, and 5 counts;
 under-predicting 1 and 2 counts; and not doing very well in the higher
 counts.</p>
-<pre class="r"><code>library(countreg)
-rootogram(rate_mod, max = 11)</code></pre>
+<pre class="r"><code>library(topmodels)
+rootogram(rate_mod, xlim = c(0,11), confint = FALSE)</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-44-1.png" width="672" /></p>
 <p>The <code>drop1()</code> function tests single term deletions.
 Dropping the gender variable decreases the AIC by about 2 units.</p>
@@ -1010,10 +1003,6 @@ summary(rate_mod2)</code></pre>
 Call:
 glm(formula = complaints ~ residency + revenueC + offset(log(visits)), 
     family = poisson, data = esdcomp)
-
-Deviance Residuals: 
-    Min       1Q   Median       3Q      Max  
--2.3118  -0.9309  -0.4820   0.9173   2.0869  
 
 Coefficients:
              Estimate Std. Error z value Pr(&gt;|z|)    
@@ -1245,11 +1234,11 @@ for(i in 1:50)lines(density(sim[[i]], from=0), col = &quot;grey90&quot;)</code><
 We’re also overpredicting in the area of 1 and 2.</p>
 <p>Another type of fit assessment for count models can be performed with
 a rootogram, which we can create using the <code>rootogram()</code>
-function from the countreg package <span class="citation">(Kleiber and
-Zeileis 2016)</span>. (Note: The countreg package is not on CRAN at the
-time of this writing (Oct 2022), but can be installed with the following
-code:
-<code>install.packages("countreg", repos="http://R-Forge.R-project.org")</code>)</p>
+function from the topmodels package <span class="citation">(Zeileis,
+Lang, and Stauffer 2024)</span>. (Note: The topmodels package is not on
+CRAN at the time of this writing (May 2024), but can be installed with
+the following code:
+<code>install.packages("topmodels", repos = "https://R-Forge.R-project.org")</code>)</p>
 <p>The tops of the bars are the <em>expected frequencies</em> of the
 counts given the model. The counts are plotted on the square-root scale
 to help visualize smaller frequencies. The red line shows the fitted
@@ -1259,9 +1248,9 @@ line. Bars that hang below the line show underpredicting, bars that hang
 above show overpredicting. We see our model is ill-fitting for
 satellites in the 0 - 6 range, but not too bad for the higher counts.
 The</p>
-<pre class="r"><code># install.packages(&quot;countreg&quot;, repos=&quot;http://R-Forge.R-project.org&quot;)
-library(countreg)
-rootogram(m2)</code></pre>
+<pre class="r"><code># install.packages(&quot;topmodels&quot;, repos = &quot;https://R-Forge.R-project.org&quot;)
+library(topmodels)
+rootogram(m2, confint = FALSE)</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-62-1.png" width="672" /></p>
 <p>Using the <code>Confint()</code> function (from the car package) with
 <code>exponentiate = TRUE</code> returns the multiplicative effect of
@@ -1358,10 +1347,6 @@ wider shells are less likely to have 0 satellites.</p>
 Call:
 glm(formula = zero ~ width, family = binomial, data = hsc)
 
-Deviance Residuals: 
-    Min       1Q   Median       3Q      Max  
--1.6942  -0.9066  -0.5480   1.0458   2.0281  
-
 Coefficients:
             Estimate Std. Error z value Pr(&gt;|z|)    
 (Intercept)  12.3508     2.6287   4.698 2.62e-06 ***
@@ -1452,7 +1437,7 @@ width        -0.5094     0.1104  -4.613 3.96e-06 ***
 Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1 
 
 Theta = 5.936 
-Number of iterations in BFGS optimization: 14 
+Number of iterations in BFGS optimization: 27 
 Log-likelihood: -350.8 on 8 Df</code></pre>
 <p>The only coefficient in the count model that looks reliably positive
 or negative is <em>theta</em>. This is the dispersion parameter in the
@@ -1486,17 +1471,17 @@ Pearson residuals:
 Count model coefficients (negbin with log link):
             Estimate Std. Error z value Pr(&gt;|z|)    
 (Intercept)  1.47294    0.06622  22.244  &lt; 2e-16 ***
-Log(theta)   1.55404    0.34193   4.545  5.5e-06 ***
+Log(theta)   1.55405    0.34194   4.545  5.5e-06 ***
 
 Zero-inflation model coefficients (binomial with logit link):
             Estimate Std. Error z value Pr(&gt;|z|)    
-(Intercept)  13.1286     2.9472   4.455 8.41e-06 ***
+(Intercept)  13.1283     2.9472   4.455 8.41e-06 ***
 width        -0.5332     0.1152  -4.628 3.69e-06 ***
 ---
 Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1 
 
-Theta = 4.7305 
-Number of iterations in BFGS optimization: 10 
+Theta = 4.7306 
+Number of iterations in BFGS optimization: 18 
 Log-likelihood: -354.2 on 4 Df</code></pre>
 <p>This updated model basically says that counts of satellites is a
 mixture of two models:</p>
@@ -1509,7 +1494,7 @@ satellites decreases with larger widths</li>
 <p>We can evaluate the fit of this updated model with a rootogram. The
 fit is not great, especially when it comes to modeling counts of ones
 and twos. But we have a much better understanding of zero counts.</p>
-<pre class="r"><code>rootogram(zm4)</code></pre>
+<pre class="r"><code>rootogram(zm4, confint = FALSE)</code></pre>
 <p><img src="cm_files/figure-html/unnamed-chunk-76-1.png" width="672" /></p>
 <p>This model also improves on the negative binomial model we fit in the
 previous section. It has two fewer coefficients and a substantially
@@ -1522,7 +1507,8 @@ m2   6 760.5958</code></pre>
 </div>
 <div id="references" class="section level3 unnumbered">
 <h3 class="unnumbered">References</h3>
-<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="refs" class="references csl-bib-body hanging-indent"
+entry-spacing="0">
 <div id="ref-agresti" class="csl-entry">
 Agresti, Alan. 2002. <em>Categorical Data Analysis</em>. Wiley.
 </div>
@@ -1557,11 +1543,6 @@ href="https://CRAN.R-project.org/package=vcdExtra">https://CRAN.R-project.org/pa
 Friendly, Michael, and David Meyer. 2016. <em>Discrete Data Analysis
 with <span>R</span></em>. Boca Raton: <span>CRC</span> Press.
 </div>
-<div id="ref-rootograms" class="csl-entry">
-Kleiber, C, and A Zeileis. 2016. <span>“Visualizing Count Data
-Regressions Using Rootograms,”</span> 296–303. <a
-href="https://doi.org/10.1080/00031305.2016.1173590">https://doi.org/10.1080/00031305.2016.1173590</a>.
-</div>
 <div id="ref-emmeans" class="csl-entry">
 Lenth, Russell V. 2022. <em>Emmeans: Estimated Marginal Means, Aka
 Least-Squares Means</em>. <a
@@ -1593,6 +1574,12 @@ Zeileis, Achim, Christian Kleiber, and Simon Jackman. 2008.
 <span>“Regression Models for Count Data in <span>R</span>.”</span>
 <em>Journal of Statistical Software</em> 27 (8). <a
 href="http://www.jstatsoft.org/v27/i08/">http://www.jstatsoft.org/v27/i08/</a>.
+</div>
+<div id="ref-topmodels" class="csl-entry">
+Zeileis, Achim, Moritz N. Lang, and Reto Stauffer. 2024. <em>Topmodels:
+Infrastructure for Forecasting and Assessment of Probabilistic
+Models</em>. <a
+href="https://R-Forge.R-project.org/projects/topmodels/">https://R-Forge.R-project.org/projects/topmodels/</a>.
 </div>
 </div>
 </div>
