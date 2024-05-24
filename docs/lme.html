@@ -363,6 +363,9 @@ div.tocify {
     <li>
       <a href="lme.html">mixed-effect models</a>
     </li>
+    <li>
+      <a href="survival.html">survival analysis</a>
+    </li>
   </ul>
 </li>
 <li>
@@ -1389,9 +1392,7 @@ of normality.</p>
 <p>Once again we can use the ggeffects package to visualize our
 model.</p>
 <pre class="r"><code>ggeffect(m3, terms = c(&quot;time&quot;, &quot;group&quot;)) |&gt;
-  plot(add.data = TRUE, jitter = 0)</code></pre>
-<pre><code>Warning: Argument `add.data` is deprecated and will be removed in the future.
-  Please use `show_data` instead.</code></pre>
+  plot(show_data = TRUE, jitter = 0)</code></pre>
 <p><img src="lme_files/figure-html/unnamed-chunk-65-1.png" width="672" /></p>
 <p>And using the emmeans package we can make comparisons at levels of
 interest. For example, what is the expected difference in phosphate

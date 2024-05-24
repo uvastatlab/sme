@@ -562,7 +562,7 @@ Once again we can use the ggeffects package to visualize our model.
 
 ```{r}
 ggeffect(m3, terms = c("time", "group")) |>
-  plot(add.data = TRUE, jitter = 0)
+  plot(show_data = TRUE, jitter = 0)
 ```
 
 And using the emmeans package we can make comparisons at levels of interest. For example, what is the expected difference in phosphate values between control and obese subjects at 1 hour post glucose challenge assuming a baseline value of 4? (We can disregard the note about interactions since we specified the time.) The output indicates an estimated difference of about -0.814 with a 95% CI of [-1.17, -0.457]. This is similar to what we obtained with the mixed-effect model.

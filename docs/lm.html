@@ -363,6 +363,9 @@ div.tocify {
     <li>
       <a href="lme.html">mixed-effect models</a>
     </li>
+    <li>
+      <a href="survival.html">survival analysis</a>
+    </li>
   </ul>
 </li>
 <li>
@@ -955,7 +958,7 @@ against the null.</p>
 <pre class="r"><code>library(car)
 durbinWatsonTest(m)</code></pre>
 <pre><code> lag Autocorrelation D-W Statistic p-value
-   1     -0.05006007      2.079992   0.894
+   1     -0.05006007      2.079992   0.904
  Alternative hypothesis: rho != 0</code></pre>
 <p>Based on our residual versus time plot and the result of the
 Durbin-Watson test, we decide to assume our residual errors are

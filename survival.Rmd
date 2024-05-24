@@ -100,26 +100,6 @@ summary(fit2, times = 365.25* c(1:5), scale = 365.25)
 
 Clearly we should be cautious before stating with certainty that men survive longer than women after heart attacks. 
 
+### Cox Proportional Hazards Model
 
-
-```{r}
-whas$agegp <- cut(whas$age, breaks = c(0,60,70,80,Inf), 
-                  include.lowest = TRUE, right = FALSE)
-fit3 <- survfit(Surv(lenfol, fstat) ~ agegp, data = whas)
-fit3
-```
-
-```{r}
-ggsurvplot(fit3)
-```
-
-```{r}
-survdiff(Surv(lenfol, fstat) ~ agegp, data = whas, rho = 1)
-```
-
-
-```{r}
-plot(fit, xlab = "Survial Time (years)", xscale = 365.25,
-     ylab = "Cumulative Hazard", cumhaz = TRUE, conf.int = F)
-```
-
+To do.
