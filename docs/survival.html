@@ -574,7 +574,7 @@ Kleinbaum 2005)</span> presents a study that followed 42 leukemia
 patients in remission. The patients were randomly assigned to
 maintenance therapy with either “6-MP” (a new treatment) or placebo. 21
 subjects were assigned to each group. The event of interest was “coming
-out of remission.” <span class="citation">(B et al. 1963)</span></p>
+out of remission.” <span class="citation">(Freireich 1963)</span></p>
 <p>Below we load the data and look at the first five rows.</p>
 <pre class="r"><code>d &lt;- readRDS(&quot;data/leuk.rds&quot;)
 head(d)</code></pre>
@@ -1101,17 +1101,11 @@ This doesn’t mean we should drop the subject. It just helps us
 understand the impact a single subject has on our model. The decision to
 drop subjects should be carefully considered and not made based on just
 residual values.</p>
+</div>
+<div id="references" class="section level3 unnumbered">
+<h3 class="unnumbered">References</h3>
 <div id="refs" class="references csl-bib-body hanging-indent"
 entry-spacing="0">
-<div id="ref-blood" class="csl-entry">
-B, ACUTE LEUKEMIA GROUP, EMIL J FREIREICH, EDMUND GEHAN, III FREI EMIL,
-LESLIE R. SCHROEDER, IRVING J. WOLMAN, RACHAD ANBARI, et al. 1963.
-<span>“<span class="nocase">The Effect of 6-Mercaptopurine on the
-Duration of Steroid-induced Remissions in Acute Leukemia: A Model for
-Evaluation of Other Potentially Useful Therapy</span>.”</span>
-<em>Blood</em> 21 (6): 699–716. <a
-href="https://doi.org/10.1182/blood.V21.6.699.699">https://doi.org/10.1182/blood.V21.6.699.699</a>.
-</div>
 <div id="ref-kleinbaum" class="csl-entry">
 David G. Kleinbaum, Mitchel Klein. 2005. <em>Survival Analysis, a
 Self-Learning Text, Second Edition</em>. Springer.
@@ -1121,14 +1115,22 @@ David W. Hosmer, Susanne May, Stanley Lemeshow. 2008. <em>Applied
 Survival Analysis: Regression Modeling of Time to Event Data: Second
 Edition</em>. John Wiley; Sons Inc.
 </div>
+<div id="ref-blood" class="csl-entry">
+Freireich, et. al., Emil. 1963. <span>“<span class="nocase">The Effect
+of 6-Mercaptopurine on the Duration of Steroid-induced Remissions in
+Acute Leukemia: A Model for Evaluation of Other Potentially Useful
+Therapy</span>.”</span> <em>Blood</em> 21 (6): 699–716. <a
+href="https://doi.org/10.1182/blood.V21.6.699.699">https://doi.org/10.1182/blood.V21.6.699.699</a>.
+</div>
 <div id="ref-survminer" class="csl-entry">
 Kassambara, Alboukadel, Marcin Kosinski, and Przemyslaw Biecek. 2021.
-<em>Survminer: Drawing Survival Curves Using ’Ggplot2’</em>. <a
+<em>Survminer: Drawing Survival Curves Using <span
+class="nocase">ggplot2</span></em>. <a
 href="https://CRAN.R-project.org/package=survminer">https://CRAN.R-project.org/package=survminer</a>.
 </div>
 <div id="ref-survival-package" class="csl-entry">
-Therneau, Terry M. 2024. <em>A Package for Survival Analysis in r</em>.
-<a
+Therneau, Terry M. 2024. <em>A Package for Survival Analysis in
+<span>R</span></em>. <a
 href="https://CRAN.R-project.org/package=survival">https://CRAN.R-project.org/package=survival</a>.
 </div>
 </div>

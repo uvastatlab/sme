@@ -449,3 +449,4 @@ coef(m4a)["rxplacebo"]/coef(m4)["rxplacebo"]
 
 With subject 19 removed from the model, the coefficient estimate for rx increases by almost 15%, which makes the treatment look even better. This doesn't mean we should drop the subject. It just helps us understand the impact a single subject has on our model. The decision to drop subjects should be carefully considered and not made based on just residual values.
 
+### References
