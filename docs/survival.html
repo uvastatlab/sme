@@ -391,14 +391,14 @@ div.tocify {
 <div id="estimated-survival-functions" class="section level3">
 <h3>Estimated Survival Functions</h3>
 <p>In the textbook <em>Applied Survival Analysis, Second Edition</em>
-<span class="citation">(David W. Hosmer 2008)</span>, the authors
-explore data from the Worcester Heart Attack Study (WHAS). The goal of
-the study was to investigate factors associated with survival following
-myocardial infarction (heart attacks) among residents of Worcester,
-Massachusetts. At the time of the book’s publication, the study had over
-11,000 subjects. The authors explore a subset of just 100 subjects for
-teaching purposes. In this section we replicate some of their
-analyses.</p>
+<span class="citation">(Hosmer, Lemeshow, and May 2008)</span>, the
+authors explore data from the Worcester Heart Attack Study (WHAS). The
+goal of the study was to investigate factors associated with survival
+following myocardial infarction (heart attacks) among residents of
+Worcester, Massachusetts. At the time of the book’s publication, the
+study had over 11,000 subjects. The authors explore a subset of just 100
+subjects for teaching purposes. In this section we replicate some of
+their analyses.</p>
 <p>We read in the data file, set admission date and follow-up date as a
 Date class, and set gender as a factor.</p>
 <pre class="r"><code>whas &lt;- read.table(&quot;data/whas100.dat&quot;)
@@ -569,12 +569,13 @@ survive longer than women after heart attacks.</p>
 </div>
 <div id="cox-proportional-hazards-model" class="section level3">
 <h3>Cox Proportional Hazards Model</h3>
-<p>The text <em>Survival Analysis</em> <span class="citation">(David G.
-Kleinbaum 2005)</span> presents a study that followed 42 leukemia
+<p>The text <em>Survival Analysis</em> <span class="citation">(Kleinbaum
+and Klein 2005)</span> presents a study that followed 42 leukemia
 patients in remission. The patients were randomly assigned to
 maintenance therapy with either “6-MP” (a new treatment) or placebo. 21
 subjects were assigned to each group. The event of interest was “coming
-out of remission.” <span class="citation">(Freireich 1963)</span></p>
+out of remission.” <span class="citation">(Freireich et al.
+1963)</span></p>
 <p>Below we load the data and look at the first five rows.</p>
 <pre class="r"><code>d &lt;- readRDS(&quot;data/leuk.rds&quot;)
 head(d)</code></pre>
@@ -585,7 +586,7 @@ head(d)</code></pre>
 4    32      0   1   2.53 trt
 5    25      0   1   1.78 trt
 6    23      1   1   2.57 trt</code></pre>
-<p>Variables definitions:</p>
+<p>Variable definitions:</p>
 <ul>
 <li>survt (time in weeks; time until coming out of remission)</li>
 <li>status (0 = censored, 1 = came out of remission)</li>
@@ -648,7 +649,7 @@ The value of 0.69 (+/- 0.04) is promising but not excellent.</p>
 are simultaneously equal to 0. These are usually all in agreement. When
 these disagree, go with the Likelihood Ratio Test (Hosmer et al,
 p. 79)</p>
-<p>We can use our Cox PH model to create <em>covariate_adjusted survival
+<p>We can use our Cox PH model to create <em>covariate-adjusted survival
 curves</em>. To do so, we need to first use the <code>survfit()</code>
 function on the model object. Notice we need to set the covariate values
 to create the curves. Below we specify we want a curve for each level of
@@ -1106,27 +1107,27 @@ residual values.</p>
 <h3 class="unnumbered">References</h3>
 <div id="refs" class="references csl-bib-body hanging-indent"
 entry-spacing="0">
-<div id="ref-kleinbaum" class="csl-entry">
-David G. Kleinbaum, Mitchel Klein. 2005. <em>Survival Analysis, a
-Self-Learning Text, Second Edition</em>. Springer.
-</div>
-<div id="ref-hosmer2008" class="csl-entry">
-David W. Hosmer, Susanne May, Stanley Lemeshow. 2008. <em>Applied
-Survival Analysis: Regression Modeling of Time to Event Data: Second
-Edition</em>. John Wiley; Sons Inc.
-</div>
 <div id="ref-blood" class="csl-entry">
-Freireich, et. al., Emil. 1963. <span>“<span class="nocase">The Effect
-of 6-Mercaptopurine on the Duration of Steroid-induced Remissions in
-Acute Leukemia: A Model for Evaluation of Other Potentially Useful
+Freireich, Emil et al. 1963. <span>“<span class="nocase">The Effect of
+6-Mercaptopurine on the Duration of Steroid-induced Remissions in Acute
+Leukemia: A Model for Evaluation of Other Potentially Useful
 Therapy</span>.”</span> <em>Blood</em> 21 (6): 699–716. <a
 href="https://doi.org/10.1182/blood.V21.6.699.699">https://doi.org/10.1182/blood.V21.6.699.699</a>.
+</div>
+<div id="ref-hosmer2008" class="csl-entry">
+Hosmer, David W., Stanley Lemeshow, and Susanne May. 2008. <em>Applied
+Survival Analysis: Regression Modeling of Time to Event Data: Second
+Edition</em>. John Wiley; Sons Inc.
 </div>
 <div id="ref-survminer" class="csl-entry">
 Kassambara, Alboukadel, Marcin Kosinski, and Przemyslaw Biecek. 2021.
 <em>Survminer: Drawing Survival Curves Using <span
 class="nocase">ggplot2</span></em>. <a
 href="https://CRAN.R-project.org/package=survminer">https://CRAN.R-project.org/package=survminer</a>.
+</div>
+<div id="ref-kleinbaum" class="csl-entry">
+Kleinbaum, David G., and Mitchel Klein. 2005. <em>Survival Analysis, a
+Self-Learning Text, Second Edition</em>. Springer.
 </div>
 <div id="ref-survival-package" class="csl-entry">
 Therneau, Terry M. 2024. <em>A Package for Survival Analysis in

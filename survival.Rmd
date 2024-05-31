@@ -111,7 +111,7 @@ d <- readRDS("data/leuk.rds")
 head(d)
 ```
 
-Variables definitions:  
+Variable definitions:  
 
 - survt (time in weeks; time until coming out of remission)
 - status (0 = censored, 1 = came out of remission)
@@ -149,7 +149,7 @@ The statistic labeled "Concordance" reports the fraction of all pairs of subject
 
 The three tests at the end test the null that all model coefficients are simultaneously equal to 0. These are usually all in agreement. When these disagree, go with the Likelihood Ratio Test (Hosmer et al, p. 79)
 
-We can use our Cox PH model to create _covariate_adjusted survival curves_. To do so, we need to first use the `survfit()` function on the model object. Notice we need to set the covariate values to create the curves. Below we specify we want a curve for each level of rx.
+We can use our Cox PH model to create _covariate-adjusted survival curves_. To do so, we need to first use the `survfit()` function on the model object. Notice we need to set the covariate values to create the curves. Below we specify we want a curve for each level of rx.
 
 ```{r}
 sfit1 <- survfit(m1, newdata = data.frame(rx = c("trt", "placebo")))
