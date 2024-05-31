@@ -31,7 +31,7 @@ The "lenfol" variable is follow up time in days. This is how long subjects were 
 
 A study that is analyzed using survival analysis typically has an _observation period_ during which subjects are enrolled and observed, or it concerns a window of time where objects are observed. When a subject or object is censored, that means they didn't experience the event _during_ the observation period. It does not mean they will never experience the event. A key assumption of survival analysis is that the censoring is _uninformative_ and not related to when the subject will experience the event. 
 
-The _Kaplan-Meier (KM) curve_ is the workhorse function for visualizing and describing survival data over time. This method was published by Edward Kaplan and Paul Meier in 1958. We can create a KM curve using the `survfit()` function from the {survival} package. To do this, we need to define survival time data using the `Surv()` function. The first argument is survival time, the second argument is the censoring indicator. Values with "+" appended are censored values. These are subjects that were alive at the end of their time in the study.
+The _Kaplan-Meier (KM) curve_ is the workhorse function for visualizing and describing survival data over time. This method was published by Edward Kaplan and Paul Meier in 1958. We can create a KM curve using the `survfit()` function from the {survival} package [@survival-package]. To do this, we need to define survival time data using the `Surv()` function. The first argument is survival time, the second argument is the censoring indicator. Values with "+" appended are censored values. These are subjects that were alive at the end of their time in the study.
 
 ```{r message=FALSE}
 library(survival)
@@ -79,7 +79,7 @@ plot(fit2, xlab = "Survial Time (days)",
 legend("topright", col = 1:2, lty = 1, legend = c("Male", "Female"))
 ```
 
-The {survminer} package makes creating such a plot a little easier. Simply call the `ggsurvplot()` function on the fitted object. Setting `conf.int = TRUE` adds a confidence ribbon for each group.
+The {survminer} package makes creating such a plot a little easier [@survminer]. Simply call the `ggsurvplot()` function on the fitted object. Setting `conf.int = TRUE` adds a confidence ribbon for each group.
 
 ```{r message=FALSE}
 library(survminer)
@@ -102,4 +102,350 @@ Clearly we should be cautious before stating with certainty that men survive lon
 
 ### Cox Proportional Hazards Model
 
-To do.
+The text _Survival Analysis_ [@kleinbaum] presents a study that followed 42 leukemia patients in remission. The patients were randomly assigned to maintenance therapy with either "6-MP" (a new treatment) or placebo. 21 subjects were assigned to each group. The event of interest was "coming out of remission." [@blood] 
+
+Below we load the data and look at the first five rows.
+
+```{r}
+d <- readRDS("data/leuk.rds")
+head(d)
+```
+
+Variables definitions:  
+
+- survt (time in weeks; time until coming out of remission)
+- status (0 = censored, 1 = came out of remission)
+- sex (0 = female, 1 = male)
+- logwbc (log transformed white blood cell count)
+- rx (treatment or placebo)
+
+The rx variable has two levels, "trt" and "placebo". Notice below that the "trt" level is the reference, or baseline, level. 
+
+```{r}
+levels(d$rx)
+```
+
+Some questions of interest: 
+
+- Does the 6-MP treatment increase time until "failure"? 
+- Do we need to control for log WBC? 
+- Is the treatment effect the same for males and females?
+
+To answer these questions we'll use Cox Proportional Hazards (PH) Modeling.
+
+The {survival} package provides the `coxph()` function for fitting Cox PH models. We use the function as we would `lm()` or `glm()`, but with the left-hand side requiring the use of the `Surv()` function.
+
+Below we model time-to-remission as a function of rx and save as `m1` and then use `summary()` to request the model summary.
+
+```{r message=FALSE}
+library(survival)
+m1 <- coxph(Surv(survt, status) ~ rx, data = d)
+summary(m1)
+```
+
+The coefficient we're usually most interested in is the one labeled "exp(coef)". This is the _hazard ratio_. The interpretation above is that the hazard of failure for those on "placebo" is about 4.8 times higher than the hazard of failure for those on "treatment". The next section shows a 95% confidence interval on the hazard ratio. The hazard of failure for those on placebo is plausibly anywhere from 2 to 10 times higher than the hazard of failure for the trt group.
+
+The statistic labeled "Concordance" reports the fraction of all pairs of subjects where the model correctly predicts the individual with the earlier event. Values in the 0.50 - 0.55 range suggest a flip of a coin would do as well as our model at correctly ordering pairs of subjects. The value of 0.69 (+/- 0.04) is promising but not excellent. 
+
+The three tests at the end test the null that all model coefficients are simultaneously equal to 0. These are usually all in agreement. When these disagree, go with the Likelihood Ratio Test (Hosmer et al, p. 79)
+
+We can use our Cox PH model to create _covariate_adjusted survival curves_. To do so, we need to first use the `survfit()` function on the model object. Notice we need to set the covariate values to create the curves. Below we specify we want a curve for each level of rx.
+
+```{r}
+sfit1 <- survfit(m1, newdata = data.frame(rx = c("trt", "placebo")))
+```
+
+Now we're ready to make the plot using the `ggsurvplot()` from the {survminer} package [@survminer].
+
+```{r message=FALSE, warning=FALSE}
+library(survminer)
+ggsurvplot(sfit1, data = d)
+```
+
+Notice this plot assumes proportional hazards and uses all the data. Compare to the Kaplan-Meier curve below, which only uses the data in each treatment group and does not assume proportional hazards. Recall the KM curve is non-parametric and descriptive.
+
+```{r}
+fit2 <- survfit(Surv(survt, status) ~ rx, data = d)
+ggsurvplot(fit2)
+```
+
+As before we can use the `summary()` method on the survfit object to see the specific survival probabilities at specific times. The "survival1" column refers to level "trt" and the "survival2" column refers to level "placebo". The probability of staying remission for the trt group is much higher (0.633) than the placebo group (0.110).
+
+```{r}
+summary(sfit1, times = c(5,10,15,20))
+```
+
+The Cox PH model assumes that the _hazard ratio is constant over time_. The model for the leukemia data above implies the hazard of failure on placebo is about 4.8 times higher than the hazard of failure on treatment, no matter how long we observe the subjects. Notice the summary output above makes no reference to time.
+
+Fortunately the {survival} package makes it easy to assess these assumptions using the `cox.zph()` function. Use it on your model object. The null hypothesis is the hazard ratios are independent of time. A small p-value is evidence against the null hypothesis. The proportional hazard assumption is probably safe if the p-value is higher than, say, 0.05.
+
+```{r}
+cox.zph(m1)
+```
+
+Each variable is tested. The GLOBAL test is that all variables _simultaneously_ satisfy the proportional hazards assumption. In this case they're the same since we only have one predictor. Set `global=FALSE` to suppress the global test.
+
+A visual check of the proportional hazards assumption is available using the `plot()` method. A smooth trend line is plotted through residuals versus time. A fairly straight line indicates the proportional hazards assumption is likely satisfied. The dashed lines are +/- two standard error confidence bands for the smooth line. We would like to be able to draw a straight line through the middle of the confidence bands. This implies the model predictions, which are relative hazards, are staying consistent over time. 
+
+```{r}
+plot(cox.zph(m1))
+```
+
+The `ggcoxzph()` function from the {survminer} package makes a slightly fancier plot that includes the result of the hypothesis test.
+
+```{r}
+ggcoxzph(cox.zph(m1))
+```
+
+In our previous model we only looked at the effect of "rx" on time to failure. We may also want to adjust for white blood cell count ("logwbc"). This is a known prognostic indicator of coming out of remission for leukemia patients. Indeed we can see an association between "survt" (time-to-failure) and "logwbc", for those subjects who experienced the event (status = 1).
+
+```{r}
+plot(survt ~ logwbc, data = d, subset = status == 1)
+```
+
+Below we add the variable "logwbc" (log-transformed white blood cell count) to the model. This allows us to estimate placebo and treatment effects on patients with similar white blood cell counts. 
+
+```{r}
+m2 <- coxph(Surv(survt, status) ~ rx + logwbc, data = d)
+summary(m2)
+```
+
+Adjusted for white blood cell count, it appears the hazard of failure for subjects on placebo is about 4 times higher than the hazard of failure for subjects on treatment. Likewise, adjusted for rx, the hazard of failure increases by about a factor of 5 for each one unit increase in logwbc. (In this case, that's probably not an interpretation we're interested in. We simply want to adjust for subjects' white blood cell count.)
+
+Adjusting for logwbc reduces the effect of rx about 12%. This is a sign that logwbc may be _confounded_ with rx, and that we should include it in our model.
+
+```{r}
+coef(m2)[1]/coef(m1)[1]
+```
+
+The confidence interval on the rx hazard ratio is also tighter (more precise) in the model with logwbc.
+
+Model 1 without logwbc
+CI width (upper bound - lower bound):    
+10.81 - 2.147 = 8.663
+
+Model 2 with logwbc
+CI width (upper bound - lower bound):  
+9.195 - 1.739 = 7.456
+
+We can formally compare models using the `anova()` function. The null hypothesis of this test is that the models are equally adequate. The test below suggests we should keep logwbc in our model.
+
+```{r}
+anova(m1, m2)
+```
+
+We should assess the proportional hazards assumption again. Recall this assumption applies to all predictors in the model.
+
+```{r}
+cox.zph(m2)
+```
+
+
+```{r}
+plot(cox.zph(m2))
+```
+
+Or using `ggcoxzph()`
+
+```{r}
+ggcoxzph(cox.zph(m2))
+```
+
+Once again we can visualize our Cox PH model creating survival curves for _particular groups of interest_. As before we specify the groups in a new data frame. Below we specify two groups: a treated group with median logwbc and placebo group with median logwbc. We then call `ggsurvplot()` on the survfit object.
+
+```{r}
+nd <- data.frame(rx = c("trt", "placebo"), logwbc = median(d$logwbc))
+sfit2 <- survfit(m2, newdata = nd)
+ggsurvplot(sfit2, data = nd, conf.int = FALSE)
+```
+
+We could also survival probabilities for the "trt" group with different logwbc levels. Notice the `ggsurvplot()` offers a `legend.labs` argument to change the legend labels. We set the confident interval off for demo purposes, but setting it to TRUE reveals the enormous uncertainty in these estimates.
+
+```{r}
+nd <- data.frame(rx = "trt", logwbc = c(2.5,3,3.5))
+sfit3 <- survfit(m2, newdata = nd)
+ggsurvplot(sfit3, data = nd, conf.int = FALSE,
+           legend.labs = paste(nd$rx, nd$logwbc))
+```
+
+Let's add the sex variable to our model. It is binary (1 = male, 0 = female). Perhaps our analysis plan specified that we would adjust for sex. This means retaining the sex variable regardless of significance. Below the coefficient is slightly positive, suggesting a higher hazard of failure for males. But the standard error is large and the z statistic is small. We're not sure what effect sex has on time to failure. Nevertheless we opt to keep it in the model.
+
+```{r}
+m3 <- coxph(Surv(survt, status) ~ rx + logwbc + sex, data = d)
+summary(m3)
+```
+
+Now let's assess the proportional hazards assumption for all variables. The null is all variables satisfy the assumption. It appears we have evidence against the null for the sex variable.
+
+```{r}
+cox.zph(m3, global = FALSE)
+```
+
+Likewise the plot shows a curvy line. We use `var = "sex"` to see just the plot for sex. 
+
+```{r}
+plot(cox.zph(m3), var = "sex")
+```
+
+One way to address a violation of the proportional hazards assumption is with a _stratified Cox model_. The general idea is to group the data according to the strata of a variable that violates the assumption, fit a Cox PH model to each strata, and combine the results into a single model. The coefficients of the remaining variables are _assumed to be constant across strata_. We might think of them as "pooled" estimates. 
+
+A drawback of this approach is the inability to examine the effects of the stratifying variable. On the other hand, we may view it as a unique feature that allows us to _adjust for variables that are not modeled_. Stratification is most natural when a covariate takes on only a few distinct values (like sex), and when the effect of the stratifying variable is not of direct interest.
+
+We can implement a stratified Cox model by wrapping the variable to stratify on in the `strata()` function. Notice that sex is no longer reported in the model. Since we stratified on it, we do not estimate its effect. Also, the effects of rx and logwbc are assumed to be the same for males and females. This is called the _no-interaction assumption_.
+
+```{r}
+m4 <- coxph(Surv(survt, status) ~ rx + logwbc + strata(sex), data = d)
+summary(m4)
+```
+
+We can test the no-interaction assumption by fitting a new model that allows the stratification to interact with the other variables, and then comparing this more complex model to the previous no-interaction model using a likelihood ratio test via `anova()`. The null is no difference in the models.
+
+```{r}
+m5 <- coxph(Surv(survt, status) ~ (logwbc + rx) * strata(sex), 
+            data = d)
+summary(m5)
+```
+
+Compare the interaction model with the no-interaction model.
+
+```{r}
+anova(m4, m5)
+```
+
+It appears the simpler no-interaction model is sufficient.
+
+Finally, we can re-check the proportional hazards assumption of the stratified model.
+
+```{r}
+cox.zph(m4)
+```
+
+The stratified Cox PH model is commonly used in practice to adjust for multiple sites in large clinical trials.
+
+Again we can plot adjusted survival curves for the variables we modeled. Below we create four adjusted survival curves with logwbc held at the median value of 2.8. 
+
+1. Female, trt
+2. Female, placebo
+3. Male, trt
+4. Male, placebo
+
+Notice we create the first plot for females by using the `suvfit` indexing method. Rows 1 and 2 of the new data are for females, so we select just those rows using `sfit4[1:2]`.
+
+```{r}
+nd <- expand.grid(rx = c("trt", "placebo"), sex = 0:1)
+nd$logwbc <- median(d$logwbc)
+sfit4 <- survfit(m4, newdata = nd)
+ggsurvplot(sfit4[1:2], data = d, legend.labs = c("trt", "placebo"), 
+           title = "Female")
+```
+
+And we can create a plot for males using `sfit4[3:4]`
+
+```{r}
+ggsurvplot(sfit4[3:4], data = d, legend.labs = c("trt", "placebo"), 
+           title = "Male")
+```
+
+When it comes to survival analysis, it's important to check if any subjects have high _leverage_ or _influence_. 
+
+- Leverage: unusually large or small variables relative to rest of data
+- Influence: removal would significantly change the model coefficients
+
+High leverage itself is not necessarily a concern, however a subject with leverage may influence the estimation of model coefficients.
+
+_Residuals_ are central to model diagnostics. Residuals are the difference between what we observe and what the model predicts. However, "there is no obvious analog to the usual 'observed minus predicted' residual used with other regression methods." (Hosmer et al, p. 170) Recall that we deal with censored observations (i.e,, no observed value). This complicates matters. Instead, different types of residuals have been developed based on martingale theory. The math behind these residuals is difficult and we will take it on faith that it works.
+
+To assess leverage, we can use _score residuals_. Each subject in a Cox PH model will have a _separate score residual for each variable_ in the model. The larger a score residual for a particular variable (in absolute value), the larger the "leverage".
+
+We can extract score residuals using the `residual()` function with `type = score`. Below we request score residuals for model m4. Notice there is a _separate residual_ for each variable in the model.
+
+```{r}
+r <- residuals(m4, type = "score")
+head(r)
+```
+
+For continuous variables, we can plot the score residual versus the variable. Below we check the logwbc residuals. We appear to have four subjects with unusually large residuals (in absolute value).
+
+```{r}
+plot(r[,"logwbc"] ~ d$logwbc)
+```
+
+For categorical variables, we can create boxplots of the score residuals versus the variable. Again we have a few outlying subjects we should investigate.
+
+```{r}
+boxplot(r[,"rxplacebo"] ~ d$rx)
+```
+
+For logwbc, we could check which subjects have a score residual less than -0.5
+
+```{r}
+i <- which(r[,"logwbc"] < -1) # select rows
+i
+```
+
+Likewise we can check the rx score residuals.
+
+```{r}
+j <- which(r[,"rxplacebo"] < -0.4)
+j
+```
+
+Subject 19 appears in both results. We can inspect the records for these subjects as follows. The `union()` function basically prevents subject 19 from appearing twice below.
+
+```{r}
+d[union(i,j),]
+```
+
+Subject 19 appears to stand out by being in the treatment group but experiencing "failure" at only 6 weeks. 
+
+To assess influence, we can use _scaled score residuals_, also known as "dfbetas". Each subject in a Cox PH model will have a _separate dfbeta for each variable_ in the model. The larger a dfbeta for a particular variable (in absolute value), the larger the "influence".
+
+We can extract score residuals using the `residual()` function with `type = "dfbeta"`. Below we request dfbetas for model m4. Again, notice there is a separate residual for each variable in the model. 
+
+```{r}
+r2 <- residuals(m4, type = "dfbeta")
+head(r2)
+```
+
+These residuals are simply the score residuals multiplied by the model covariance matrix, which can be obtained with the function `vcov()`.
+
+```{r}
+# Use %*% for matrix multiplication
+head(residuals(m4, type = "score") %*% vcov(m4)) 
+```
+
+Again we can use scatter plots and box plots to investigate influence.
+
+```{r}
+plot(r2[,2] ~ d$logwbc)
+```
+
+The same four subjects seem to stand out:
+
+```{r}
+which(r2[,2] < -0.1)
+```
+
+
+```{r}
+boxplot(r2[,1] ~ d$rx)
+```
+
+And the same three subjects appear to have outlying dfbeta values for rx.
+
+```{r}
+which(r2[,1] < -0.1)
+```
+
+Once again subject 19 appears in both residual sets as having a large residual relative to the rest of the data.
+
+To find out how variables are influencing a model, we need to drop them and refit the model. With such a small data set, we would want to think carefully before permanently dropping subjects. However, let's say we want to see how much subject 19 is influencing the model. We can refit the model without subject 19 and calculate the change in the rx coefficient.
+
+```{r}
+m4a <- coxph(Surv(survt, status) ~ rx + logwbc + strata(sex), 
+             data = d[-19,])
+coef(m4a)["rxplacebo"]/coef(m4)["rxplacebo"]
+```
+
+With subject 19 removed from the model, the coefficient estimate for rx increases by almost 15%, which makes the treatment look even better. This doesn't mean we should drop the subject. It just helps us understand the impact a single subject has on our model. The decision to drop subjects should be carefully considered and not made based on just residual values.
+

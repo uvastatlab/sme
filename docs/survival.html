@@ -437,11 +437,12 @@ the subject will experience the event.</p>
 visualizing and describing survival data over time. This method was
 published by Edward Kaplan and Paul Meier in 1958. We can create a KM
 curve using the <code>survfit()</code> function from the {survival}
-package. To do this, we need to define survival time data using the
-<code>Surv()</code> function. The first argument is survival time, the
-second argument is the censoring indicator. Values with “+” appended are
-censored values. These are subjects that were alive at the end of their
-time in the study.</p>
+package <span class="citation">(Therneau 2024)</span>. To do this, we
+need to define survival time data using the <code>Surv()</code>
+function. The first argument is survival time, the second argument is
+the censoring indicator. Values with “+” appended are censored values.
+These are subjects that were alive at the end of their time in the
+study.</p>
 <pre class="r"><code>library(survival)
 Surv(whas$lenfol, whas$fstat)</code></pre>
 <pre><code>  [1]    6   374  2421    98  1205  2065  1002  2201   189  2719+ 2638+  492 
@@ -516,7 +517,8 @@ plot(fit2, xlab = &quot;Survial Time (days)&quot;,
      mark.time = TRUE)
 legend(&quot;topright&quot;, col = 1:2, lty = 1, legend = c(&quot;Male&quot;, &quot;Female&quot;))</code></pre>
 <p><img src="survival_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
-<p>The {survminer} package makes creating such a plot a little easier.
+<p>The {survminer} package makes creating such a plot a little easier
+<span class="citation">(Kassambara, Kosinski, and Biecek 2021)</span>.
 Simply call the <code>ggsurvplot()</code> function on the fitted object.
 Setting <code>conf.int = TRUE</code> adds a confidence ribbon for each
 group.</p>
@@ -567,13 +569,567 @@ survive longer than women after heart attacks.</p>
 </div>
 <div id="cox-proportional-hazards-model" class="section level3">
 <h3>Cox Proportional Hazards Model</h3>
-<p>To do.</p>
+<p>The text <em>Survival Analysis</em> <span class="citation">(David G.
+Kleinbaum 2005)</span> presents a study that followed 42 leukemia
+patients in remission. The patients were randomly assigned to
+maintenance therapy with either “6-MP” (a new treatment) or placebo. 21
+subjects were assigned to each group. The event of interest was “coming
+out of remission.” <span class="citation">(B et al. 1963)</span></p>
+<p>Below we load the data and look at the first five rows.</p>
+<pre class="r"><code>d &lt;- readRDS(&quot;data/leuk.rds&quot;)
+head(d)</code></pre>
+<pre><code>  survt status sex logwbc  rx
+1    35      0   1   1.45 trt
+2    34      0   1   1.47 trt
+3    32      0   1   2.20 trt
+4    32      0   1   2.53 trt
+5    25      0   1   1.78 trt
+6    23      1   1   2.57 trt</code></pre>
+<p>Variables definitions:</p>
+<ul>
+<li>survt (time in weeks; time until coming out of remission)</li>
+<li>status (0 = censored, 1 = came out of remission)</li>
+<li>sex (0 = female, 1 = male)</li>
+<li>logwbc (log transformed white blood cell count)</li>
+<li>rx (treatment or placebo)</li>
+</ul>
+<p>The rx variable has two levels, “trt” and “placebo”. Notice below
+that the “trt” level is the reference, or baseline, level.</p>
+<pre class="r"><code>levels(d$rx)</code></pre>
+<pre><code>[1] &quot;trt&quot;     &quot;placebo&quot;</code></pre>
+<p>Some questions of interest:</p>
+<ul>
+<li>Does the 6-MP treatment increase time until “failure”?</li>
+<li>Do we need to control for log WBC?</li>
+<li>Is the treatment effect the same for males and females?</li>
+</ul>
+<p>To answer these questions we’ll use Cox Proportional Hazards (PH)
+Modeling.</p>
+<p>The {survival} package provides the <code>coxph()</code> function for
+fitting Cox PH models. We use the function as we would <code>lm()</code>
+or <code>glm()</code>, but with the left-hand side requiring the use of
+the <code>Surv()</code> function.</p>
+<p>Below we model time-to-remission as a function of rx and save as
+<code>m1</code> and then use <code>summary()</code> to request the model
+summary.</p>
+<pre class="r"><code>library(survival)
+m1 &lt;- coxph(Surv(survt, status) ~ rx, data = d)
+summary(m1)</code></pre>
+<pre><code>Call:
+coxph(formula = Surv(survt, status) ~ rx, data = d)
+
+  n= 42, number of events= 30 
+
+            coef exp(coef) se(coef)     z Pr(&gt;|z|)    
+rxplacebo 1.5721    4.8169   0.4124 3.812 0.000138 ***
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+          exp(coef) exp(-coef) lower .95 upper .95
+rxplacebo     4.817     0.2076     2.147     10.81
+
+Concordance= 0.69  (se = 0.041 )
+Likelihood ratio test= 16.35  on 1 df,   p=5e-05
+Wald test            = 14.53  on 1 df,   p=1e-04
+Score (logrank) test = 17.25  on 1 df,   p=3e-05</code></pre>
+<p>The coefficient we’re usually most interested in is the one labeled
+“exp(coef)”. This is the <em>hazard ratio</em>. The interpretation above
+is that the hazard of failure for those on “placebo” is about 4.8 times
+higher than the hazard of failure for those on “treatment”. The next
+section shows a 95% confidence interval on the hazard ratio. The hazard
+of failure for those on placebo is plausibly anywhere from 2 to 10 times
+higher than the hazard of failure for the trt group.</p>
+<p>The statistic labeled “Concordance” reports the fraction of all pairs
+of subjects where the model correctly predicts the individual with the
+earlier event. Values in the 0.50 - 0.55 range suggest a flip of a coin
+would do as well as our model at correctly ordering pairs of subjects.
+The value of 0.69 (+/- 0.04) is promising but not excellent.</p>
+<p>The three tests at the end test the null that all model coefficients
+are simultaneously equal to 0. These are usually all in agreement. When
+these disagree, go with the Likelihood Ratio Test (Hosmer et al,
+p. 79)</p>
+<p>We can use our Cox PH model to create <em>covariate_adjusted survival
+curves</em>. To do so, we need to first use the <code>survfit()</code>
+function on the model object. Notice we need to set the covariate values
+to create the curves. Below we specify we want a curve for each level of
+rx.</p>
+<pre class="r"><code>sfit1 &lt;- survfit(m1, newdata = data.frame(rx = c(&quot;trt&quot;, &quot;placebo&quot;)))</code></pre>
+<p>Now we’re ready to make the plot using the <code>ggsurvplot()</code>
+from the {survminer} package <span class="citation">(Kassambara,
+Kosinski, and Biecek 2021)</span>.</p>
+<pre class="r"><code>library(survminer)
+ggsurvplot(sfit1, data = d)</code></pre>
+<p><img src="survival_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
+<p>Notice this plot assumes proportional hazards and uses all the data.
+Compare to the Kaplan-Meier curve below, which only uses the data in
+each treatment group and does not assume proportional hazards. Recall
+the KM curve is non-parametric and descriptive.</p>
+<pre class="r"><code>fit2 &lt;- survfit(Surv(survt, status) ~ rx, data = d)
+ggsurvplot(fit2)</code></pre>
+<p><img src="survival_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
+<p>As before we can use the <code>summary()</code> method on the survfit
+object to see the specific survival probabilities at specific times. The
+“survival1” column refers to level “trt” and the “survival2” column
+refers to level “placebo”. The probability of staying remission for the
+trt group is much higher (0.633) than the placebo group (0.110).</p>
+<pre class="r"><code>summary(sfit1, times = c(5,10,15,20))</code></pre>
+<pre><code>Call: survfit(formula = m1, newdata = data.frame(rx = c(&quot;trt&quot;, &quot;placebo&quot;)))
+
+ time n.risk n.event survival1 survival2
+    5     35       9     0.915     0.652
+   10     23       9     0.803     0.347
+   15     15       6     0.685     0.162
+   20     10       2     0.633     0.110</code></pre>
+<p>The Cox PH model assumes that the <em>hazard ratio is constant over
+time</em>. The model for the leukemia data above implies the hazard of
+failure on placebo is about 4.8 times higher than the hazard of failure
+on treatment, no matter how long we observe the subjects. Notice the
+summary output above makes no reference to time.</p>
+<p>Fortunately the {survival} package makes it easy to assess these
+assumptions using the <code>cox.zph()</code> function. Use it on your
+model object. The null hypothesis is the hazard ratios are independent
+of time. A small p-value is evidence against the null hypothesis. The
+proportional hazard assumption is probably safe if the p-value is higher
+than, say, 0.05.</p>
+<pre class="r"><code>cox.zph(m1)</code></pre>
+<pre><code>        chisq df    p
+rx     0.0229  1 0.88
+GLOBAL 0.0229  1 0.88</code></pre>
+<p>Each variable is tested. The GLOBAL test is that all variables
+<em>simultaneously</em> satisfy the proportional hazards assumption. In
+this case they’re the same since we only have one predictor. Set
+<code>global=FALSE</code> to suppress the global test.</p>
+<p>A visual check of the proportional hazards assumption is available
+using the <code>plot()</code> method. A smooth trend line is plotted
+through residuals versus time. A fairly straight line indicates the
+proportional hazards assumption is likely satisfied. The dashed lines
+are +/- two standard error confidence bands for the smooth line. We
+would like to be able to draw a straight line through the middle of the
+confidence bands. This implies the model predictions, which are relative
+hazards, are staying consistent over time.</p>
+<pre class="r"><code>plot(cox.zph(m1))</code></pre>
+<p><img src="survival_files/figure-html/unnamed-chunk-19-1.png" width="672" /></p>
+<p>The <code>ggcoxzph()</code> function from the {survminer} package
+makes a slightly fancier plot that includes the result of the hypothesis
+test.</p>
+<pre class="r"><code>ggcoxzph(cox.zph(m1))</code></pre>
+<p><img src="survival_files/figure-html/unnamed-chunk-20-1.png" width="672" /></p>
+<p>In our previous model we only looked at the effect of “rx” on time to
+failure. We may also want to adjust for white blood cell count
+(“logwbc”). This is a known prognostic indicator of coming out of
+remission for leukemia patients. Indeed we can see an association
+between “survt” (time-to-failure) and “logwbc”, for those subjects who
+experienced the event (status = 1).</p>
+<pre class="r"><code>plot(survt ~ logwbc, data = d, subset = status == 1)</code></pre>
+<p><img src="survival_files/figure-html/unnamed-chunk-21-1.png" width="672" /></p>
+<p>Below we add the variable “logwbc” (log-transformed white blood cell
+count) to the model. This allows us to estimate placebo and treatment
+effects on patients with similar white blood cell counts.</p>
+<pre class="r"><code>m2 &lt;- coxph(Surv(survt, status) ~ rx + logwbc, data = d)
+summary(m2)</code></pre>
+<pre><code>Call:
+coxph(formula = Surv(survt, status) ~ rx + logwbc, data = d)
+
+  n= 42, number of events= 30 
+
+            coef exp(coef) se(coef)     z Pr(&gt;|z|)    
+rxplacebo 1.3861    3.9991   0.4248 3.263   0.0011 ** 
+logwbc    1.6909    5.4243   0.3359 5.034  4.8e-07 ***
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+          exp(coef) exp(-coef) lower .95 upper .95
+rxplacebo     3.999     0.2501     1.739     9.195
+logwbc        5.424     0.1844     2.808    10.478
+
+Concordance= 0.852  (se = 0.04 )
+Likelihood ratio test= 46.71  on 2 df,   p=7e-11
+Wald test            = 33.6  on 2 df,   p=5e-08
+Score (logrank) test = 46.07  on 2 df,   p=1e-10</code></pre>
+<p>Adjusted for white blood cell count, it appears the hazard of failure
+for subjects on placebo is about 4 times higher than the hazard of
+failure for subjects on treatment. Likewise, adjusted for rx, the hazard
+of failure increases by about a factor of 5 for each one unit increase
+in logwbc. (In this case, that’s probably not an interpretation we’re
+interested in. We simply want to adjust for subjects’ white blood cell
+count.)</p>
+<p>Adjusting for logwbc reduces the effect of rx about 12%. This is a
+sign that logwbc may be <em>confounded</em> with rx, and that we should
+include it in our model.</p>
+<pre class="r"><code>coef(m2)[1]/coef(m1)[1]</code></pre>
+<pre><code>rxplacebo 
+0.8816572 </code></pre>
+<p>The confidence interval on the rx hazard ratio is also tighter (more
+precise) in the model with logwbc.</p>
+<p>Model 1 without logwbc CI width (upper bound - lower bound):<br />
+10.81 - 2.147 = 8.663</p>
+<p>Model 2 with logwbc CI width (upper bound - lower bound):<br />
+9.195 - 1.739 = 7.456</p>
+<p>We can formally compare models using the <code>anova()</code>
+function. The null hypothesis of this test is that the models are
+equally adequate. The test below suggests we should keep logwbc in our
+model.</p>
+<pre class="r"><code>anova(m1, m2)</code></pre>
+<pre><code>Analysis of Deviance Table
+ Cox model: response is  Surv(survt, status)
+ Model 1: ~ rx
+ Model 2: ~ rx + logwbc
+   loglik  Chisq Df Pr(&gt;|Chi|)    
+1 -85.008                         
+2 -69.828 30.361  1  3.587e-08 ***
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p>We should assess the proportional hazards assumption again. Recall
+this assumption applies to all predictors in the model.</p>
+<pre class="r"><code>cox.zph(m2)</code></pre>
+<pre><code>          chisq df    p
+rx     8.27e-05  1 0.99
+logwbc 4.00e-02  1 0.84
+GLOBAL 4.02e-02  2 0.98</code></pre>
+<pre class="r"><code>plot(cox.zph(m2))</code></pre>
+<p><img src="survival_files/figure-html/unnamed-chunk-26-1.png" width="672" /><img src="survival_files/figure-html/unnamed-chunk-26-2.png" width="672" /></p>
+<p>Or using <code>ggcoxzph()</code></p>
+<pre class="r"><code>ggcoxzph(cox.zph(m2))</code></pre>
+<p><img src="survival_files/figure-html/unnamed-chunk-27-1.png" width="672" /></p>
+<p>Once again we can visualize our Cox PH model creating survival curves
+for <em>particular groups of interest</em>. As before we specify the
+groups in a new data frame. Below we specify two groups: a treated group
+with median logwbc and placebo group with median logwbc. We then call
+<code>ggsurvplot()</code> on the survfit object.</p>
+<pre class="r"><code>nd &lt;- data.frame(rx = c(&quot;trt&quot;, &quot;placebo&quot;), logwbc = median(d$logwbc))
+sfit2 &lt;- survfit(m2, newdata = nd)
+ggsurvplot(sfit2, data = nd, conf.int = FALSE)</code></pre>
+<p><img src="survival_files/figure-html/unnamed-chunk-28-1.png" width="672" /></p>
+<p>We could also survival probabilities for the “trt” group with
+different logwbc levels. Notice the <code>ggsurvplot()</code> offers a
+<code>legend.labs</code> argument to change the legend labels. We set
+the confident interval off for demo purposes, but setting it to TRUE
+reveals the enormous uncertainty in these estimates.</p>
+<pre class="r"><code>nd &lt;- data.frame(rx = &quot;trt&quot;, logwbc = c(2.5,3,3.5))
+sfit3 &lt;- survfit(m2, newdata = nd)
+ggsurvplot(sfit3, data = nd, conf.int = FALSE,
+           legend.labs = paste(nd$rx, nd$logwbc))</code></pre>
+<p><img src="survival_files/figure-html/unnamed-chunk-29-1.png" width="672" /></p>
+<p>Let’s add the sex variable to our model. It is binary (1 = male, 0 =
+female). Perhaps our analysis plan specified that we would adjust for
+sex. This means retaining the sex variable regardless of significance.
+Below the coefficient is slightly positive, suggesting a higher hazard
+of failure for males. But the standard error is large and the z
+statistic is small. We’re not sure what effect sex has on time to
+failure. Nevertheless we opt to keep it in the model.</p>
+<pre class="r"><code>m3 &lt;- coxph(Surv(survt, status) ~ rx + logwbc + sex, data = d)
+summary(m3)</code></pre>
+<pre><code>Call:
+coxph(formula = Surv(survt, status) ~ rx + logwbc + sex, data = d)
+
+  n= 42, number of events= 30 
+
+            coef exp(coef) se(coef)     z Pr(&gt;|z|)    
+rxplacebo 1.5036    4.4978   0.4615 3.258  0.00112 ** 
+logwbc    1.6819    5.3760   0.3366 4.997 5.82e-07 ***
+sex       0.3147    1.3698   0.4545 0.692  0.48872    
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+          exp(coef) exp(-coef) lower .95 upper .95
+rxplacebo     4.498     0.2223    1.8204    11.113
+logwbc        5.376     0.1860    2.7794    10.398
+sex           1.370     0.7300    0.5621     3.338
+
+Concordance= 0.851  (se = 0.041 )
+Likelihood ratio test= 47.19  on 3 df,   p=3e-10
+Wald test            = 33.54  on 3 df,   p=2e-07
+Score (logrank) test = 48.01  on 3 df,   p=2e-10</code></pre>
+<p>Now let’s assess the proportional hazards assumption for all
+variables. The null is all variables satisfy the assumption. It appears
+we have evidence against the null for the sex variable.</p>
+<pre class="r"><code>cox.zph(m3, global = FALSE)</code></pre>
+<pre><code>       chisq df    p
+rx     0.036  1 0.85
+logwbc 0.142  1 0.71
+sex    5.420  1 0.02</code></pre>
+<p>Likewise the plot shows a curvy line. We use <code>var = "sex"</code>
+to see just the plot for sex.</p>
+<pre class="r"><code>plot(cox.zph(m3), var = &quot;sex&quot;)</code></pre>
+<p><img src="survival_files/figure-html/unnamed-chunk-32-1.png" width="672" /></p>
+<p>One way to address a violation of the proportional hazards assumption
+is with a <em>stratified Cox model</em>. The general idea is to group
+the data according to the strata of a variable that violates the
+assumption, fit a Cox PH model to each strata, and combine the results
+into a single model. The coefficients of the remaining variables are
+<em>assumed to be constant across strata</em>. We might think of them as
+“pooled” estimates.</p>
+<p>A drawback of this approach is the inability to examine the effects
+of the stratifying variable. On the other hand, we may view it as a
+unique feature that allows us to <em>adjust for variables that are not
+modeled</em>. Stratification is most natural when a covariate takes on
+only a few distinct values (like sex), and when the effect of the
+stratifying variable is not of direct interest.</p>
+<p>We can implement a stratified Cox model by wrapping the variable to
+stratify on in the <code>strata()</code> function. Notice that sex is no
+longer reported in the model. Since we stratified on it, we do not
+estimate its effect. Also, the effects of rx and logwbc are assumed to
+be the same for males and females. This is called the <em>no-interaction
+assumption</em>.</p>
+<pre class="r"><code>m4 &lt;- coxph(Surv(survt, status) ~ rx + logwbc + strata(sex), data = d)
+summary(m4)</code></pre>
+<pre><code>Call:
+coxph(formula = Surv(survt, status) ~ rx + logwbc + strata(sex), 
+    data = d)
+
+  n= 42, number of events= 30 
+
+            coef exp(coef) se(coef)     z Pr(&gt;|z|)    
+rxplacebo 0.9981    2.7131   0.4736 2.108   0.0351 *  
+logwbc    1.4537    4.2787   0.3441 4.225 2.39e-05 ***
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+          exp(coef) exp(-coef) lower .95 upper .95
+rxplacebo     2.713     0.3686     1.072     6.864
+logwbc        4.279     0.2337     2.180     8.398
+
+Concordance= 0.812  (se = 0.059 )
+Likelihood ratio test= 32.06  on 2 df,   p=1e-07
+Wald test            = 22.75  on 2 df,   p=1e-05
+Score (logrank) test = 30.8  on 2 df,   p=2e-07</code></pre>
+<p>We can test the no-interaction assumption by fitting a new model that
+allows the stratification to interact with the other variables, and then
+comparing this more complex model to the previous no-interaction model
+using a likelihood ratio test via <code>anova()</code>. The null is no
+difference in the models.</p>
+<pre class="r"><code>m5 &lt;- coxph(Surv(survt, status) ~ (logwbc + rx) * strata(sex), 
+            data = d)
+summary(m5)</code></pre>
+<pre><code>Call:
+coxph(formula = Surv(survt, status) ~ (logwbc + rx) * strata(sex), 
+    data = d)
+
+  n= 42, number of events= 30 
+
+                             coef exp(coef) se(coef)     z Pr(&gt;|z|)  
+logwbc                     1.2061    3.3406   0.5035 2.396   0.0166 *
+rxplacebo                  0.3113    1.3652   0.5636 0.552   0.5807  
+logwbc:strata(sex)sex=1    0.5366    1.7102   0.7352 0.730   0.4655  
+rxplacebo:strata(sex)sex=1 1.6666    5.2942   0.9295 1.793   0.0730 .
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+                           exp(coef) exp(-coef) lower .95 upper .95
+logwbc                         3.341     0.2993    1.2452     8.962
+rxplacebo                      1.365     0.7325    0.4524     4.120
+logwbc:strata(sex)sex=1        1.710     0.5847    0.4048     7.226
+rxplacebo:strata(sex)sex=1     5.294     0.1889    0.8562    32.735
+
+Concordance= 0.797  (se = 0.058 )
+Likelihood ratio test= 35.83  on 4 df,   p=3e-07
+Wald test            = 21.69  on 4 df,   p=2e-04
+Score (logrank) test = 33.15  on 4 df,   p=1e-06</code></pre>
+<p>Compare the interaction model with the no-interaction model.</p>
+<pre class="r"><code>anova(m4, m5)</code></pre>
+<pre><code>Analysis of Deviance Table
+ Cox model: response is  Surv(survt, status)
+ Model 1: ~ rx + logwbc + strata(sex)
+ Model 2: ~ (logwbc + rx) * strata(sex)
+   loglik  Chisq Df Pr(&gt;|Chi|)
+1 -55.735                     
+2 -53.852 3.7659  2     0.1521</code></pre>
+<p>It appears the simpler no-interaction model is sufficient.</p>
+<p>Finally, we can re-check the proportional hazards assumption of the
+stratified model.</p>
+<pre class="r"><code>cox.zph(m4)</code></pre>
+<pre><code>       chisq df    p
+rx     0.148  1 0.70
+logwbc 0.318  1 0.57
+GLOBAL 0.478  2 0.79</code></pre>
+<p>The stratified Cox PH model is commonly used in practice to adjust
+for multiple sites in large clinical trials.</p>
+<p>Again we can plot adjusted survival curves for the variables we
+modeled. Below we create four adjusted survival curves with logwbc held
+at the median value of 2.8.</p>
+<ol style="list-style-type: decimal">
+<li>Female, trt</li>
+<li>Female, placebo</li>
+<li>Male, trt</li>
+<li>Male, placebo</li>
+</ol>
+<p>Notice we create the first plot for females by using the
+<code>suvfit</code> indexing method. Rows 1 and 2 of the new data are
+for females, so we select just those rows using
+<code>sfit4[1:2]</code>.</p>
+<pre class="r"><code>nd &lt;- expand.grid(rx = c(&quot;trt&quot;, &quot;placebo&quot;), sex = 0:1)
+nd$logwbc &lt;- median(d$logwbc)
+sfit4 &lt;- survfit(m4, newdata = nd)
+ggsurvplot(sfit4[1:2], data = d, legend.labs = c(&quot;trt&quot;, &quot;placebo&quot;), 
+           title = &quot;Female&quot;)</code></pre>
+<p><img src="survival_files/figure-html/unnamed-chunk-37-1.png" width="672" /></p>
+<p>And we can create a plot for males using <code>sfit4[3:4]</code></p>
+<pre class="r"><code>ggsurvplot(sfit4[3:4], data = d, legend.labs = c(&quot;trt&quot;, &quot;placebo&quot;), 
+           title = &quot;Male&quot;)</code></pre>
+<p><img src="survival_files/figure-html/unnamed-chunk-38-1.png" width="672" /></p>
+<p>When it comes to survival analysis, it’s important to check if any
+subjects have high <em>leverage</em> or <em>influence</em>.</p>
+<ul>
+<li>Leverage: unusually large or small variables relative to rest of
+data</li>
+<li>Influence: removal would significantly change the model
+coefficients</li>
+</ul>
+<p>High leverage itself is not necessarily a concern, however a subject
+with leverage may influence the estimation of model coefficients.</p>
+<p><em>Residuals</em> are central to model diagnostics. Residuals are
+the difference between what we observe and what the model predicts.
+However, “there is no obvious analog to the usual ‘observed minus
+predicted’ residual used with other regression methods.” (Hosmer et al,
+p. 170) Recall that we deal with censored observations (i.e,, no
+observed value). This complicates matters. Instead, different types of
+residuals have been developed based on martingale theory. The math
+behind these residuals is difficult and we will take it on faith that it
+works.</p>
+<p>To assess leverage, we can use <em>score residuals</em>. Each subject
+in a Cox PH model will have a <em>separate score residual for each
+variable</em> in the model. The larger a score residual for a particular
+variable (in absolute value), the larger the “leverage”.</p>
+<p>We can extract score residuals using the <code>residual()</code>
+function with <code>type = score</code>. Below we request score
+residuals for model m4. Notice there is a <em>separate residual</em> for
+each variable in the model.</p>
+<pre class="r"><code>r &lt;- residuals(m4, type = &quot;score&quot;)
+head(r)</code></pre>
+<pre><code>   rxplacebo      logwbc
+1 0.05268608  0.20516809
+2 0.05424031  0.20713737
+3 0.15674055  0.16790181
+4 0.25322991 -0.04327465
+5 0.08511958  0.22574242
+6 0.02729922  0.35266769</code></pre>
+<p>For continuous variables, we can plot the score residual versus the
+variable. Below we check the logwbc residuals. We appear to have four
+subjects with unusually large residuals (in absolute value).</p>
+<pre class="r"><code>plot(r[,&quot;logwbc&quot;] ~ d$logwbc)</code></pre>
+<p><img src="survival_files/figure-html/unnamed-chunk-40-1.png" width="672" /></p>
+<p>For categorical variables, we can create boxplots of the score
+residuals versus the variable. Again we have a few outlying subjects we
+should investigate.</p>
+<pre class="r"><code>boxplot(r[,&quot;rxplacebo&quot;] ~ d$rx)</code></pre>
+<p><img src="survival_files/figure-html/unnamed-chunk-41-1.png" width="672" /></p>
+<p>For logwbc, we could check which subjects have a score residual less
+than -0.5</p>
+<pre class="r"><code>i &lt;- which(r[,&quot;logwbc&quot;] &lt; -1) # select rows
+i</code></pre>
+<pre><code>19 26 37 41 
+19 26 37 41 </code></pre>
+<p>Likewise we can check the rx score residuals.</p>
+<pre class="r"><code>j &lt;- which(r[,&quot;rxplacebo&quot;] &lt; -0.4)
+j</code></pre>
+<pre><code>15 19 21 
+15 19 21 </code></pre>
+<p>Subject 19 appears in both results. We can inspect the records for
+these subjects as follows. The <code>union()</code> function basically
+prevents subject 19 from appearing twice below.</p>
+<pre class="r"><code>d[union(i,j),]</code></pre>
+<pre><code>   survt status sex logwbc      rx
+19     6      1   0   2.31     trt
+26    12      1   0   1.50 placebo
+37     4      1   1   2.42 placebo
+41     1      1   1   2.80 placebo
+15    10      1   0   2.96     trt
+21     6      1   0   3.28     trt</code></pre>
+<p>Subject 19 appears to stand out by being in the treatment group but
+experiencing “failure” at only 6 weeks.</p>
+<p>To assess influence, we can use <em>scaled score residuals</em>, also
+known as “dfbetas”. Each subject in a Cox PH model will have a
+<em>separate dfbeta for each variable</em> in the model. The larger a
+dfbeta for a particular variable (in absolute value), the larger the
+“influence”.</p>
+<p>We can extract score residuals using the <code>residual()</code>
+function with <code>type = "dfbeta"</code>. Below we request dfbetas for
+model m4. Again, notice there is a separate residual for each variable
+in the model.</p>
+<pre class="r"><code>r2 &lt;- residuals(m4, type = &quot;dfbeta&quot;)
+head(r2)</code></pre>
+<pre><code>         [,1]         [,2]
+1 0.010989342  0.024076432
+2 0.011329959  0.024303307
+3 0.034473951  0.019245951
+4 0.056961970 -0.006142143
+5 0.018179881  0.026381557
+6 0.004702614  0.041640090</code></pre>
+<p>These residuals are simply the score residuals multiplied by the
+model covariance matrix, which can be obtained with the function
+<code>vcov()</code>.</p>
+<pre class="r"><code># Use %*% for matrix multiplication
+head(residuals(m4, type = &quot;score&quot;) %*% vcov(m4)) </code></pre>
+<pre><code>    rxplacebo       logwbc
+1 0.010989342  0.024076432
+2 0.011329959  0.024303307
+3 0.034473951  0.019245951
+4 0.056961970 -0.006142143
+5 0.018179881  0.026381557
+6 0.004702614  0.041640090</code></pre>
+<p>Again we can use scatter plots and box plots to investigate
+influence.</p>
+<pre class="r"><code>plot(r2[,2] ~ d$logwbc)</code></pre>
+<p><img src="survival_files/figure-html/unnamed-chunk-47-1.png" width="672" /></p>
+<p>The same four subjects seem to stand out:</p>
+<pre class="r"><code>which(r2[,2] &lt; -0.1)</code></pre>
+<pre><code>19 26 37 41 
+19 26 37 41 </code></pre>
+<pre class="r"><code>boxplot(r2[,1] ~ d$rx)</code></pre>
+<p><img src="survival_files/figure-html/unnamed-chunk-49-1.png" width="672" /></p>
+<p>And the same three subjects appear to have outlying dfbeta values for
+rx.</p>
+<pre class="r"><code>which(r2[,1] &lt; -0.1)</code></pre>
+<pre><code>15 19 21 
+15 19 21 </code></pre>
+<p>Once again subject 19 appears in both residual sets as having a large
+residual relative to the rest of the data.</p>
+<p>To find out how variables are influencing a model, we need to drop
+them and refit the model. With such a small data set, we would want to
+think carefully before permanently dropping subjects. However, let’s say
+we want to see how much subject 19 is influencing the model. We can
+refit the model without subject 19 and calculate the change in the rx
+coefficient.</p>
+<pre class="r"><code>m4a &lt;- coxph(Surv(survt, status) ~ rx + logwbc + strata(sex), 
+             data = d[-19,])
+coef(m4a)[&quot;rxplacebo&quot;]/coef(m4)[&quot;rxplacebo&quot;]</code></pre>
+<pre><code>rxplacebo 
+ 1.146543 </code></pre>
+<p>With subject 19 removed from the model, the coefficient estimate for
+rx increases by almost 15%, which makes the treatment look even better.
+This doesn’t mean we should drop the subject. It just helps us
+understand the impact a single subject has on our model. The decision to
+drop subjects should be carefully considered and not made based on just
+residual values.</p>
 <div id="refs" class="references csl-bib-body hanging-indent"
 entry-spacing="0">
+<div id="ref-blood" class="csl-entry">
+B, ACUTE LEUKEMIA GROUP, EMIL J FREIREICH, EDMUND GEHAN, III FREI EMIL,
+LESLIE R. SCHROEDER, IRVING J. WOLMAN, RACHAD ANBARI, et al. 1963.
+<span>“<span class="nocase">The Effect of 6-Mercaptopurine on the
+Duration of Steroid-induced Remissions in Acute Leukemia: A Model for
+Evaluation of Other Potentially Useful Therapy</span>.”</span>
+<em>Blood</em> 21 (6): 699–716. <a
+href="https://doi.org/10.1182/blood.V21.6.699.699">https://doi.org/10.1182/blood.V21.6.699.699</a>.
+</div>
+<div id="ref-kleinbaum" class="csl-entry">
+David G. Kleinbaum, Mitchel Klein. 2005. <em>Survival Analysis, a
+Self-Learning Text, Second Edition</em>. Springer.
+</div>
 <div id="ref-hosmer2008" class="csl-entry">
 David W. Hosmer, Susanne May, Stanley Lemeshow. 2008. <em>Applied
 Survival Analysis: Regression Modeling of Time to Event Data: Second
 Edition</em>. John Wiley; Sons Inc.
+</div>
+<div id="ref-survminer" class="csl-entry">
+Kassambara, Alboukadel, Marcin Kosinski, and Przemyslaw Biecek. 2021.
+<em>Survminer: Drawing Survival Curves Using ’Ggplot2’</em>. <a
+href="https://CRAN.R-project.org/package=survminer">https://CRAN.R-project.org/package=survminer</a>.
+</div>
+<div id="ref-survival-package" class="csl-entry">
+Therneau, Terry M. 2024. <em>A Package for Survival Analysis in r</em>.
+<a
+href="https://CRAN.R-project.org/package=survival">https://CRAN.R-project.org/package=survival</a>.
 </div>
 </div>
 </div>
