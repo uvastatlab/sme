@@ -958,7 +958,7 @@ against the null.</p>
 <pre class="r"><code>library(car)
 durbinWatsonTest(m)</code></pre>
 <pre><code> lag Autocorrelation D-W Statistic p-value
-   1     -0.05006007      2.079992   0.914
+   1     -0.05006007      2.079992   0.944
  Alternative hypothesis: rho != 0</code></pre>
 <p>Based on our residual versus time plot and the result of the
 Durbin-Watson test, we decide to assume our residual errors are
@@ -1261,7 +1261,11 @@ heteroscedasticity, but it’s being driven by only 3 points: 30, 24, and
 <pre class="r"><code>plot(m4, which = 1)</code></pre>
 <p><img src="lm_files/figure-html/unnamed-chunk-68-1.png" width="672" /></p>
 <p>As before, we can use the {emmeans} package to estimate mean survival
-times and plot with error bars.</p>
+times and create a plot with error bars. Notice we don’t need to specify
+a transformation with the <code>tran</code> argument. The
+<code>emmeans()</code> function knows to automatically back-transform
+the response since the “inverse” link is part of the fitted model
+object.</p>
 <pre class="r"><code>emmeans(m4, ~ treat | poison, type = &quot;response&quot;) |&gt; 
   plot()</code></pre>
 <p><img src="lm_files/figure-html/unnamed-chunk-69-1.png" width="672" /></p>

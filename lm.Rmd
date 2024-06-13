@@ -600,7 +600,7 @@ The residuals versus fitted values plot hints at some heteroscedasticity, but it
 plot(m4, which = 1)
 ```
 
-As before, we can use the {emmeans} package to estimate mean survival times and plot with error bars. 
+As before, we can use the {emmeans} package to estimate mean survival times and create a plot with error bars. Notice we don't need to specify a transformation with the `tran` argument. The `emmeans()` function knows to automatically back-transform the response since the "inverse" link is part of the fitted model object.
 
 ```{r}
 emmeans(m4, ~ treat | poison, type = "response") |> 
