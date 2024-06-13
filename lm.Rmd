@@ -477,4 +477,136 @@ predict(m, newdata = data.frame(inventories = 2500,
 
 Based on the confidence interval, a conservative estimate would be about 1200 orders.
 
+### Inverse Gaussian Linear Model
+
+The {faraway} package [@faraway] provides data on an experiment that investigates the effects of various treatments on certain toxic agents. 48 rats were randomly poisoned with one of three types of poison, and then treated with one of four available treatments. Of interest is which treatment helped the rats survive the longest. The data were original published in @boxcox. 
+
+```{r}
+data("rats", package = "faraway")
+```
+
+We see the data is balanced with 4 rats per poison/treatment combination.
+
+```{r}
+table(rats$poison, rats$treat)
+```
+
+The outcome is survival time. It is measured in units of 10 hours.
+
+```{r}
+summary(rats$time)
+```
+
+It looks like most rats survived about 5 hours, but a few lived a bit longer. 
+
+```{r}
+plot(density(rats$time))
+```
+
+Stripcharts help visualize the variability in time within each group. It appears poison III was the most lethal, and that treatment A is the least efficacious. 
+
+```{r}
+stripchart(time ~ poison, data = rats, method = "jitter", 
+           ylab = "poison", las = 1)
+stripchart(time ~ treat, data = rats, method = "jitter", 
+           xlab = "treatment", las = 1)
+```
+
+An interaction plot can help us assess if treatment effect depends on the poison. There doesn't appear to be any major interactions. It looks like treatment B may be preferred to increase survival time, at least for poisons I and II.
+
+```{r}
+with(rats, interaction.plot(x.factor = treat, 
+                            trace.factor = poison, 
+                            response = time))
+```
+
+Next we model time as a function of treat, poison, and their interaction. The summary is somewhat difficult to interpret with interactions. 
+
+```{r}
+m <- lm(time ~ treat * poison, data = rats)
+summary(m)
+```
+
+Before we try to interpret this model, let's check the residuals versus fitted values plot.
+
+```{r}
+plot(m, which = 1)
+```
+
+We see noticeable _heteroscedasticity_. As our fitted values get bigger, so do the residuals. Ideally we would like the residuals to be uniformly scattered around 0, which would indicate our assumption of constant variance is satisfied. That is not the case here. 
+
+To address this, we can attempt to transform the outcome. Common transformations include a log transformation and square root transformation. We can use the `powerTransform()` function from the {car} package [@car] to help us identify a suitable transformation.
+
+```{r}
+car::powerTransform(m)
+```
+
+The suggested parameter, -0.81, is the power we could raise our outcome to. But -0.81 is close to -1, which would be a simple inverse (or reciprocal) transformation. The `boxCox()` function helps us assess if -0.81 is close enough to -1. 
+
+```{r}
+car::boxCox(m)
+```
+
+The outer dashed lines comfortably enclose -1, so we elect to use -1 as a our transformation parameter. We refit the model using this transformation, which can be expressed as `1/time`. This transformation corresponds to _rate of death_.
+
+```{r}
+m2 <- lm(1/time ~ treat * poison, data = rats)
+```
+
+The residuals versus fitted values plot looks much better.
+
+```{r}
+plot(m2, which = 1)
+```
+
+Before we attempt to interpret the model, lets assess whether we should keep the interaction using the `Anova()` function from the {car} package.
+
+```{r}
+car::Anova(m2)
+```
+
+It certainly doesn't seem to contribute much to the model. Let's drop the interaction and fit a new model.
+
+```{r}
+m3 <- lm(1/time ~ treat + poison, data = rats)
+summary(m3)
+```
+
+The summary is a little easier to understand, but the coefficients are relative to the reference levels: Treatment A and Poison I. We can use the {emmeans} package [@emmeans] to estimate mean survival time conditional on the poison type. Notice we specify `type = "response"` and `tran = "inverse"` to back-transform the response back to the original scale.
+
+```{r message=FALSE}
+library(emmeans)
+emmeans(m3, ~ treat | poison, type = "response", tran = "inverse") 
+```
+
+We can pipe the output into the {emmeans} plot method to visualize these estimates. Treatments B and D seem to be most effective but also the most variable. No treatment appears to help rats subjected to poison type III.
+
+```{r}
+emmeans(m3, ~ treat | poison, type = "response", tran = "inverse") |> 
+  plot()
+```
+
+Another approach to modeling this data is using an inverse Gaussian generalized linear model. Instead of transforming the response, we use the `glm()` function with family set to `inverse.gaussian(link = "inverse")`. We see the coefficients in the model summary are not too different from our model above with a transformed response.
+
+```{r}
+m4 <- glm(time ~ treat + poison, data = rats, 
+          family = inverse.gaussian(link = "inverse"))
+summary(m4)
+```
+
+The residuals versus fitted values plot hints at some heteroscedasticity, but it's being driven by only 3 points: 30, 24, and 15.
+
+```{r}
+plot(m4, which = 1)
+```
+
+As before, we can use the {emmeans} package to estimate mean survival times and plot with error bars. 
+
+```{r}
+emmeans(m4, ~ treat | poison, type = "response") |> 
+  plot()
+```
+
+The results are very similar to the previous plot.
+
 ### References

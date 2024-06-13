@@ -394,7 +394,7 @@ class="section level3">
 <p>A new reading program is being evaluated at an elementary school. A
 random sample of 20 students were tested to determine reading speed.
 Speed was measured in minutes. <span class="citation">(Ott and
-Longnecker 2004)</span></p>
+Longnecker, n.d.)</span></p>
 <pre class="r"><code>speed &lt;- c(5, 7, 15, 12, 8, 7, 10, 11, 9, 13, 10, 
            6, 11, 8, 10, 8, 7, 6, 11, 8, 20)</code></pre>
 <p>We can visualize the distribution of data using a histogram as
@@ -958,7 +958,7 @@ against the null.</p>
 <pre class="r"><code>library(car)
 durbinWatsonTest(m)</code></pre>
 <pre><code> lag Autocorrelation D-W Statistic p-value
-   1     -0.05006007      2.079992    0.93
+   1     -0.05006007      2.079992   0.914
  Alternative hypothesis: rho != 0</code></pre>
 <p>Based on our residual versus time plot and the result of the
 Durbin-Watson test, we decide to assume our residual errors are
@@ -1037,14 +1037,255 @@ number of orders with <code>inventories</code> at 2500 and
 <p>Based on the confidence interval, a conservative estimate would be
 about 1200 orders.</p>
 </div>
+<div id="inverse-gaussian-linear-model" class="section level3">
+<h3>Inverse Gaussian Linear Model</h3>
+<p>The {faraway} package <span class="citation">(Faraway 2016)</span>
+provides data on an experiment that investigates the effects of various
+treatments on certain toxic agents. 48 rats were randomly poisoned with
+one of three types of poison, and then treated with one of four
+available treatments. Of interest is which treatment helped the rats
+survive the longest. The data were original published in <span
+class="citation">Box and Cox (1964)</span>.</p>
+<pre class="r"><code>data(&quot;rats&quot;, package = &quot;faraway&quot;)</code></pre>
+<p>We see the data is balanced with 4 rats per poison/treatment
+combination.</p>
+<pre class="r"><code>table(rats$poison, rats$treat)</code></pre>
+<pre><code>     
+      A B C D
+  I   4 4 4 4
+  II  4 4 4 4
+  III 4 4 4 4</code></pre>
+<p>The outcome is survival time. It is measured in units of 10
+hours.</p>
+<pre class="r"><code>summary(rats$time)</code></pre>
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.1800  0.3000  0.4000  0.4794  0.6225  1.2400 </code></pre>
+<p>It looks like most rats survived about 5 hours, but a few lived a bit
+longer.</p>
+<pre class="r"><code>plot(density(rats$time))</code></pre>
+<p><img src="lm_files/figure-html/unnamed-chunk-54-1.png" width="672" /></p>
+<p>Stripcharts help visualize the variability in time within each group.
+It appears poison III was the most lethal, and that treatment A is the
+least efficacious.</p>
+<pre class="r"><code>stripchart(time ~ poison, data = rats, method = &quot;jitter&quot;, 
+           ylab = &quot;poison&quot;, las = 1)</code></pre>
+<p><img src="lm_files/figure-html/unnamed-chunk-55-1.png" width="672" /></p>
+<pre class="r"><code>stripchart(time ~ treat, data = rats, method = &quot;jitter&quot;, 
+           xlab = &quot;treatment&quot;, las = 1)</code></pre>
+<p><img src="lm_files/figure-html/unnamed-chunk-55-2.png" width="672" /></p>
+<p>An interaction plot can help us assess if treatment effect depends on
+the poison. There doesn’t appear to be any major interactions. It looks
+like treatment B may be preferred to increase survival time, at least
+for poisons I and II.</p>
+<pre class="r"><code>with(rats, interaction.plot(x.factor = treat, 
+                            trace.factor = poison, 
+                            response = time))</code></pre>
+<p><img src="lm_files/figure-html/unnamed-chunk-56-1.png" width="672" /></p>
+<p>Next we model time as a function of treat, poison, and their
+interaction. The summary is somewhat difficult to interpret with
+interactions.</p>
+<pre class="r"><code>m &lt;- lm(time ~ treat * poison, data = rats)
+summary(m)</code></pre>
+<pre><code>
+Call:
+lm(formula = time ~ treat * poison, data = rats)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-0.32500 -0.04875  0.00500  0.04312  0.42500 
+
+Coefficients:
+                 Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)       0.41250    0.07457   5.532 2.94e-06 ***
+treatB            0.46750    0.10546   4.433 8.37e-05 ***
+treatC            0.15500    0.10546   1.470   0.1503    
+treatD            0.19750    0.10546   1.873   0.0692 .  
+poisonII         -0.09250    0.10546  -0.877   0.3862    
+poisonIII        -0.20250    0.10546  -1.920   0.0628 .  
+treatB:poisonII   0.02750    0.14914   0.184   0.8547    
+treatC:poisonII  -0.10000    0.14914  -0.671   0.5068    
+treatD:poisonII   0.15000    0.14914   1.006   0.3212    
+treatB:poisonIII -0.34250    0.14914  -2.297   0.0276 *  
+treatC:poisonIII -0.13000    0.14914  -0.872   0.3892    
+treatD:poisonIII -0.08250    0.14914  -0.553   0.5836    
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+Residual standard error: 0.1491 on 36 degrees of freedom
+Multiple R-squared:  0.7335,    Adjusted R-squared:  0.6521 
+F-statistic:  9.01 on 11 and 36 DF,  p-value: 1.986e-07</code></pre>
+<p>Before we try to interpret this model, let’s check the residuals
+versus fitted values plot.</p>
+<pre class="r"><code>plot(m, which = 1)</code></pre>
+<p><img src="lm_files/figure-html/unnamed-chunk-58-1.png" width="672" /></p>
+<p>We see noticeable <em>heteroscedasticity</em>. As our fitted values
+get bigger, so do the residuals. Ideally we would like the residuals to
+be uniformly scattered around 0, which would indicate our assumption of
+constant variance is satisfied. That is not the case here.</p>
+<p>To address this, we can attempt to transform the outcome. Common
+transformations include a log transformation and square root
+transformation. We can use the <code>powerTransform()</code> function
+from the {car} package <span class="citation">(Fox and Weisberg
+2019)</span> to help us identify a suitable transformation.</p>
+<pre class="r"><code>car::powerTransform(m)</code></pre>
+<pre><code>Estimated transformation parameter 
+       Y1 
+-0.815736 </code></pre>
+<p>The suggested parameter, -0.81, is the power we could raise our
+outcome to. But -0.81 is close to -1, which would be a simple inverse
+(or reciprocal) transformation. The <code>boxCox()</code> function helps
+us assess if -0.81 is close enough to -1.</p>
+<pre class="r"><code>car::boxCox(m)</code></pre>
+<p><img src="lm_files/figure-html/unnamed-chunk-60-1.png" width="672" /></p>
+<p>The outer dashed lines comfortably enclose -1, so we elect to use -1
+as a our transformation parameter. We refit the model using this
+transformation, which can be expressed as <code>1/time</code>. This
+transformation corresponds to <em>rate of death</em>.</p>
+<pre class="r"><code>m2 &lt;- lm(1/time ~ treat * poison, data = rats)</code></pre>
+<p>The residuals versus fitted values plot looks much better.</p>
+<pre class="r"><code>plot(m2, which = 1)</code></pre>
+<p><img src="lm_files/figure-html/unnamed-chunk-62-1.png" width="672" /></p>
+<p>Before we attempt to interpret the model, lets assess whether we
+should keep the interaction using the <code>Anova()</code> function from
+the {car} package.</p>
+<pre class="r"><code>car::Anova(m2)</code></pre>
+<pre><code>Anova Table (Type II tests)
+
+Response: 1/time
+             Sum Sq Df F value    Pr(&gt;F)    
+treat        20.414  3 28.3431 1.376e-09 ***
+poison       34.877  2 72.6347 2.310e-13 ***
+treat:poison  1.571  6  1.0904    0.3867    
+Residuals     8.643 36                      
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p>It certainly doesn’t seem to contribute much to the model. Let’s drop
+the interaction and fit a new model.</p>
+<pre class="r"><code>m3 &lt;- lm(1/time ~ treat + poison, data = rats)
+summary(m3)</code></pre>
+<pre><code>
+Call:
+lm(formula = 1/time ~ treat + poison, data = rats)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-0.82757 -0.37619  0.02116  0.27568  1.18153 
+
+Coefficients:
+            Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)   2.6977     0.1744  15.473  &lt; 2e-16 ***
+treatB       -1.6574     0.2013  -8.233 2.66e-10 ***
+treatC       -0.5721     0.2013  -2.842  0.00689 ** 
+treatD       -1.3583     0.2013  -6.747 3.35e-08 ***
+poisonII      0.4686     0.1744   2.688  0.01026 *  
+poisonIII     1.9964     0.1744  11.451 1.69e-14 ***
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+Residual standard error: 0.4931 on 42 degrees of freedom
+Multiple R-squared:  0.8441,    Adjusted R-squared:  0.8255 
+F-statistic: 45.47 on 5 and 42 DF,  p-value: 6.974e-16</code></pre>
+<p>The summary is a little easier to understand, but the coefficients
+are relative to the reference levels: Treatment A and Poison I. We can
+use the {emmeans} package <span class="citation">(Lenth 2022)</span> to
+estimate mean survival time conditional on the poison type. Notice we
+specify <code>type = "response"</code> and <code>tran = "inverse"</code>
+to back-transform the response back to the original scale.</p>
+<pre class="r"><code>library(emmeans)
+emmeans(m3, ~ treat | poison, type = &quot;response&quot;, tran = &quot;inverse&quot;) </code></pre>
+<pre><code>poison = I:
+ treat response      SE df lower.CL upper.CL
+ A        0.371 0.02396 42    0.328    0.426
+ B        0.961 0.16112 42    0.718    1.453
+ C        0.470 0.03859 42    0.404    0.564
+ D        0.747 0.09720 42    0.591    1.013
+
+poison = II:
+ treat response      SE df lower.CL upper.CL
+ A        0.316 0.01739 42    0.284    0.355
+ B        0.663 0.07658 42    0.537    0.864
+ C        0.385 0.02591 42    0.339    0.446
+ D        0.553 0.05334 42    0.463    0.687
+
+poison = III:
+ treat response      SE df lower.CL upper.CL
+ A        0.213 0.00791 42    0.198    0.230
+ B        0.329 0.01891 42    0.295    0.372
+ C        0.243 0.01026 42    0.224    0.265
+ D        0.300 0.01567 42    0.271    0.335
+
+Confidence level used: 0.95 
+Intervals are back-transformed from the inverse scale </code></pre>
+<p>We can pipe the output into the {emmeans} plot method to visualize
+these estimates. Treatments B and D seem to be most effective but also
+the most variable. No treatment appears to help rats subjected to poison
+type III.</p>
+<pre class="r"><code>emmeans(m3, ~ treat | poison, type = &quot;response&quot;, tran = &quot;inverse&quot;) |&gt; 
+  plot()</code></pre>
+<p><img src="lm_files/figure-html/unnamed-chunk-66-1.png" width="672" /></p>
+<p>Another approach to modeling this data is using an inverse Gaussian
+generalized linear model. Instead of transforming the response, we use
+the <code>glm()</code> function with family set to
+<code>inverse.gaussian(link = "inverse")</code>. We see the coefficients
+in the model summary are not too different from our model above with a
+transformed response.</p>
+<pre class="r"><code>m4 &lt;- glm(time ~ treat + poison, data = rats, 
+          family = inverse.gaussian(link = &quot;inverse&quot;))
+summary(m4)</code></pre>
+<pre><code>
+Call:
+glm(formula = time ~ treat + poison, family = inverse.gaussian(link = &quot;inverse&quot;), 
+    data = rats)
+
+Coefficients:
+            Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)   2.6465     0.1939  13.648  &lt; 2e-16 ***
+treatB       -1.6095     0.2110  -7.627 1.87e-09 ***
+treatC       -0.5835     0.2347  -2.486    0.017 *  
+treatD       -1.2940     0.2187  -5.917 5.24e-07 ***
+poisonII      0.2900     0.1566   1.853    0.071 .  
+poisonIII     1.9660     0.1929  10.192 6.34e-13 ***
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+(Dispersion parameter for inverse.gaussian family taken to be 0.1139811)
+
+    Null deviance: 25.7437  on 47  degrees of freedom
+Residual deviance:  4.5888  on 42  degrees of freedom
+AIC: -85.701
+
+Number of Fisher Scoring iterations: 2</code></pre>
+<p>The residuals versus fitted values plot hints at some
+heteroscedasticity, but it’s being driven by only 3 points: 30, 24, and
+15.</p>
+<pre class="r"><code>plot(m4, which = 1)</code></pre>
+<p><img src="lm_files/figure-html/unnamed-chunk-68-1.png" width="672" /></p>
+<p>As before, we can use the {emmeans} package to estimate mean survival
+times and plot with error bars.</p>
+<pre class="r"><code>emmeans(m4, ~ treat | poison, type = &quot;response&quot;) |&gt; 
+  plot()</code></pre>
+<p><img src="lm_files/figure-html/unnamed-chunk-69-1.png" width="672" /></p>
+<p>The results are very similar to the previous plot.</p>
+</div>
 <div id="references" class="section level3 unnumbered">
 <h3 class="unnumbered">References</h3>
 <div id="refs" class="references csl-bib-body hanging-indent"
 entry-spacing="0">
+<div id="ref-boxcox" class="csl-entry">
+Box, G. E. P., and D. R. Cox. 1964. <span>“An Analysis of
+Transformations.”</span> <em>Journal of the Royal Statistical Society:
+Series B (Methodological)</em> 26 (2): 211–43. <a
+href="https://rss.onlinelibrary.wiley.com/doi/abs/10.1111/j.2517-6161.1964.tb00553.x">https://rss.onlinelibrary.wiley.com/doi/abs/10.1111/j.2517-6161.1964.tb00553.x</a>.
+</div>
 <div id="ref-ISwR" class="csl-entry">
 Dalgaard, Peter. 2020. <em>ISwR: Introductory Statistics with
 <span>R</span></em>. <a
 href="https://CRAN.R-project.org/package=ISwR">https://CRAN.R-project.org/package=ISwR</a>.
+</div>
+<div id="ref-faraway" class="csl-entry">
+Faraway, Julian. 2016. <em>Faraway: Functions and Datasets for Books by
+Julian Faraway</em>. <a
+href="https://CRAN.R-project.org/package=faraway">https://CRAN.R-project.org/package=faraway</a>.
 </div>
 <div id="ref-car" class="csl-entry">
 Fox, John, and Sanford Weisberg. 2019. <em>An <span>R</span> Companion
@@ -1061,9 +1302,13 @@ href="https://CRAN.R-project.org/package=HSAUR3">https://CRAN.R-project.org/pack
 Kutner, et al. 2005. <em>Applied Linear Statistical Models, 5th Ed.</em>
 McGraw Hill.
 </div>
+<div id="ref-emmeans" class="csl-entry">
+Lenth, Russell V. 2022. <em>Emmeans: Estimated Marginal Means, Aka
+Least-Squares Means</em>. <a
+href="https://CRAN.R-project.org/package=emmeans">https://CRAN.R-project.org/package=emmeans</a>.
+</div>
 <div id="ref-ott2004" class="csl-entry">
-Ott, R. Lyman, and Michael T. Longnecker. 2004. <em>A First Course in
-Statistical Methods</em>. California: Brooks/Cole.
+Ott, R. Lyman, and Michael T. Longnecker. n.d.
 </div>
 <div id="ref-bootStepAIC" class="csl-entry">
 Rizopoulos, Dimitris. 2022. <em>bootStepAIC: Bootstrap stepAIC</em>. <a
