@@ -1,0 +1,187 @@
+---
+title: "Generalized Additive Models"
+output:
+  html_document:
+    toc: TRUE
+    toc_float: TRUE
+bibliography: refs.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, comment = '')
+```
+
+### Generalized Additive Model with two predictors
+
+Here, we will explore _Generalized Additive Models_ (GAMs) in R using the {mgcv} package [@mgcv]. We will generate data for a baker who is passionate about sharing her love for baking and starts posting videos on a YouTube account. One of her first 'how-to' videos goes viral and she quickly gains over 50,000 subscribers! 
+
+To start, we will load our packages using `library()`. If you do not have one or more of these packages, you can use the function `install.packages()`.
+
+```{r, message=FALSE, warning = FALSE}
+library(mgcv) # For fitting GAMs
+library(ggplot2) #For plots
+library(gratia) # For GAM validation
+library(ggeffects) # For plotting model predictions 
+```
+
+Let's generate our data and take a look at the columns. In our data frame, we will include the number of Youtube subscribers (`subscribers`), number of video postings (`posts`), and the length of the video in minutes (`vid.length`). 
+
+```{r}
+#Reproducibility 
+set.seed(15)
+
+#Generate a dataframe
+df <- data.frame(subscribers = 
+                 pmax(50000 * (1 - exp(-0.1 * seq(0, 150, length.out = 150))) 
+                  + rnorm(150, mean = 0, sd = 2000), 0),
+                 posts = seq(0, 150, length.out = 150),
+                 vid.length = pmax(rnorm(150, mean = 8, sd = 3), 0))
+
+#Examine the first 6 rows of data 
+head(df)
+```
+
+Let's go ahead and plot the data using the {ggplot2} package [@ggplot2] to get an idea of the relationship between the number of subscribers and posts, which we will focus on throughout this tutorial. 
+
+```{r}
+ggplot(df, aes(x = posts, y = subscribers)) +
+  geom_point() +
+  labs(x = "Posts", y = "Subscribers", title = "Youtube Subscriber Growth") +
+  theme_minimal()
+```
+
+Let's first try fitting a linear model to the data and then check the summary to see the results. The number of subscribers to YouTube will be predicted by the number of posts and video length.
+
+```{r}
+#Fit a linear model 
+lm <- lm(subscribers ~ posts + vid.length, data = df)
+
+#Check the linear model summary 
+summary(lm)
+```
+
+We can see that the predictor `posts` is significant. We will evaluate model performance by looking at the plot of residuals against the fitted values. 
+
+```{r}
+plot(lm, which = 1)
+```
+
+We see that this model does not perform very well with our data. The residuals have a clear pattern, highlighting that our model may not be capturing the structure of the data. Since the residuals display a non-linear pattern, we will fit a GAM to better capture the non-linearity.
+
+We will use the `gam()` function in the {mgcv} package to fit a GAM and add `s()` around our predictors to specify a smoothing term for them. We are going to specify the argument `k = 9` to tell {mgcv} how 'wiggly` we think the smooth should be, or how many basis functions can be used. The default value of k is 10 for these smooths.  
+
+We will look at the summary to check the model output. 
+
+```{r}
+#Fit a GAM
+gam1 <- gam(subscribers ~ s(posts, k = 9) + s(vid.length), 
+            method = "REML", data = df)
+
+#Check the summary of our GAM model 
+summary(gam1)
+
+```
+
+We can see that our smooth for `posts` is statistically significant and the deviance explained is high (94%) showing we were able to explain the variation in our data well.
+
+Importantly, smooths in a GAM are created by combining smaller functions called basis functions. In this way, a non-linear relationship between our independent and dependent variable has many parameters that collectively create the overall smoothed shape we get for each term we have specified a smooth for. However, we need to make sure our smoothing terms are flexible enough to model the data as the basis dimensions define how 'wiggly' the smooth function can be. We will check if the basis size of our smoothing terms (k) is sufficient.  To do this, we will use the function `k.check()` on our GAM.
+
+```{r}
+k.check(gam1)
+```
+
+Notably, we can see that for `posts`, our k' and edf values are close to each other. The p-value for this smooth is also low and the k-index falls below 1. These signs (1. a low p-value; 2. k' and edf close in value to each other; 3. k-index below 1) indicate that our basis dimension (k) may be too low, and our model may benefit from a higher k value. We can increase the k value by doubling it and seeing if our edf value increases.    
+
+We will refit the GAM, specify a higher k value and call `k.check()` again. 
+
+```{r}
+#Specify a GAM where `posts` has a k value of 18 
+gam2 <- gam(subscribers ~ s(posts, k = 18) + s(vid.length), 
+            method = "REML", data = df)
+
+#Check the basis size of our smoothing terms for `gam2`
+k.check(gam2)
+```
+
+We can now see that for `posts`, our k' and edf values are farther apart, our p-value is higher, and our k-index value is approximately 1. 
+
+#### Fittting linear models and terms in mgcv
+
+We can also fit a linear model with `gam()` by leaving out the smoothing function. We will give it a try for comparison. 
+
+```{r}
+#Fit a linear model using `gam()`
+lm <- gam(subscribers ~ posts + vid.length, data = df)
+
+#Check the summary of `gam.lm`
+summary(lm)
+```
+
+Or, we could add a smoothing term and a linear term in the model by including `s()` only around the terms we would like to specify a smooth for.
+
+```{r}
+gam.lm <- gam(subscribers ~ s(posts) + vid.length, 
+              method = "REML", data = df)
+
+summary(gam.lm)
+```
+
+#### Validation 
+
+Let's go back our `gam2` model. We will plot the partial residuals of `gam2`, which helps us view the relationship between a predictor variable and the response variable after accounting for other predictors in the model. We will add the residuals to the plot by including the argument `residuals = TRUE`. The vertical lines along the x-axis represent a rug plot, indicating the distribution of the covariate shown.
+
+```{r}
+plot.gam(gam2, pages = 1, residuals = TRUE) 
+```
+
+We can also use `gam.check()` from the {mgcv} package to assess model diagnostics. The output from `gam.check()` includes the information from `k.check()` at the bottom of the results.
+
+```{r, warning=FALSE}
+gam.check(gam2, pages = 1)
+```
+
+To assess model diagnostics, we can also use `appraise()` from the {gratia} package [@gratia]. Notably, this package is built on {ggplot2}, allowing for easy editing of plots using ggplot scripts.  
+
+```{r}
+appraise(gam2, method = "simulate")
+```
+
+Within the {gratia} package, we can also plot the partial effect of the smoothing terms. The smooths are centered around 0 so regions below 0 on the y-axis are less common on average while regions above 0 on the y-axis are more common on average. We will add the residuals to the plot by including `residuals = TRUE`. 
+
+```{r}
+draw(gam2, residuals = TRUE)
+```
+
+When specifying multiple smoothing terms, we can also check for concurvity, which occurs when a smooth term in the model can be estimated by one or more other smooth terms in the model. High concurvity can lead to challenges with model interpretation. We can check concurvity of our model using the {mgcv} function `concurvity()`. The function will return values for 3 cases ranging from 0 - 1 with 1 indicating high concurvity and potential problems in the model. You can read more about how these cases are calculated using `?concurvity`. 
+
+```{r}
+concurvity(gam2)
+```
+
+While there is currently no defined value for what value is considered 'high' concurvity, our worst case estimate is 0.3 with the observed and estimated values falling below this. Here, we will conclude that concurvity is not a concern.  
+
+#### plot model prediction over the raw data 
+
+We can also visualize the relationship between posts and subscribers as predicted by the gam2 model and include the raw data points. We generate predictions using the `ggpredict()` function from the {ggeffects} package [@ggeffects].
+
+```{r, warning=FALSE}
+predict.df <- ggpredict(gam2, terms = "posts")
+
+ggplot() +
+  #Raw data points 
+  geom_point(data = df, aes(x = posts, y = subscribers), 
+             color = "dodgerblue3", alpha = 0.5) +
+  #Confidence intervals 
+  geom_ribbon(data = predict.df, aes(x = x, ymin = conf.low, 
+                                     ymax = conf.high), 
+              fill = "grey60", alpha = 0.5) +
+  #Predicted values
+  geom_line(data = predict.df, aes(x = x, y = predicted), 
+            color = "black", size = 1) +
+  theme_classic()
+
+```
+
+We can see the raw data points in blue, while the black line represents the model's predicted values. The grey shaded area shows the confidence intervals around the predictions, giving us a sense of uncertainty in the model's fit.
+
+### References

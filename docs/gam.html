@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+
+
+<title>Generalized Additive Models</title>
+
+<script src="site_libs/header-attrs-2.28/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.13.2/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+<style type="text/css">
+/* for pandoc --citeproc since 2.11 */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
+</style>
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "\e258";
+  font-family: 'Glyphicons Halflings';
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Statistical Modeling Examples in R</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+    Examples
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="lm.html">linear models</a>
+    </li>
+    <li>
+      <a href="lrm.html">logistic regression models</a>
+    </li>
+    <li>
+      <a href="cm.html">count models</a>
+    </li>
+    <li>
+      <a href="gam.html">generalized additive models</a>
+    </li>
+    <li>
+      <a href="lme.html">mixed-effect models</a>
+    </li>
+    <li>
+      <a href="survival.html">survival analysis</a>
+    </li>
+  </ul>
+</li>
+<li>
+  <a href="about.html">About</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">Generalized Additive Models</h1>
+
+</div>
+
+
+<div id="generalized-additive-model-with-two-predictors"
+class="section level3">
+<h3>Generalized Additive Model with two predictors</h3>
+<p>Here, we will explore <em>Generalized Additive Models</em> (GAMs) in
+R using the {mgcv} package <span class="citation">(Wood 2017)</span>. We
+will generate data for a baker who is passionate about sharing her love
+for baking and starts posting videos on a YouTube account. One of her
+first ‘how-to’ videos goes viral and she quickly gains over 50,000
+subscribers!</p>
+<p>To start, we will load our packages using <code>library()</code>. If
+you do not have one or more of these packages, you can use the function
+<code>install.packages()</code>.</p>
+<pre class="r"><code>library(mgcv) # For fitting GAMs
+library(ggplot2) #For plots
+library(gratia) # For GAM validation
+library(ggeffects) # For plotting model predictions </code></pre>
+<p>Let’s generate our data and take a look at the columns. In our data
+frame, we will include the number of Youtube subscribers
+(<code>subscribers</code>), number of video postings
+(<code>posts</code>), and the length of the video in minutes
+(<code>vid.length</code>).</p>
+<pre class="r"><code>#Reproducibility 
+set.seed(15)
+
+#Generate a dataframe
+df &lt;- data.frame(subscribers = 
+                 pmax(50000 * (1 - exp(-0.1 * seq(0, 150, length.out = 150))) 
+                  + rnorm(150, mean = 0, sd = 2000), 0),
+                 posts = seq(0, 150, length.out = 150),
+                 vid.length = pmax(rnorm(150, mean = 8, sd = 3), 0))
+
+#Examine the first 6 rows of data 
+head(df)</code></pre>
+<pre><code>  subscribers    posts vid.length
+1    517.6457 0.000000   7.366206
+2   8450.7240 1.006711   6.442278
+3   8439.1367 2.013423   8.921410
+4  14827.9893 3.020134   9.907846
+5  17549.8854 4.026846   1.699380
+6  17264.2917 5.033557   7.572589</code></pre>
+<p>Let’s go ahead and plot the data using the {ggplot2} package <span
+class="citation">(Wickham 2016)</span> to get an idea of the
+relationship between the number of subscribers and posts, which we will
+focus on throughout this tutorial.</p>
+<pre class="r"><code>ggplot(df, aes(x = posts, y = subscribers)) +
+  geom_point() +
+  labs(x = &quot;Posts&quot;, y = &quot;Subscribers&quot;, title = &quot;Youtube Subscriber Growth&quot;) +
+  theme_minimal()</code></pre>
+<p><img src="gam_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<p>Let’s first try fitting a linear model to the data and then check the
+summary to see the results. The number of subscribers to YouTube will be
+predicted by the number of posts and video length.</p>
+<pre class="r"><code>#Fit a linear model 
+lm &lt;- lm(subscribers ~ posts + vid.length, data = df)
+
+#Check the linear model summary 
+summary(lm)</code></pre>
+<pre><code>
+Call:
+lm(formula = subscribers ~ posts + vid.length, data = df)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-37241  -2768    913   4581  13646 
+
+Coefficients:
+            Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)  33920.7     1994.1  17.010  &lt; 2e-16 ***
+posts          114.5       13.9   8.234 9.01e-14 ***
+vid.length     521.1      197.4   2.640  0.00918 ** 
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+Residual standard error: 7411 on 147 degrees of freedom
+Multiple R-squared:  0.3311,    Adjusted R-squared:  0.322 
+F-statistic: 36.38 on 2 and 147 DF,  p-value: 1.457e-13</code></pre>
+<p>We can see that the predictor <code>posts</code> is significant. We
+will evaluate model performance by looking at the plot of residuals
+against the fitted values.</p>
+<pre class="r"><code>plot(lm, which = 1)</code></pre>
+<p><img src="gam_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>We see that this model does not perform very well with our data. The
+residuals have a clear pattern, highlighting that our model may not be
+capturing the structure of the data. Since the residuals display a
+non-linear pattern, we will fit a GAM to better capture the
+non-linearity.</p>
+<p>We will use the <code>gam()</code> function in the {mgcv} package to
+fit a GAM and add <code>s()</code> around our predictors to specify a
+smoothing term for them. We are going to specify the argument
+<code>k = 9</code> to tell {mgcv} how ’wiggly` we think the smooth
+should be, or how many basis functions can be used. The default value of
+k is 10 for these smooths.</p>
+<p>We will look at the summary to check the model output.</p>
+<pre class="r"><code>#Fit a GAM
+gam1 &lt;- gam(subscribers ~ s(posts, k = 9) + s(vid.length), 
+            method = &quot;REML&quot;, data = df)
+
+#Check the summary of our GAM model 
+summary(gam1)</code></pre>
+<pre><code>
+Family: gaussian 
+Link function: identity 
+
+Formula:
+subscribers ~ s(posts, k = 9) + s(vid.length)
+
+Parametric coefficients:
+            Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)  46562.5      187.6   248.2   &lt;2e-16 ***
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+Approximate significance of smooth terms:
+                edf Ref.df   F p-value    
+s(posts)      7.795  7.986 262  &lt;2e-16 ***
+s(vid.length) 1.002  1.004   0   0.999    
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+R-sq.(adj) =  0.935   Deviance explained = 93.9%
+-REML = 1370.6  Scale est. = 5.2796e+06  n = 150</code></pre>
+<p>We can see that our smooth for <code>posts</code> is statistically
+significant and the deviance explained is high (94%) showing we were
+able to explain the variation in our data well.</p>
+<p>Importantly, smooths in a GAM are created by combining smaller
+functions called basis functions. In this way, a non-linear relationship
+between our independent and dependent variable has many parameters that
+collectively create the overall smoothed shape we get for each term we
+have specified a smooth for. However, we need to make sure our smoothing
+terms are flexible enough to model the data as the basis dimensions
+define how ‘wiggly’ the smooth function can be. We will check if the
+basis size of our smoothing terms (k) is sufficient. To do this, we will
+use the function <code>k.check()</code> on our GAM.</p>
+<pre class="r"><code>k.check(gam1)</code></pre>
+<pre><code>              k&#39;      edf   k-index p-value
+s(posts)       8 7.794714 0.8666983  0.0525
+s(vid.length)  9 1.002067 1.0647945  0.7800</code></pre>
+<p>Notably, we can see that for <code>posts</code>, our k’ and edf
+values are close to each other. The p-value for this smooth is also low
+and the k-index falls below 1. These signs (1. a low p-value; 2. k’ and
+edf close in value to each other; 3. k-index below 1) indicate that our
+basis dimension (k) may be too low, and our model may benefit from a
+higher k value. We can increase the k value by doubling it and seeing if
+our edf value increases.</p>
+<p>We will refit the GAM, specify a higher k value and call
+<code>k.check()</code> again.</p>
+<pre class="r"><code>#Specify a GAM where `posts` has a k value of 18 
+gam2 &lt;- gam(subscribers ~ s(posts, k = 18) + s(vid.length), 
+            method = &quot;REML&quot;, data = df)
+
+#Check the basis size of our smoothing terms for `gam2`
+k.check(gam2)</code></pre>
+<pre><code>              k&#39;       edf  k-index p-value
+s(posts)      17 13.291363 1.069912  0.7750
+s(vid.length)  9  1.001513 1.114679  0.9175</code></pre>
+<p>We can now see that for <code>posts</code>, our k’ and edf values are
+farther apart, our p-value is higher, and our k-index value is
+approximately 1.</p>
+<div id="fittting-linear-models-and-terms-in-mgcv"
+class="section level4">
+<h4>Fittting linear models and terms in mgcv</h4>
+<p>We can also fit a linear model with <code>gam()</code> by leaving out
+the smoothing function. We will give it a try for comparison.</p>
+<pre class="r"><code>#Fit a linear model using `gam()`
+lm &lt;- gam(subscribers ~ posts + vid.length, data = df)
+
+#Check the summary of `gam.lm`
+summary(lm)</code></pre>
+<pre><code>
+Family: gaussian 
+Link function: identity 
+
+Formula:
+subscribers ~ posts + vid.length
+
+Parametric coefficients:
+            Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)  33920.7     1994.1  17.010  &lt; 2e-16 ***
+posts          114.5       13.9   8.234 9.01e-14 ***
+vid.length     521.1      197.4   2.640  0.00918 ** 
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+
+R-sq.(adj) =  0.322   Deviance explained = 33.1%
+GCV = 5.6049e+07  Scale est. = 5.4928e+07  n = 150</code></pre>
+<p>Or, we could add a smoothing term and a linear term in the model by
+including <code>s()</code> only around the terms we would like to
+specify a smooth for.</p>
+<pre class="r"><code>gam.lm &lt;- gam(subscribers ~ s(posts) + vid.length, 
+              method = &quot;REML&quot;, data = df)
+
+summary(gam.lm)</code></pre>
+<pre><code>
+Family: gaussian 
+Link function: identity 
+
+Formula:
+subscribers ~ s(posts) + vid.length
+
+Parametric coefficients:
+            Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept) 46097.29     510.64   90.27   &lt;2e-16 ***
+vid.length     59.74      61.60    0.97    0.334    
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+Approximate significance of smooth terms:
+          edf Ref.df     F p-value    
+s(posts) 8.74   8.98 270.9  &lt;2e-16 ***
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+R-sq.(adj) =  0.943   Deviance explained = 94.7%
+-REML = 1363.9  Scale est. = 4.5997e+06  n = 150</code></pre>
+</div>
+<div id="validation" class="section level4">
+<h4>Validation</h4>
+<p>Let’s go back our <code>gam2</code> model. We will plot the partial
+residuals of <code>gam2</code>, which helps us view the relationship
+between a predictor variable and the response variable after accounting
+for other predictors in the model. We will add the residuals to the plot
+by including the argument <code>residuals = TRUE</code>. The vertical
+lines along the x-axis represent a rug plot, indicating the distribution
+of the covariate shown.</p>
+<pre class="r"><code>plot.gam(gam2, pages = 1, residuals = TRUE) </code></pre>
+<p><img src="gam_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<p>We can also use <code>gam.check()</code> from the {mgcv} package to
+assess model diagnostics. The output from <code>gam.check()</code>
+includes the information from <code>k.check()</code> at the bottom of
+the results.</p>
+<pre class="r"><code>gam.check(gam2, pages = 1)</code></pre>
+<p><img src="gam_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<pre><code>
+Method: REML   Optimizer: outer newton
+full convergence after 7 iterations.
+Gradient range [-0.0006043802,0.0001521058]
+(score 1362.221 &amp; scale 4366531).
+Hessian positive definite, eigenvalue range [0.0006038669,74.04975].
+Model rank =  27 / 27 
+
+Basis dimension (k) checking results. Low p-value (k-index&lt;1) may
+indicate that k is too low, especially if edf is close to k&#39;.
+
+                k&#39;  edf k-index p-value
+s(posts)      17.0 13.3    1.07    0.76
+s(vid.length)  9.0  1.0    1.11    0.91</code></pre>
+<p>To assess model diagnostics, we can also use <code>appraise()</code>
+from the {gratia} package <span class="citation">(Simpson 2024)</span>.
+Notably, this package is built on {ggplot2}, allowing for easy editing
+of plots using ggplot scripts.</p>
+<pre class="r"><code>appraise(gam2, method = &quot;simulate&quot;)</code></pre>
+<p><img src="gam_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<p>Within the {gratia} package, we can also plot the partial effect of
+the smoothing terms. The smooths are centered around 0 so regions below
+0 on the y-axis are less common on average while regions above 0 on the
+y-axis are more common on average. We will add the residuals to the plot
+by including <code>residuals = TRUE</code>.</p>
+<pre class="r"><code>draw(gam2, residuals = TRUE)</code></pre>
+<p><img src="gam_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
+<p>When specifying multiple smoothing terms, we can also check for
+concurvity, which occurs when a smooth term in the model can be
+estimated by one or more other smooth terms in the model. High
+concurvity can lead to challenges with model interpretation. We can
+check concurvity of our model using the {mgcv} function
+<code>concurvity()</code>. The function will return values for 3 cases
+ranging from 0 - 1 with 1 indicating high concurvity and potential
+problems in the model. You can read more about how these cases are
+calculated using <code>?concurvity</code>.</p>
+<pre class="r"><code>concurvity(gam2)</code></pre>
+<pre><code>                 para   s(posts) s(vid.length)
+worst    2.591343e-22 0.32898939     0.3289894
+observed 2.591343e-22 0.08288992     0.1881053
+estimate 2.591343e-22 0.05899542     0.1728076</code></pre>
+<p>While there is currently no defined value for what value is
+considered ‘high’ concurvity, our worst case estimate is 0.3 with the
+observed and estimated values falling below this. Here, we will conclude
+that concurvity is not a concern.</p>
+</div>
+<div id="plot-model-prediction-over-the-raw-data"
+class="section level4">
+<h4>plot model prediction over the raw data</h4>
+<p>We can also visualize the relationship between posts and subscribers
+as predicted by the gam2 model and include the raw data points. We
+generate predictions using the <code>ggpredict()</code> function from
+the {ggeffects} package <span class="citation">(Lüdecke
+2018)</span>.</p>
+<pre class="r"><code>predict.df &lt;- ggpredict(gam2, terms = &quot;posts&quot;)
+
+ggplot() +
+  #Raw data points 
+  geom_point(data = df, aes(x = posts, y = subscribers), 
+             color = &quot;dodgerblue3&quot;, alpha = 0.5) +
+  #Confidence intervals 
+  geom_ribbon(data = predict.df, aes(x = x, ymin = conf.low, 
+                                     ymax = conf.high), 
+              fill = &quot;grey60&quot;, alpha = 0.5) +
+  #Predicted values
+  geom_line(data = predict.df, aes(x = x, y = predicted), 
+            color = &quot;black&quot;, size = 1) +
+  theme_classic()</code></pre>
+<p><img src="gam_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
+<p>We can see the raw data points in blue, while the black line
+represents the model’s predicted values. The grey shaded area shows the
+confidence intervals around the predictions, giving us a sense of
+uncertainty in the model’s fit.</p>
+</div>
+</div>
+<div id="references" class="section level3 unnumbered">
+<h3 class="unnumbered">References</h3>
+<div id="refs" class="references csl-bib-body hanging-indent"
+entry-spacing="0">
+<div id="ref-ggeffects" class="csl-entry">
+Lüdecke, Daniel. 2018. <span>“Ggeffects: Tidy Data Frames of Marginal
+Effects from Regression Models.”</span> <em>Journal of Open Source
+Software</em> 3 (26): 772. <a
+href="https://doi.org/10.21105/joss.00772">https://doi.org/10.21105/joss.00772</a>.
+</div>
+<div id="ref-gratia" class="csl-entry">
+Simpson, Gavin L. 2024. <em><span class="nocase">gratia</span>: Graceful
+<span class="nocase">ggplot</span>-Based Graphics and Other Functions
+for <span>GAM</span>s Fitted Using <span
+class="nocase">mgcv</span></em>. <a
+href="https://gavinsimpson.github.io/gratia/">https://gavinsimpson.github.io/gratia/</a>.
+</div>
+<div id="ref-ggplot2" class="csl-entry">
+Wickham, Hadley. 2016. <em>Ggplot2: Elegant Graphics for Data
+Analysis</em>. Springer-Verlag New York. <a
+href="https://ggplot2.tidyverse.org">https://ggplot2.tidyverse.org</a>.
+</div>
+<div id="ref-mgcv" class="csl-entry">
+Wood, S. N. 2017. <em>Generalized Additive Models: An Introduction with
+r</em>. 2nd ed. Chapman; Hall/CRC.
+</div>
+</div>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3,h4",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

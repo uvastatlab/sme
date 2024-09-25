@@ -13,6 +13,8 @@ navbar:
         href: lrm.html
       - text: count models
         href: cm.html
+      - text: generalized additive models
+        href: gam.html
       - text: mixed-effect models
         href: lme.html
       - text: survival analysis
