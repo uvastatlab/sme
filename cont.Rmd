@@ -1,0 +1,111 @@
+---
+title: "Contingency Tables"
+output:
+  html_document:
+    toc: TRUE
+    toc_float: TRUE
+bibliography: refs.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, comment = '')
+```
+
+### 2 x 2 Contigency Table
+
+Bilder and Loughin present the following problem:
+
+Do students whose native language is not English pick up on authors' efforts to use humor in illustrating points in textbooks? Students at one university were shown a passage from a textbook that was meant to be humorous. Of the 211 students in the study where English was not their native language, 118 thought the passage was humorous. Of the 206 students in the study where English was their native language, 155 thought the passage was humorous. Analyze these data to answer the research question.
+
+To begin we manually enter the data into a matrix and save the object as `d`. Setting `byrow = TRUE` allows us to enter the data by row. Otherwise the matrix is filled column-wise. Notice the second field in each row is calculated on-the-fly by subtracting the humorous count from the total count.
+
+```{r}
+d <- matrix(c(118, 211 - 118,
+              155, 206 - 155), nrow = 2, byrow = TRUE)
+d
+```
+
+Our data will be easier to work with if we name the rows and columns. We can do this with the `dimnames()` function. This allows us to not only name the rows and columns, but also name the dimensions. This requires using a list object.
+
+```{r}
+dimnames(d) <- list("English" = c("non-native", "native"),
+                    "Humor" = c("humorous", "not humorous"))
+d
+```
+
+Finally we convert our matrix to a table class. While this does not change the way the data is displayed, this will provide additional data wrangling capabilities later in this example.
+
+```{r}
+d <- as.table(d)
+d
+```
+
+One question we might want to immediately ask is if there is _any association_ between English and Humor. Does knowing whether or not someone is a non-native speaker provide information about whether or not they'll find authors' attempts at humor funny? One way to assess this is with the chi-square test of independence. This is easy to implement with the `chisq.test()`.
+
+```{r}
+chisq.test(d)
+```
+
+The small p-value provides evidence against the null of no association. These two variables seem to be associated in some way. But how are they associated? 
+
+One way to investigate this is to calculate and compare proportions. Specifically we want to calculate proportions conditional on English. This is because we consider English to be the independent variable and Humor to be the dependent variable. To do this we use the `proportions()` function with `margin = 1`. (Rows are the first margin. Columns are the second margin.) 
+
+```{r}
+proportions(d, margin = 1)
+```
+
+Of the non-native speakers, about 0.56 found the passage humorous. Of the native speakers, about 0.75 found the passage humorous. That's a difference of -0.19^[If we calculate proportions down the columns (`margin = 2`), we get the proportions conditional on Humor. Of the students who found the passage humorous, about 0.43 were non-native while 0.57 were native.]
+
+The difference in proportions, 0.56 versus 0.75, seems large. What is the probability we would get a difference this big or bigger if there really is no difference in the population? We can answer this with a 2-sample proportion test. Base R implements this test with the `prop.test()` function. To use it we need marginal totals in addition to the table counts. We can get marginal totals with the `addmargins()` function.
+
+```{r}
+addmargins(d)
+```
+
+Now we have what we need to implement the 2-sample proportion test. The first argument is the total number of "successes" for each group as a vector, or the numerators of the proportions. The next argument is the total number of "trials" for each group as a vector, or the denominators of the proportions.
+
+```{r}
+prop.test(x = c(118, 155), n = c(211, 206))
+```
+
+Of most interest is the 95 percent confidence interval. We can now present the result as follows: The difference in proportions between non native speakers and native speakers who understand the authors' humor is about -0.19, 95% CI [-0.29, -0.10]. 
+
+
+```{r}
+df <- as.data.frame(d)
+df
+```
+
+```{r}
+mosaicplot(d, shade = TRUE)
+```
+
+```{r}
+as.data.frame(d, )
+```
+
+
+```{r}
+library(ggplot2)
+library(RColorBrewer)
+as.table(d) |> 
+  as.data.frame() |> 
+  ggplot() +
+  aes(x = Var1, y = Freq, fill = Var2) +
+  geom_col(position = "dodge") +
+  scale_fill_brewer(palette = "Set2") +
+  theme_minimal()
+```
+
+
+
+```{r}
+library(tidyr)
+df_all <- uncount(df, weights = Freq)
+head(df_all)
+```
+
+```{r}
+library(mosaic)
+prop.test(~ Humor | English, data = df_all)
+```
