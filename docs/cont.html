@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+
+
+<title>Contingency Tables</title>
+
+<script src="site_libs/header-attrs-2.29/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.13.2/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+<style type="text/css">
+/* for pandoc --citeproc since 2.11 */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
+</style>
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "\e258";
+  font-family: 'Glyphicons Halflings';
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Statistical Modeling Examples in R</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+    Examples
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="cont.html">contingency tables</a>
+    </li>
+    <li>
+      <a href="lm.html">linear models</a>
+    </li>
+    <li>
+      <a href="lrm.html">logistic regression models</a>
+    </li>
+    <li>
+      <a href="cm.html">count models</a>
+    </li>
+    <li>
+      <a href="gam.html">generalized additive models</a>
+    </li>
+    <li>
+      <a href="lme.html">mixed-effect models</a>
+    </li>
+    <li>
+      <a href="survival.html">survival analysis</a>
+    </li>
+  </ul>
+</li>
+<li>
+  <a href="about.html">About</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">Contingency Tables</h1>
+
+</div>
+
+
+<div id="x-2-contigency-table" class="section level3">
+<h3>2 x 2 Contigency Table</h3>
+<p>Bilder and Loughin <span class="citation">(2015)</span> present the
+following problem:</p>
+<p>Do students whose native language is not English pick up on authors’
+efforts to use humor in illustrating points in textbooks? Students at
+one university were shown a passage from a textbook that was meant to be
+humorous. Of the 211 students in the study where English was not their
+native language, 118 thought the passage was humorous. Of the 206
+students in the study where English was their native language, 155
+thought the passage was humorous. Analyze these data to answer the
+research question.</p>
+<p>To begin we manually enter the data into a matrix and save the object
+as <code>d</code>. Setting <code>byrow = TRUE</code> allows us to enter
+the data by row. Otherwise the matrix is filled column-wise. Notice the
+second field in each row is calculated on-the-fly by subtracting the
+humorous count from the total count.</p>
+<pre class="r"><code>d &lt;- matrix(c(118, 211 - 118,
+              155, 206 - 155), nrow = 2, byrow = TRUE)
+d</code></pre>
+<pre><code>     [,1] [,2]
+[1,]  118   93
+[2,]  155   51</code></pre>
+<p>Our data will be easier to work with if we name the rows and columns.
+We can do this with the <code>dimnames()</code> function. This allows us
+to not only name the rows and columns, but also name the dimensions.
+This requires using a list object.</p>
+<pre class="r"><code>dimnames(d) &lt;- list(&quot;English&quot; = c(&quot;non-native&quot;, &quot;native&quot;),
+                    &quot;Humor&quot; = c(&quot;humorous&quot;, &quot;not humorous&quot;))
+d</code></pre>
+<pre><code>            Humor
+English      humorous not humorous
+  non-native      118           93
+  native          155           51</code></pre>
+<p>Finally we convert our matrix to a table class. While this does not
+change the way the data is displayed, this will provide additional data
+wrangling capabilities later in this example.</p>
+<pre class="r"><code>d &lt;- as.table(d)
+d</code></pre>
+<pre><code>            Humor
+English      humorous not humorous
+  non-native      118           93
+  native          155           51</code></pre>
+<p>One question we might want to immediately ask is if there is <em>any
+association</em> between English and Humor. Does knowing whether or not
+someone is a non-native speaker provide information about whether or not
+they’ll find authors’ attempts at humor funny? One way to assess this is
+with the chi-square test of independence. This is easy to implement with
+the <code>chisq.test()</code>.</p>
+<pre class="r"><code>chisq.test(d)</code></pre>
+<pre><code>
+    Pearson&#39;s Chi-squared test with Yates&#39; continuity correction
+
+data:  d
+X-squared = 16.363, df = 1, p-value = 5.229e-05</code></pre>
+<p>The small p-value provides evidence against the null of no
+association. These two variables seem to be associated in some way. But
+how are they associated?</p>
+<p>One way to investigate is to calculate and compare proportions.
+Specifically we want to calculate proportions conditional on English.
+This is because we consider English to be the independent variable and
+Humor to be the dependent variable. To do this we use the
+<code>proportions()</code> function with <code>margin = 1</code>. (Rows
+are the first margin, columns are the second margin.)</p>
+<pre class="r"><code>proportions(d, margin = 1)</code></pre>
+<pre><code>            Humor
+English       humorous not humorous
+  non-native 0.5592417    0.4407583
+  native     0.7524272    0.2475728</code></pre>
+<p>Of the non-native speakers, about 0.56 found the passage humorous. Of
+the native speakers, about 0.75 found the passage humorous. That’s a
+difference of -0.19<a href="#fn1" class="footnote-ref"
+id="fnref1"><sup>1</sup></a></p>
+<p>The difference in proportions, 0.56 versus 0.75, seems large. What is
+the probability we would get a difference this big or bigger if there
+really is no difference in the population? We can answer this with a
+2-sample proportion test. Base R implements this test with the
+<code>prop.test()</code> function. To use it we need marginal totals in
+addition to the table counts. We can get marginal totals with the
+<code>addmargins()</code> function.</p>
+<pre class="r"><code>addmargins(d)</code></pre>
+<pre><code>            Humor
+English      humorous not humorous Sum
+  non-native      118           93 211
+  native          155           51 206
+  Sum             273          144 417</code></pre>
+<p>Now we have what we need to implement the 2-sample proportion test.
+The first argument is the total number of “successes” for each group as
+a vector, or the numerators of the proportions. The next argument is the
+total number of “trials” for each group as a vector, or the denominators
+of the proportions.</p>
+<pre class="r"><code>prop.test(x = c(118, 155), n = c(211, 206))</code></pre>
+<pre><code>
+    2-sample test for equality of proportions with continuity correction
+
+data:  c(118, 155) out of c(211, 206)
+X-squared = 16.363, df = 1, p-value = 5.229e-05
+alternative hypothesis: two.sided
+95 percent confidence interval:
+ -0.28720861 -0.09916235
+sample estimates:
+   prop 1    prop 2 
+0.5592417 0.7524272 </code></pre>
+<p>Notice the p-value of this test is the same as the chi-square test
+above. In fact, the two tests are identical. Of more interest is the 95
+percent confidence interval on the difference in proportions. This tells
+us that the difference in proportions between non native speakers and
+native speakers who understand the authors’ humor is about -0.19, 95% CI
+[-0.29, -0.10].</p>
+<p>One way to visualize this data is by creating a Cleveland dot plot.
+The <code>dotchart()</code> function in R allows us to easily create
+this plot as long as your data is a matrix or table.</p>
+<pre class="r"><code>dotchart(d)</code></pre>
+<p><img src="cont_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p>The dot plot shows how counts of English change conditional on Humor.
+It would make more sense to show Humor counts conditional on English. We
+can accomplish that by transposing the table using the <code>t()</code>
+function.</p>
+<pre class="r"><code>dotchart(t(d))</code></pre>
+<p><img src="cont_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<p>We can clearly see the counts of students finding humor in the
+textbook increasing dramatically for those students who are native
+English speakers.</p>
+<p>Bar plots are also an effective way to visualize data of this nature.
+A basic bar plot can be created using the <code>barplot()</code>
+function. Notice we transpose the table again to ensure counts are shown
+conditional on English.</p>
+<pre class="r"><code>barplot(t(d), beside = TRUE, legend.text = TRUE)</code></pre>
+<p><img src="cont_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<p>To use the {ggplot2} package to create a bar plot <span
+class="citation">(Wickham 2016)</span>, we need to convert our table
+into a data frame. Since our data is a table object, this is easy to do
+with the <code>as.data.frame()</code> function.</p>
+<pre class="r"><code>df &lt;- as.data.frame(d)
+df</code></pre>
+<pre><code>     English        Humor Freq
+1 non-native     humorous  118
+2     native     humorous  155
+3 non-native not humorous   93
+4     native not humorous   51</code></pre>
+<p>The main function to use when our data frame already contains counts
+is <code>geom_col()</code>. The
+<code>scale_fill_brewer(palette = "Set2")</code> line sets the color
+palette to a colorblind-friendly palette courtesy of the {RColorBrewer}
+package <span class="citation">(Neuwirth 2022)</span>.</p>
+<pre class="r"><code>library(ggplot2)
+ggplot(df) +
+  aes(x = English, y = Freq, fill = Humor) +
+  geom_col(position = &quot;dodge&quot;) +
+  scale_fill_brewer(palette = &quot;Set2&quot;) +
+  theme_minimal()</code></pre>
+<p><img src="cont_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<p>To visualize proportions, we need to calculate the proportions and
+then convert to a data frame.</p>
+<pre class="r"><code>df2 &lt;- proportions(d, margin = 1) |&gt; 
+  as.data.frame(responseName = &quot;Prop&quot;)
+df2</code></pre>
+<pre><code>     English        Humor      Prop
+1 non-native     humorous 0.5592417
+2     native     humorous 0.7524272
+3 non-native not humorous 0.4407583
+4     native not humorous 0.2475728</code></pre>
+<p>And now we can use the same {ggplot2} code above substituting “Prop”
+for “Freq”.</p>
+<pre class="r"><code>ggplot(df2) +
+  aes(x = English, y = Prop, fill = Humor) +
+  geom_col(position = &quot;dodge&quot;) +
+  scale_fill_brewer(palette = &quot;Set2&quot;) +
+  theme_minimal()</code></pre>
+<p><img src="cont_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
+<p>To compare just the proportions who found the textbook humorous, we
+can subset the data frame prior to creating the plot as follows:</p>
+<pre class="r"><code>ggplot(subset(df2, Humor == &quot;humorous&quot;)) +
+  aes(x = English, y = Prop) +
+  geom_col(position = &quot;dodge&quot;, width = 1/2) +
+  theme_minimal()</code></pre>
+<p><img src="cont_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
+<p>To conclude this example, let’s restructure our original data to be a
+data frame with one observation per subject. This is often how raw data
+will look in real life. The <code>uncount()</code> function from the
+{tidyr} package <span class="citation">(Wickham and Girlich 2022)</span>
+allows us to accomplish this. Notice we need to work with the “df”
+object we created using <code>as.data.frame()</code> above.</p>
+<pre class="r"><code>library(tidyr)
+df_all &lt;- uncount(df, weights = Freq)
+head(df_all)</code></pre>
+<pre><code>     English    Humor
+1 non-native humorous
+2 non-native humorous
+3 non-native humorous
+4 non-native humorous
+5 non-native humorous
+6 non-native humorous</code></pre>
+<p>With our data in this structure, we can use the modified
+<code>prop.test()</code> function from the {mosaic} package <span
+class="citation">(Pruim, Kaplan, and Horton 2017)</span> to carry out
+the 2-sample proportion test using R’s modeling syntax. The syntax
+<code>Humor | English</code> says compare proportions of Humor
+conditional on English.</p>
+<pre class="r"><code>library(mosaic)
+prop.test(~ Humor | English, data = df_all)</code></pre>
+<pre><code>
+    2-sample test for equality of proportions with continuity correction
+
+data:  tally(Humor ~ English)
+X-squared = 16.363, df = 1, p-value = 5.229e-05
+alternative hypothesis: two.sided
+95 percent confidence interval:
+ -0.28720861 -0.09916235
+sample estimates:
+   prop 1    prop 2 
+0.5592417 0.7524272 </code></pre>
+<p>To carry out the chi-square test of independence, we need to create a
+table again. We can do that with the <code>xtabs()</code> function
+before piping into the <code>chisq.test()</code> function.</p>
+<pre class="r"><code>xtabs(~ English + Humor, data = df_all) |&gt; 
+  chisq.test()</code></pre>
+<pre><code>
+    Pearson&#39;s Chi-squared test with Yates&#39; continuity correction
+
+data:  xtabs(~English + Humor, data = df_all)
+X-squared = 16.363, df = 1, p-value = 5.229e-05</code></pre>
+<p>To visualize count data in this format using {ggplot2} we need to use
+the <code>geom_bar()</code> function.</p>
+<pre class="r"><code>ggplot(df_all) +
+  aes(x = English, fill = Humor) +
+  geom_bar(position = &quot;dodge&quot;) +
+  scale_fill_brewer(palette = &quot;Set2&quot;) +
+  theme_minimal()</code></pre>
+<p><img src="cont_files/figure-html/unnamed-chunk-19-1.png" width="672" /></p>
+<p>To visualize proportions, it makes sense to create a table first,
+calculate the proportions on the desired margin, convert back to a data
+frame, and then create the plot using <code>geom_col()</code>. Thanks to
+the pipe operator, we can do all that on-the-fly before piping into the
+{ggplot2} code.</p>
+<pre class="r"><code>xtabs(~ English + Humor, data = df_all) |&gt; 
+  proportions(margin = 1) |&gt; 
+  as.data.frame(responseName = &quot;Prop&quot;) |&gt; 
+  ggplot() +
+  aes(x = English, y = Prop, fill = Humor) +
+  geom_col(position = &quot;dodge&quot;) +
+  scale_fill_brewer(palette = &quot;Set2&quot;) +
+  theme_minimal()</code></pre>
+<p><img src="cont_files/figure-html/unnamed-chunk-20-1.png" width="672" /></p>
+<p>It’s worth noting that a 2-sample proportion test can also be
+analyzed using logistic regression. This is easiest to do when our data
+has one row per subject. Before doing this it’s important to know which
+levels of the categorical variables will be considered as the reference
+level. By default, order is determined alphabetically. So if we model
+Humor as a function of English, we will be modeling the probability of
+“not humorous”. It probably makes more sense to model the probability of
+“humorous”, so we relevel the variable so that “not humorous” is the
+reference level.</p>
+<pre class="r"><code>df_all$Humor &lt;- relevel(df_all$Humor, &quot;not humorous&quot;)</code></pre>
+<p>Next we model Humor as a function of English.</p>
+<pre class="r"><code>m &lt;- glm(Humor ~ English, data = df_all, family = binomial)
+summary(m)</code></pre>
+<pre><code>
+Call:
+glm(formula = Humor ~ English, family = binomial, data = df_all)
+
+Coefficients:
+              Estimate Std. Error z value Pr(&gt;|z|)    
+(Intercept)     0.2381     0.1387   1.717    0.086 .  
+Englishnative   0.8735     0.2128   4.105 4.05e-05 ***
+---
+Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 537.52  on 416  degrees of freedom
+Residual deviance: 520.12  on 415  degrees of freedom
+AIC: 524.12
+
+Number of Fisher Scoring iterations: 4</code></pre>
+<p>The coefficient for English is relative to “non-native”. The fact it
+is positive and “significant” tells us that native speakers are more
+likely to find the textbook humorous. To interpret it, we can
+exponentiate to obtain an <em>odds ratio</em>.</p>
+<pre class="r"><code>exp(coef(m)[&quot;Englishnative&quot;])</code></pre>
+<pre><code>Englishnative 
+     2.395314 </code></pre>
+<p>This says the odds of a native speaker finding the textbook humorous
+are about 2.4 times higher than the odds of a non-native speaker finding
+the textbook humorous. This is a <em>relative</em> comparison.</p>
+<p>To carry out a 2-sample test, which is an <em>absolute</em>
+comparison, we can use the <code>emmeans()</code> and
+<code>pairs()</code> functions from the {emmeans} package <span
+class="citation">(Lenth 2022)</span>. We set
+<code>regrid = "response"</code> to tell the <code>emmeans()</code>
+function to calculate probabilities instead of odds ratios.</p>
+<pre class="r"><code>library(emmeans)
+emmeans(m, specs = ~ English, regrid = &quot;response&quot;) |&gt; 
+  pairs() </code></pre>
+<pre><code> contrast              estimate     SE  df z.ratio p.value
+ (non-native) - native   -0.193 0.0455 Inf  -4.244  &lt;.0001</code></pre>
+</div>
+<div id="references" class="section level3 unnumbered">
+<h3 class="unnumbered">References</h3>
+<div id="refs" class="references csl-bib-body hanging-indent"
+entry-spacing="0">
+<div id="ref-bilder2015" class="csl-entry">
+Bilder, Christopher R., and Thomas M. Loughin. 2015. <em>Analysis of
+Categorical Data in <span>R</span></em>. Boca Raton: <span>CRC</span>
+Press.
+</div>
+<div id="ref-emmeans" class="csl-entry">
+Lenth, Russell V. 2022. <em>Emmeans: Estimated Marginal Means, Aka
+Least-Squares Means</em>. <a
+href="https://CRAN.R-project.org/package=emmeans">https://CRAN.R-project.org/package=emmeans</a>.
+</div>
+<div id="ref-brewer" class="csl-entry">
+Neuwirth, Erich. 2022. <em>RColorBrewer: ColorBrewer Palettes</em>. <a
+href="https://CRAN.R-project.org/package=RColorBrewer">https://CRAN.R-project.org/package=RColorBrewer</a>.
+</div>
+<div id="ref-mosaic" class="csl-entry">
+Pruim, Randall, Daniel T Kaplan, and Nicholas J Horton. 2017. <span>“The
+Mosaic Package: Helping Students to ’Think with Data’ Using
+<span>R</span>.”</span> <em>The R Journal</em> 9 (1): 77–102. <a
+href="https://journal.r-project.org/archive/2017/RJ-2017-024/index.html">https://journal.r-project.org/archive/2017/RJ-2017-024/index.html</a>.
+</div>
+<div id="ref-ggplot2" class="csl-entry">
+Wickham, Hadley. 2016. <em><span class="nocase">ggplot2</span>: Elegant
+Graphics for Data Analysis</em>. Springer-Verlag New York. <a
+href="https://ggplot2.tidyverse.org">https://ggplot2.tidyverse.org</a>.
+</div>
+<div id="ref-tidyr" class="csl-entry">
+Wickham, Hadley, and Maximilian Girlich. 2022. <em>Tidyr: Tidy Messy
+Data</em>. <a
+href="https://CRAN.R-project.org/package=tidyr">https://CRAN.R-project.org/package=tidyr</a>.
+</div>
+</div>
+</div>
+<div class="footnotes footnotes-end-of-document">
+<hr />
+<ol>
+<li id="fn1"><p>If we calculate proportions down the columns
+(<code>margin = 2</code>), we get the proportions conditional on Humor.
+Of the students who found the passage humorous, about 0.43 were
+non-native while 0.57 were native.<a href="#fnref1"
+class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3,h4",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

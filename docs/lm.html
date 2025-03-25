@@ -13,7 +13,7 @@
 
 <title>Linear Modeling</title>
 
-<script src="site_libs/header-attrs-2.28/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.29/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
@@ -351,6 +351,9 @@ div.tocify {
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="cont.html">contingency tables</a>
+    </li>
     <li>
       <a href="lm.html">linear models</a>
     </li>
@@ -961,7 +964,7 @@ against the null.</p>
 <pre class="r"><code>library(car)
 durbinWatsonTest(m)</code></pre>
 <pre><code> lag Autocorrelation D-W Statistic p-value
-   1     -0.05006007      2.079992    0.93
+   1     -0.05006007      2.079992   0.894
  Alternative hypothesis: rho != 0</code></pre>
 <p>Based on our residual versus time plot and the result of the
 Durbin-Watson test, we decide to assume our residual errors are
@@ -1198,24 +1201,24 @@ to back-transform the response back to the original scale.</p>
 emmeans(m3, ~ treat | poison, type = &quot;response&quot;, tran = &quot;inverse&quot;) </code></pre>
 <pre><code>poison = I:
  treat response      SE df lower.CL upper.CL
- A        0.371 0.02396 42    0.328    0.426
- B        0.961 0.16112 42    0.718    1.453
- C        0.470 0.03859 42    0.404    0.564
+ A        0.371 0.02400 42    0.328    0.426
+ B        0.961 0.16100 42    0.718    1.453
+ C        0.470 0.03860 42    0.404    0.564
  D        0.747 0.09720 42    0.591    1.013
 
 poison = II:
  treat response      SE df lower.CL upper.CL
- A        0.316 0.01739 42    0.284    0.355
- B        0.663 0.07658 42    0.537    0.864
- C        0.385 0.02591 42    0.339    0.446
- D        0.553 0.05334 42    0.463    0.687
+ A        0.316 0.01740 42    0.284    0.355
+ B        0.663 0.07660 42    0.537    0.864
+ C        0.385 0.02590 42    0.339    0.446
+ D        0.553 0.05330 42    0.463    0.687
 
 poison = III:
  treat response      SE df lower.CL upper.CL
  A        0.213 0.00791 42    0.198    0.230
- B        0.329 0.01891 42    0.295    0.372
- C        0.243 0.01026 42    0.224    0.265
- D        0.300 0.01567 42    0.271    0.335
+ B        0.329 0.01890 42    0.295    0.372
+ C        0.243 0.01030 42    0.224    0.265
+ D        0.300 0.01570 42    0.271    0.335
 
 Confidence level used: 0.95 
 Intervals are back-transformed from the inverse scale </code></pre>

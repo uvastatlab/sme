@@ -13,7 +13,7 @@
 
 <title>Mixed-Effect Models</title>
 
-<script src="site_libs/header-attrs-2.28/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.29/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
@@ -352,6 +352,9 @@ div.tocify {
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
+      <a href="cont.html">contingency tables</a>
+    </li>
+    <li>
       <a href="lm.html">linear models</a>
     </li>
     <li>
@@ -628,9 +631,7 @@ group. However, the <code>t.ratio</code> is higher for <code>E-O</code>
 and <code>F-O</code> than <code>E-F</code>. Visually we can also see
 this using an effect plot:</p>
 <pre class="r"><code>library(ggeffects)
-ggpredict(m, terms = ~ treat) |&gt; plot(add.data = TRUE)</code></pre>
-<pre><code>Warning: Argument `add.data` is deprecated and will be removed in the future.
-  Please use `show_data` instead.</code></pre>
+ggpredict(m, terms = ~ treat) |&gt; plot(show_data = TRUE)</code></pre>
 <p><img src="lme_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
 <p>This plot shows us the spread of predicted egg values based on their
 treatment group. The black dot in the middle of each line represents the
@@ -821,9 +822,7 @@ let’s plot this model using the <code>ggeffects</code> package <span
 class="citation">(Lüdecke 2018)</span>.</p>
 <pre class="r"><code>library(ggeffects)
 ggeffect(m4, terms = c(&quot;region&quot;, &quot;treatment&quot;)) |&gt;
-         plot(add.data = TRUE, jitter = 0)</code></pre>
-<pre><code>Warning: Argument `add.data` is deprecated and will be removed in the future.
-  Please use `show_data` instead.</code></pre>
+         plot(show_data = TRUE, jitter = 0)</code></pre>
 <p><img src="lme_files/figure-html/unnamed-chunk-27-1.png" width="672" /></p>
 <p>This shows the relationship between treatment groups by region.
 Within region one, the estimates for activate by treatment are closer
@@ -1072,9 +1071,7 @@ the model using the ggeffects package <span class="citation">(Lüdecke
 be too simplistic.</p>
 <pre class="r"><code>library(ggeffects)
 ggeffect(m, terms = c(&quot;time&quot;, &quot;group&quot;)) |&gt;
-  plot(add.data = TRUE, jitter = 0)</code></pre>
-<pre><code>Warning: Argument `add.data` is deprecated and will be removed in the future.
-  Please use `show_data` instead.</code></pre>
+  plot(show_data = TRUE, jitter = 0)</code></pre>
 <p><img src="lme_files/figure-html/unnamed-chunk-39-1.png" width="672" /></p>
 <p>Given our exploratory plots we may want to entertain a
 <em>non-linear</em> effect of time. One way to do this is with natural
@@ -1131,9 +1128,7 @@ for(i in 1:50)lines(density(sim1[[i]]), col = &quot;grey90&quot;)</code></pre>
 <p>As before, let’s use ggeffects to visualize our model. We see the
 bend in our fitted lines due to the non-linear effects.</p>
 <pre class="r"><code>ggeffect(m2, terms = c(&quot;time&quot;, &quot;group&quot;)) |&gt;
-  plot(add.data = TRUE, jitter = 0)</code></pre>
-<pre><code>Warning: Argument `add.data` is deprecated and will be removed in the future.
-  Please use `show_data` instead.</code></pre>
+  plot(show_data = TRUE, jitter = 0)</code></pre>
 <p><img src="lme_files/figure-html/unnamed-chunk-45-1.png" width="672" /></p>
 <p>Looking at the summary for model m2 reveals coefficients that are
 impossible to interpret. This is one of the drawbacks of models with
@@ -1512,8 +1507,8 @@ West, Brady T., Kathleen B. Welch, and Andrzej T. Galecki. 2015.
 Press.
 </div>
 <div id="ref-ggplot2" class="csl-entry">
-Wickham, Hadley. 2016. <em>Ggplot2: Elegant Graphics for Data
-Analysis</em>. Springer-Verlag New York. <a
+Wickham, Hadley. 2016. <em><span class="nocase">ggplot2</span>: Elegant
+Graphics for Data Analysis</em>. Springer-Verlag New York. <a
 href="https://ggplot2.tidyverse.org">https://ggplot2.tidyverse.org</a>.
 </div>
 <div id="ref-tidyr" class="csl-entry">

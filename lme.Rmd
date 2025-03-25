@@ -118,7 +118,7 @@ We see that none of the mean differences are significant by treatment group. How
 
 ```{r}
 library(ggeffects)
-ggpredict(m, terms = ~ treat) |> plot(add.data = TRUE)
+ggpredict(m, terms = ~ treat) |> plot(show_data = TRUE)
 ```
 
 This plot shows us the spread of predicted egg values based on their treatment group. The black dot in the middle of each line represents the prediction and the length of the line represents its 95% confidence interval. The dots around each line represent the true data points. We can see the same trend as indicated by their predicted value, `E` and `F` are closer to one another than either is to `O`, and we can also see that the spread of predicted values for `O` overlaps with `E` and `F`'s spreads. 
@@ -240,7 +240,7 @@ To get a better understanding how this interaction is functioning, let's plot th
 ```{r}
 library(ggeffects)
 ggeffect(m4, terms = c("region", "treatment")) |>
-         plot(add.data = TRUE, jitter = 0)
+         plot(show_data = TRUE, jitter = 0)
 ```
 
 This shows the relationship between treatment groups by region. Within region one, the estimates for activate by treatment are closer together, then in region 2 the estimate for treatment 1 and treatment 2 decrease while their magnitude of difference also increases. Then in region 3 their magnitude of differences increases further as treatment 2 increases and treatment 1 decreases. This provides visual evidence that the relationship between treatment groups changes based on the region. We can use the `Anova()` function from the `car` package [@car] to assess the statistical significance of the visual evidence.
@@ -368,7 +368,7 @@ The model we fit assumes the effect of time is _linear_, and that the linear eff
 ```{r}
 library(ggeffects)
 ggeffect(m, terms = c("time", "group")) |>
-  plot(add.data = TRUE, jitter = 0)
+  plot(show_data = TRUE, jitter = 0)
 ```
 
 Given our exploratory plots we may want to entertain a _non-linear_ effect of time. One way to do this is with natural cubic splines. Using the splines package [@R], we can specify that we want to allow the trajectory of time to change directions up to 3 times using the syntax `ns(time, df = 3)`. We skip summarizing the model and look at the residuals vs fitted value plot. This looks about the same as the previous plot but a careful look at the y axis reveals we have slightly smaller residuals.
@@ -410,7 +410,7 @@ As before, let's use ggeffects to visualize our model. We see the bend in our fi
 
 ```{r}
 ggeffect(m2, terms = c("time", "group")) |>
-  plot(add.data = TRUE, jitter = 0)
+  plot(show_data = TRUE, jitter = 0)
 ```
 
 Looking at the summary for model m2 reveals coefficients that are impossible to interpret. This is one of the drawbacks of models with non-linear effects. However we see under the Random effects section that there is more variation within subjects (0.4246) than between subjects (0.2615).  

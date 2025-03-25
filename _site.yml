@@ -7,6 +7,8 @@ navbar:
       href: index.html
     - text: "Examples"
       menu:
+      - text: contingency tables
+        href: cont.html
       - text: linear models
         href: lm.html
       - text: logistic regression models

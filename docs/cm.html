@@ -13,7 +13,7 @@
 
 <title>Count Models</title>
 
-<script src="site_libs/header-attrs-2.28/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.29/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
@@ -351,6 +351,9 @@ div.tocify {
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="cont.html">contingency tables</a>
+    </li>
     <li>
       <a href="lm.html">linear models</a>
     </li>
@@ -807,15 +810,15 @@ sense.</p>
 emmeans(m3, pairwise ~ Phase, regrid = &quot;response&quot;)$contrasts</code></pre>
 <pre><code> contrast              estimate    SE  df z.ratio p.value
  en route - landing       24.39  8.63 Inf   2.826  0.0380
- en route - standing      74.97 10.88 Inf   6.892  &lt;.0001
- en route - (take-off)    22.69 10.94 Inf   2.074  0.2314
- en route - unknown       -5.26 56.65 Inf  -0.093  1.0000
+ en route - standing      74.97 10.90 Inf   6.892  &lt;.0001
+ en route - (take-off)    22.69 10.90 Inf   2.074  0.2314
+ en route - unknown       -5.26 56.70 Inf  -0.093  1.0000
  landing - standing       50.57  8.17 Inf   6.191  &lt;.0001
  landing - (take-off)     -1.71  9.44 Inf  -0.181  0.9998
- landing - unknown       -29.66 56.44 Inf  -0.525  0.9848
- standing - (take-off)   -52.28 10.71 Inf  -4.884  &lt;.0001
+ landing - unknown       -29.66 56.40 Inf  -0.525  0.9848
+ standing - (take-off)   -52.28 10.70 Inf  -4.884  &lt;.0001
  standing - unknown      -80.23 57.20 Inf  -1.403  0.6259
- (take-off) - unknown    -27.95 56.95 Inf  -0.491  0.9882
+ (take-off) - unknown    -27.95 56.90 Inf  -0.491  0.9882
 
 Results are averaged over the levels of: Cause 
 P value adjustment: tukey method for comparing a family of 5 estimates </code></pre>
@@ -833,15 +836,15 @@ between “en route” and “standing” is plausibly anywhere between 45.3 and
   confint()</code></pre>
 <pre><code> contrast              estimate    SE  df asymp.LCL asymp.UCL
  en route - landing       24.39  8.63 Inf     0.846      47.9
- en route - standing      74.97 10.88 Inf    45.295     104.6
- en route - (take-off)    22.69 10.94 Inf    -7.155      52.5
- en route - unknown       -5.26 56.65 Inf  -159.801     149.3
+ en route - standing      74.97 10.90 Inf    45.295     104.6
+ en route - (take-off)    22.69 10.90 Inf    -7.155      52.5
+ en route - unknown       -5.26 56.70 Inf  -159.801     149.3
  landing - standing       50.57  8.17 Inf    28.293      72.9
  landing - (take-off)     -1.71  9.44 Inf   -27.464      24.1
- landing - unknown       -29.66 56.44 Inf  -183.623     124.3
- standing - (take-off)   -52.28 10.71 Inf   -81.480     -23.1
+ landing - unknown       -29.66 56.40 Inf  -183.623     124.3
+ standing - (take-off)   -52.28 10.70 Inf   -81.480     -23.1
  standing - unknown      -80.23 57.20 Inf  -236.257      75.8
- (take-off) - unknown    -27.95 56.95 Inf  -183.300     127.4
+ (take-off) - unknown    -27.95 56.90 Inf  -183.300     127.4
 
 Results are averaged over the levels of: Cause 
 Confidence level used: 0.95 
@@ -1571,8 +1574,8 @@ with s</em>. Fourth. New York: Springer. <a
 href="https://www.stats.ox.ac.uk/pub/MASS4/">https://www.stats.ox.ac.uk/pub/MASS4/</a>.
 </div>
 <div id="ref-ggplot2" class="csl-entry">
-Wickham, Hadley. 2016. <em>Ggplot2: Elegant Graphics for Data
-Analysis</em>. Springer-Verlag New York. <a
+Wickham, Hadley. 2016. <em><span class="nocase">ggplot2</span>: Elegant
+Graphics for Data Analysis</em>. Springer-Verlag New York. <a
 href="https://ggplot2.tidyverse.org">https://ggplot2.tidyverse.org</a>.
 </div>
 <div id="ref-pscl" class="csl-entry">

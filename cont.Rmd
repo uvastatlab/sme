@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, comment = '')
 
 ### 2 x 2 Contigency Table
 
-Bilder and Loughin present the following problem:
+Bilder and Loughin [-@bilder2015] present the following problem:
 
 Do students whose native language is not English pick up on authors' efforts to use humor in illustrating points in textbooks? Students at one university were shown a passage from a textbook that was meant to be humorous. Of the 211 students in the study where English was not their native language, 118 thought the passage was humorous. Of the 206 students in the study where English was their native language, 155 thought the passage was humorous. Analyze these data to answer the research question.
 
@@ -48,7 +48,7 @@ chisq.test(d)
 
 The small p-value provides evidence against the null of no association. These two variables seem to be associated in some way. But how are they associated? 
 
-One way to investigate this is to calculate and compare proportions. Specifically we want to calculate proportions conditional on English. This is because we consider English to be the independent variable and Humor to be the dependent variable. To do this we use the `proportions()` function with `margin = 1`. (Rows are the first margin. Columns are the second margin.) 
+One way to investigate is to calculate and compare proportions. Specifically we want to calculate proportions conditional on English. This is because we consider English to be the independent variable and Humor to be the dependent variable. To do this we use the `proportions()` function with `margin = 1`. (Rows are the first margin, columns are the second margin.) 
 
 ```{r}
 proportions(d, margin = 1)
@@ -68,36 +68,74 @@ Now we have what we need to implement the 2-sample proportion test. The first ar
 prop.test(x = c(118, 155), n = c(211, 206))
 ```
 
-Of most interest is the 95 percent confidence interval. We can now present the result as follows: The difference in proportions between non native speakers and native speakers who understand the authors' humor is about -0.19, 95% CI [-0.29, -0.10]. 
+Notice the p-value of this test is the same as the chi-square test above. In fact, the two tests are identical. Of more interest is the 95 percent confidence interval on the difference in proportions. This tells us that the difference in proportions between non native speakers and native speakers who understand the authors' humor is about -0.19, 95% CI [-0.29, -0.10]. 
 
+One way to visualize this data is by creating a Cleveland dot plot. The `dotchart()` function in R allows us to easily create this plot as long as your data is a matrix or table. 
+
+```{r}
+dotchart(d)
+```
+
+The dot plot shows how counts of English change conditional on Humor. It would make more sense to show Humor counts conditional on English. We can accomplish that by transposing the table using the `t()` function. 
+
+```{r}
+dotchart(t(d))
+```
+
+We can clearly see the counts of students finding humor in the textbook increasing dramatically for those students who are native English speakers. 
+
+Bar plots are also an effective way to visualize data of this nature. A basic bar plot can be created using the `barplot()` function. Notice we transpose the table again to ensure counts are shown conditional on English.
+
+```{r}
+barplot(t(d), beside = TRUE, legend.text = TRUE)
+```
+
+To use the {ggplot2} package to create a bar plot [@ggplot2], we need to convert our table into a data frame. Since our data is a table object, this is easy to do with the `as.data.frame()` function. 
 
 ```{r}
 df <- as.data.frame(d)
 df
 ```
 
-```{r}
-mosaicplot(d, shade = TRUE)
-```
-
-```{r}
-as.data.frame(d, )
-```
-
+The main function to use when our data frame already contains counts is `geom_col()`. The `scale_fill_brewer(palette = "Set2")` line sets the color palette to a colorblind-friendly palette courtesy of the {RColorBrewer} package [@brewer]. 
 
 ```{r}
 library(ggplot2)
-library(RColorBrewer)
-as.table(d) |> 
-  as.data.frame() |> 
-  ggplot() +
-  aes(x = Var1, y = Freq, fill = Var2) +
+ggplot(df) +
+  aes(x = English, y = Freq, fill = Humor) +
   geom_col(position = "dodge") +
   scale_fill_brewer(palette = "Set2") +
   theme_minimal()
 ```
 
+To visualize proportions, we need to calculate the proportions and then convert to a data frame.
 
+```{r}
+df2 <- proportions(d, margin = 1) |> 
+  as.data.frame(responseName = "Prop")
+df2
+```
+
+And now we can use the same {ggplot2} code above substituting "Prop" for "Freq".
+
+```{r}
+ggplot(df2) +
+  aes(x = English, y = Prop, fill = Humor) +
+  geom_col(position = "dodge") +
+  scale_fill_brewer(palette = "Set2") +
+  theme_minimal()
+```
+
+To compare just the proportions who found the textbook humorous, we can subset the data frame prior to creating the plot as follows:
+
+```{r}
+ggplot(subset(df2, Humor == "humorous")) +
+  aes(x = English, y = Prop) +
+  geom_col(position = "dodge", width = 1/2) +
+  theme_minimal()
+```
+
+To conclude this example, let's restructure our original data to be a data frame with one observation per subject. This is often how raw data will look in real life. The `uncount()` function from the {tidyr} package [@tidyr] allows us to accomplish this. Notice we need to work with the "df" object we created using `as.data.frame()` above.
 
 ```{r}
 library(tidyr)
@@ -105,7 +143,70 @@ df_all <- uncount(df, weights = Freq)
 head(df_all)
 ```
 
-```{r}
+With our data in this structure, we can use the modified `prop.test()` function from the {mosaic} package [@mosaic] to carry out the 2-sample proportion test using R's modeling syntax. The syntax `Humor | English` says compare proportions of Humor conditional on English.
+
+```{r message=FALSE}
 library(mosaic)
 prop.test(~ Humor | English, data = df_all)
 ```
+
+To carry out the chi-square test of independence, we need to create a table again. We can do that with the `xtabs()` function before piping into the `chisq.test()` function.
+
+```{r}
+xtabs(~ English + Humor, data = df_all) |> 
+  chisq.test()
+```
+
+To visualize count data in this format using {ggplot2} we need to use the `geom_bar()` function.
+
+```{r}
+ggplot(df_all) +
+  aes(x = English, fill = Humor) +
+  geom_bar(position = "dodge") +
+  scale_fill_brewer(palette = "Set2") +
+  theme_minimal()
+```
+
+To visualize proportions, it makes sense to create a table first, calculate the proportions on the desired margin, convert back to a data frame, and then create the plot using `geom_col()`. Thanks to the pipe operator, we can do all that on-the-fly before piping into the {ggplot2} code.
+
+```{r}
+xtabs(~ English + Humor, data = df_all) |> 
+  proportions(margin = 1) |> 
+  as.data.frame(responseName = "Prop") |> 
+  ggplot() +
+  aes(x = English, y = Prop, fill = Humor) +
+  geom_col(position = "dodge") +
+  scale_fill_brewer(palette = "Set2") +
+  theme_minimal()
+```
+
+It's worth noting that a 2-sample proportion test can also be analyzed using logistic regression. This is easiest to do when our data has one row per subject. Before doing this it's important to know which levels of the categorical variables will be considered as the reference level. By default, order is determined alphabetically. So if we model Humor as a function of English, we will be modeling the probability of "not humorous". It probably makes more sense to model the probability of "humorous", so we relevel the variable so that "not humorous" is the reference level.
+
+```{r}
+df_all$Humor <- relevel(df_all$Humor, "not humorous")
+```
+
+Next we model Humor as a function of English.
+
+```{r}
+m <- glm(Humor ~ English, data = df_all, family = binomial)
+summary(m)
+```
+
+The coefficient for English is relative to "non-native". The fact it is positive and "significant" tells us that native speakers are more likely to find the textbook humorous. To interpret it, we can exponentiate to obtain an _odds ratio_.
+
+```{r}
+exp(coef(m)["Englishnative"])
+```
+
+This says the odds of a native speaker finding the textbook humorous are about 2.4 times higher than the odds of a non-native speaker finding the textbook humorous. This is a _relative_ comparison. 
+
+To carry out a 2-sample test, which is an _absolute_ comparison, we can use the `emmeans()` and `pairs()` functions from the {emmeans} package [@emmeans]. We set `regrid = "response"` to tell the `emmeans()` function to calculate probabilities instead of odds ratios.
+
+```{r}
+library(emmeans)
+emmeans(m, specs = ~ English, regrid = "response") |> 
+  pairs() 
+```
+
+### References
