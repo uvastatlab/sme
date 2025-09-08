@@ -24,7 +24,7 @@ library(gratia) # For GAM validation
 library(ggeffects) # For plotting model predictions 
 ```
 
-Let's generate our data and take a look at the columns. In our data frame, we will include the number of Youtube subscribers (`subscribers`), number of video postings (`posts`), and the length of the video in minutes (`vid.length`). 
+Let's generate our data and take a look at the columns. In our data frame, we will include the number of YouTube subscribers (`subscribers`), number of video postings (`posts`), and the length of the video in minutes (`vid.length`). 
 
 ```{r}
 #Reproducibility 
@@ -126,15 +126,58 @@ gam.lm <- gam(subscribers ~ s(posts) + vid.length,
 summary(gam.lm)
 ```
 
-#### Validation 
+#### Visualization & validation 
 
-Let's go back our `gam2` model. We will plot the partial residuals of `gam2`, which helps us view the relationship between a predictor variable and the response variable after accounting for other predictors in the model. We will add the residuals to the plot by including the argument `residuals = TRUE`. The vertical lines along the x-axis represent a rug plot, indicating the distribution of the covariate shown.
+Let's go back to our `gam2` model. We will plot the estimated smooths of `gam2` using partial effect plots. Partial effect plots help us visualize how an individual term in the model contributes to the overall prediction. In other words, each term in our model contributes some amount to the overall prediction and the partial effect plot helps us understand how a single term is associated with the response. These plots are on the linear predictor scale (see `?plot.gam`). For `gam2`, which has a Gaussian family, the linear predictor scale is the response scale (i.e. the link is identity). This determines the y axis of the partial effect plots. 
+
+We will get 2 partial effect plots because we have 2 smooth terms. We will add the partial residuals to the plot by including the argument `residuals = TRUE`. The partial residuals account for other partial effects. The small, vertical lines along the x-axis represent a rug plot, indicating the distribution of the term shown. Standard errors are represented by the dashed lines on the plot which show the 95% confidence interval. 
 
 ```{r}
-plot.gam(gam2, pages = 1, residuals = TRUE) 
+plot.gam(gam2, pages = 1, 
+         residuals = TRUE, # add partial residuals
+         se = TRUE, shade = TRUE # add and shade the standard error
+         ) 
+
 ```
 
-We can also use `gam.check()` from the {mgcv} package to assess model diagnostics. The output from `gam.check()` includes the information from `k.check()` at the bottom of the results.
+Here, we see the average effect of each term is 0 with values above 0 having a positive contribution and values below 0 having a negative contribution. 
+
+We can help make the plot more interpretable by using the argument `shift` which shifts the plot by a constant value. In our case, we will shift the scale by the model intercept which is: 
+
+```{r}
+coef(gam2)[1]
+```
+
+```{r}
+plot.gam(gam2, shift = coef(gam2)[1], pages = 1) 
+```
+
+Notably, the shifted values should be interpreted with caution here as we have multiple smoothing terms. 
+
+We can also visualize the relationship between posts and subscribers as predicted by the `gam2` model using the package {ggeffects} and include the raw data points. 
+
+```{r, warning=FALSE}
+predict.df <- ggpredict(gam2, terms = "posts")
+
+ggplot() +
+  #Raw data points 
+  geom_point(data = df, aes(x = posts, y = subscribers), color = "dodgerblue3", alpha = 0.5) +
+  #Confidence intervals 
+  geom_ribbon(data = predict.df, aes(x = x, ymin = conf.low, ymax = conf.high), fill = "grey60", alpha = 0.5) +
+  #Predicted values
+  geom_line(data = predict.df, aes(x = x, y = predicted), color = "black", size = 1) +
+  theme_classic()
+
+```
+
+We can see the raw data points in blue, while the black line represents the model's predicted values. The grey shaded area shows the confidence intervals around the predictions, giving us a sense of uncertainty in the model's fit.
+
+To further explore output on the response scale, see the {ggeffects} package. 
+
+#### Model diagnostics 
+
+To assess model diagnostics, we can also use `gam.check()` from the `mgcv` package. The output from `gam.check()` includes the information from `k.check()` at the bottom of the results.
+
 
 ```{r, warning=FALSE}
 gam.check(gam2, pages = 1)
@@ -159,29 +202,5 @@ concurvity(gam2)
 ```
 
 While there is currently no defined value for what value is considered 'high' concurvity, our worst case estimate is 0.3 with the observed and estimated values falling below this. Here, we will conclude that concurvity is not a concern.  
-
-#### plot model prediction over the raw data 
-
-We can also visualize the relationship between posts and subscribers as predicted by the gam2 model and include the raw data points. We generate predictions using the `ggpredict()` function from the {ggeffects} package [@ggeffects].
-
-```{r, warning=FALSE}
-predict.df <- ggpredict(gam2, terms = "posts")
-
-ggplot() +
-  #Raw data points 
-  geom_point(data = df, aes(x = posts, y = subscribers), 
-             color = "dodgerblue3", alpha = 0.5) +
-  #Confidence intervals 
-  geom_ribbon(data = predict.df, aes(x = x, ymin = conf.low, 
-                                     ymax = conf.high), 
-              fill = "grey60", alpha = 0.5) +
-  #Predicted values
-  geom_line(data = predict.df, aes(x = x, y = predicted), 
-            color = "black", size = 1) +
-  theme_classic()
-
-```
-
-We can see the raw data points in blue, while the black line represents the model's predicted values. The grey shaded area shows the confidence intervals around the predictions, giving us a sense of uncertainty in the model's fit.
 
 ### References

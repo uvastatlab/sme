@@ -411,7 +411,7 @@ library(ggplot2) #For plots
 library(gratia) # For GAM validation
 library(ggeffects) # For plotting model predictions </code></pre>
 <p>Let’s generate our data and take a look at the columns. In our data
-frame, we will include the number of Youtube subscribers
+frame, we will include the number of YouTube subscribers
 (<code>subscribers</code>), number of video postings
 (<code>posts</code>), and the length of the video in minutes
 (<code>vid.length</code>).</p>
@@ -610,23 +610,73 @@ Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&
 R-sq.(adj) =  0.943   Deviance explained = 94.7%
 -REML = 1363.9  Scale est. = 4.5997e+06  n = 150</code></pre>
 </div>
-<div id="validation" class="section level4">
-<h4>Validation</h4>
-<p>Let’s go back our <code>gam2</code> model. We will plot the partial
-residuals of <code>gam2</code>, which helps us view the relationship
-between a predictor variable and the response variable after accounting
-for other predictors in the model. We will add the residuals to the plot
-by including the argument <code>residuals = TRUE</code>. The vertical
-lines along the x-axis represent a rug plot, indicating the distribution
-of the covariate shown.</p>
-<pre class="r"><code>plot.gam(gam2, pages = 1, residuals = TRUE) </code></pre>
+<div id="visualization-validation" class="section level4">
+<h4>Visualization &amp; validation</h4>
+<p>Let’s go back to our <code>gam2</code> model. We will plot the
+estimated smooths of <code>gam2</code> using partial effect plots.
+Partial effect plots help us visualize how an individual term in the
+model contributes to the overall prediction. In other words, each term
+in our model contributes some amount to the overall prediction and the
+partial effect plot helps us understand how a single term is associated
+with the response. These plots are on the linear predictor scale (see
+<code>?plot.gam</code>). For <code>gam2</code>, which has a Gaussian
+family, the linear predictor scale is the response scale (i.e. the link
+is identity). This determines the y axis of the partial effect
+plots.</p>
+<p>We will get 2 partial effect plots because we have 2 smooth terms. We
+will add the partial residuals to the plot by including the argument
+<code>residuals = TRUE</code>. The partial residuals account for other
+partial effects. The small, vertical lines along the x-axis represent a
+rug plot, indicating the distribution of the term shown. Standard errors
+are represented by the dashed lines on the plot which show the 95%
+confidence interval.</p>
+<pre class="r"><code>plot.gam(gam2, pages = 1, 
+         residuals = TRUE, # add partial residuals
+         se = TRUE, shade = TRUE # add and shade the standard error
+         ) </code></pre>
 <p><img src="gam_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
-<p>We can also use <code>gam.check()</code> from the {mgcv} package to
-assess model diagnostics. The output from <code>gam.check()</code>
-includes the information from <code>k.check()</code> at the bottom of
-the results.</p>
+<p>Here, we see the average effect of each term is 0 with values above 0
+having a positive contribution and values below 0 having a negative
+contribution.</p>
+<p>We can help make the plot more interpretable by using the argument
+<code>shift</code> which shifts the plot by a constant value. In our
+case, we will shift the scale by the model intercept which is:</p>
+<pre class="r"><code>coef(gam2)[1]</code></pre>
+<pre><code>(Intercept) 
+   46562.51 </code></pre>
+<pre class="r"><code>plot.gam(gam2, shift = coef(gam2)[1], pages = 1) </code></pre>
+<p><img src="gam_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<p>Notably, the shifted values should be interpreted with caution here
+as we have multiple smoothing terms.</p>
+<p>We can also visualize the relationship between posts and subscribers
+as predicted by the <code>gam2</code> model using the package
+{ggeffects} and include the raw data points.</p>
+<pre class="r"><code>predict.df &lt;- ggpredict(gam2, terms = &quot;posts&quot;)
+
+ggplot() +
+  #Raw data points 
+  geom_point(data = df, aes(x = posts, y = subscribers), color = &quot;dodgerblue3&quot;, alpha = 0.5) +
+  #Confidence intervals 
+  geom_ribbon(data = predict.df, aes(x = x, ymin = conf.low, ymax = conf.high), fill = &quot;grey60&quot;, alpha = 0.5) +
+  #Predicted values
+  geom_line(data = predict.df, aes(x = x, y = predicted), color = &quot;black&quot;, size = 1) +
+  theme_classic()</code></pre>
+<p><img src="gam_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
+<p>We can see the raw data points in blue, while the black line
+represents the model’s predicted values. The grey shaded area shows the
+confidence intervals around the predictions, giving us a sense of
+uncertainty in the model’s fit.</p>
+<p>To further explore output on the response scale, see the {ggeffects}
+package.</p>
+</div>
+<div id="model-diagnostics" class="section level4">
+<h4>Model diagnostics</h4>
+<p>To assess model diagnostics, we can also use <code>gam.check()</code>
+from the <code>mgcv</code> package. The output from
+<code>gam.check()</code> includes the information from
+<code>k.check()</code> at the bottom of the results.</p>
 <pre class="r"><code>gam.check(gam2, pages = 1)</code></pre>
-<p><img src="gam_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<p><img src="gam_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
 <pre><code>
 Method: REML   Optimizer: outer newton
 full convergence after 7 iterations.
@@ -646,14 +696,14 @@ from the {gratia} package <span class="citation">(Simpson 2024)</span>.
 Notably, this package is built on {ggplot2}, allowing for easy editing
 of plots using ggplot scripts.</p>
 <pre class="r"><code>appraise(gam2, method = &quot;simulate&quot;)</code></pre>
-<p><img src="gam_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<p><img src="gam_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
 <p>Within the {gratia} package, we can also plot the partial effect of
 the smoothing terms. The smooths are centered around 0 so regions below
 0 on the y-axis are less common on average while regions above 0 on the
 y-axis are more common on average. We will add the residuals to the plot
 by including <code>residuals = TRUE</code>.</p>
 <pre class="r"><code>draw(gam2, residuals = TRUE)</code></pre>
-<p><img src="gam_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
+<p><img src="gam_files/figure-html/unnamed-chunk-17-1.png" width="672" /></p>
 <p>When specifying multiple smoothing terms, we can also check for
 concurvity, which occurs when a smooth term in the model can be
 estimated by one or more other smooth terms in the model. High
@@ -673,45 +723,11 @@ considered ‘high’ concurvity, our worst case estimate is 0.3 with the
 observed and estimated values falling below this. Here, we will conclude
 that concurvity is not a concern.</p>
 </div>
-<div id="plot-model-prediction-over-the-raw-data"
-class="section level4">
-<h4>plot model prediction over the raw data</h4>
-<p>We can also visualize the relationship between posts and subscribers
-as predicted by the gam2 model and include the raw data points. We
-generate predictions using the <code>ggpredict()</code> function from
-the {ggeffects} package <span class="citation">(Lüdecke
-2018)</span>.</p>
-<pre class="r"><code>predict.df &lt;- ggpredict(gam2, terms = &quot;posts&quot;)
-
-ggplot() +
-  #Raw data points 
-  geom_point(data = df, aes(x = posts, y = subscribers), 
-             color = &quot;dodgerblue3&quot;, alpha = 0.5) +
-  #Confidence intervals 
-  geom_ribbon(data = predict.df, aes(x = x, ymin = conf.low, 
-                                     ymax = conf.high), 
-              fill = &quot;grey60&quot;, alpha = 0.5) +
-  #Predicted values
-  geom_line(data = predict.df, aes(x = x, y = predicted), 
-            color = &quot;black&quot;, size = 1) +
-  theme_classic()</code></pre>
-<p><img src="gam_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
-<p>We can see the raw data points in blue, while the black line
-represents the model’s predicted values. The grey shaded area shows the
-confidence intervals around the predictions, giving us a sense of
-uncertainty in the model’s fit.</p>
-</div>
 </div>
 <div id="references" class="section level3 unnumbered">
 <h3 class="unnumbered">References</h3>
 <div id="refs" class="references csl-bib-body hanging-indent"
 entry-spacing="0">
-<div id="ref-ggeffects" class="csl-entry">
-Lüdecke, Daniel. 2018. <span>“Ggeffects: Tidy Data Frames of Marginal
-Effects from Regression Models.”</span> <em>Journal of Open Source
-Software</em> 3 (26): 772. <a
-href="https://doi.org/10.21105/joss.00772">https://doi.org/10.21105/joss.00772</a>.
-</div>
 <div id="ref-gratia" class="csl-entry">
 Simpson, Gavin L. 2024. <em><span class="nocase">gratia</span>: Graceful
 <span class="nocase">ggplot</span>-Based Graphics and Other Functions
